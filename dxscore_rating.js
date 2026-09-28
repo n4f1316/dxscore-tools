@@ -31,7 +31,7 @@
 
   // 譜面定数表（JSON）のURL。空なら表示レベルからの概算値（下限）を使う
   // 形式: { "曲名|DX|MASTER": 14.8, "曲名|ST|EXPERT": 12.3, ... }
-  const CONST_URL = '';
+  const CONST_URL = 'https://n4f1316.github.io/dxscore-tools/maimai_consts.json';
 
   // 公式サイトのHTML構造に合わせたセレクタ（2026年9月時点の構造で確認済み）
   const SEL = {
