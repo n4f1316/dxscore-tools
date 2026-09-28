@@ -203,7 +203,7 @@
     table.style.cssText = 'border-collapse:collapse;width:100%;font-size:13px;';
 
     const tr0 = table.insertRow();
-    ['#', '曲名', '譜面', '定数', '☆', 'MAX差', '値'].forEach((t) => {
+    ['#', '曲名', '譜面', '定数', '☆', 'MAX差', 'レート値'].forEach((t) => {
       const th = document.createElement('th');
       th.textContent = t;
       th.style.cssText = 'border-bottom:2px solid #888;padding:4px;text-align:left;';
