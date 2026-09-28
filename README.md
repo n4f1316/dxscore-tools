@@ -89,25 +89,6 @@ javascript:(()=>{const s=document.createElement('script');s.src='https://n4f1316
 
 ---
 
-## 管理者向け：譜面定数表の作成
-
-譜面定数は、同梱の `collect_consts.js` で maimai DX NET のページから収集し、JSONファイル（`maimai_consts_<バージョン名>.json`）として保存しています。
-
-レベル別のレコードページは「定数の低い順、同じ定数内はジャンル順」に並んでいるため、ジャンルの並びが後戻りした地点を定数の段の境目とみなして、定数を割り当てています（そのため、下の方のレベルの譜面定数は間違っている可能性があります）。検出した段数が理論上の段数（例：13+ なら 13.6〜13.9 の4段）と一致したレベルのみ定数を確定します。
-
-### 定数収集用ブックマークレット
-
-```
-javascript:(()=>{const s=document.createElement('script');s.src='https://n4f1316.github.io/dxscore-tools/collect_consts.js?'+Date.now();document.body.appendChild(s);})();void(0);
-```
-
-### バージョン更新時の手順
-
-1. maimai DX NET にログインし、定数収集用ブックマークレットを実行します（40秒ほどかかります）。
-2. 完了画面の「レベルごとの結果」で、各レベルが「確定」になっていることを確認します。
-3. 定数表をダウンロードし、`maimai_consts_<新バージョン名>.json` という名前でリポジトリにアップロードします。
-4. `dxscore_rating.js` の `CONST_URL` を新しいファイルのURLに書き換えます。
-
 ## ファイル構成
 
 | ファイル | 内容 |
