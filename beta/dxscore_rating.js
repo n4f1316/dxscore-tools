@@ -225,6 +225,8 @@
       color: #2B2350; box-shadow: none;
       background: linear-gradient(90deg, #FFD1DC, #FFE9B8, #D6F5C9, #C9EBFF, #E3D4FF);
     }
+    .dxr-trophy-official { max-width: 100%; margin-bottom: 4px; }
+    .dxr-trophy-official > * { max-width: 100%; margin-left: 0 !important; }
     .dxr-player { font-size: 22px; font-weight: 800; letter-spacing: .02em; line-height: 1.3; word-break: break-all; }
 
     /* レート表示：押すと表が切り替わる */
@@ -428,7 +430,7 @@
     const trophyEl = box.querySelector(SEL.trophy);
     const trophy = trophyEl?.querySelector(SEL.trophyText)?.textContent.trim() ?? '';
     const trophyRank = trophyEl?.className.match(/trophy_(Normal|Bronze|Silver|Gold|Rainbow)/)?.[1] ?? '';
-    return { name, icon, trophy, trophyRank };
+    return { name, icon, trophy, trophyRank, trophyEl };
   }
 
   async function getPlayerProfile() {
@@ -446,6 +448,48 @@
   }
 
 
+  // 公式サイトの称号の見た目を再現するため、今のページに読み込まれている公式CSSから、
+  // 称号の要素に関係するルールだけを取り出す（画面全体には適用しないので崩れない）
+  function extractOfficialCss(node) {
+    const used = new Set();
+    [node, ...node.querySelectorAll('*')].forEach((e) => e.classList.forEach((c) => used.add(c)));
+
+    const relevant = (selector) =>
+      selector.split(',').some((sel) => {
+        const t = sel.trim();
+        if (t.includes('trophy')) return true;
+        // 「.p_3」「.t_c.f_13」のような、クラスだけで書かれたルールで、称号に使われているもの
+        if (!/^(\.[\w-]+)+$/.test(t)) return false;
+        return t.slice(1).split('.').every((c) => used.has(c));
+      });
+
+    const out = [];
+    const walk = (rules, base) => {
+      for (const r of rules) {
+        if (r.cssRules && r.media) {
+          const inner = [];
+          const saved = out.length;
+          walk(r.cssRules, base);
+          inner.push(...out.splice(saved));
+          if (inner.length) out.push(`@media ${r.media.mediaText}{${inner.join('')}}`);
+        } else if (r.selectorText && relevant(r.selectorText)) {
+          // 画像の相対パスは、CSSファイルの場所を基準に絶対URLへ直す
+          out.push(r.cssText.replace(/url\((['"]?)([^'")]+)\1\)/g, (m, q, u) => {
+            try { return `url("${new URL(u, base).href}")`; } catch { return m; }
+          }));
+        }
+      }
+    };
+    for (const sheet of document.styleSheets) {
+      try {
+        walk(sheet.cssRules, sheet.href || location.href);
+      } catch {
+        // 読めないCSS（別サイトのもの）は飛ばす
+      }
+    }
+    return out.join('\n');
+  }
+
   // results: [{ mode, rating, top }, ...]
   function renderResult(ui, profile, results, info, jackets) {
     // プレイヤー情報：アイコン / 称号 / 名前
@@ -459,9 +503,23 @@
     }
     const text = el('div', 'dxr-profile-text');
     if (profile.trophy) {
-      const trophy = el('div', `dxr-trophy${profile.trophyRank ? ' t-' + profile.trophyRank : ''}`, profile.trophy);
-      trophy.title = profile.trophy; // 長い称号は省略表示になるので、全文を確認できるように
-      text.appendChild(trophy);
+      const officialCss = profile.trophyEl ? extractOfficialCss(profile.trophyEl) : '';
+      if (officialCss) {
+        // 公式の称号をそのまま複製し、取り出した公式CSSで表示する
+        const style = el('style');
+        style.textContent = officialCss;
+        ui.body.getRootNode().appendChild(style);
+        const clone = document.importNode(profile.trophyEl, true);
+        [clone, ...clone.querySelectorAll('[id]')].forEach((e) => e.removeAttribute('id'));
+        const holder = el('div', 'dxr-trophy-official');
+        holder.appendChild(clone);
+        text.appendChild(holder);
+      } else {
+        // 公式CSSが読めない場合は、色だけ合わせた簡易表示
+        const trophy = el('div', `dxr-trophy${profile.trophyRank ? ' t-' + profile.trophyRank : ''}`, profile.trophy);
+        trophy.title = profile.trophy;
+        text.appendChild(trophy);
+      }
     }
     text.appendChild(el('div', 'dxr-player', profile.name || 'プレイヤー名を取得できませんでした'));
     player.appendChild(text);
