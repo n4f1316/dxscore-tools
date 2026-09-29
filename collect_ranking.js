@@ -19,7 +19,10 @@
   const SCORE_TYPE = 1;            // 1 = でらっくスコア
   const RANKING_TYPE = 99;         // 99 = 全国
   const CONST_URL = 'https://n4f1316.github.io/dxscore-tools/maimai_consts_magical.json';
-  const STORE_KEY = 'dxr-ranking-progress'; // 途中経過の保存先（このブラウザ内のみ）
+  // 集計結果の保存先：GitHub に置いた JSON を読み込み、取得済みの譜面は飛ばす
+  const RESULTS_URL = 'https://n4f1316.github.io/dxscore-tools/dxscore_ranking.json';
+  const RESULTS_FILE = 'dxscore_ranking.json'; // ダウンロード時のファイル名（そのままアップロードできる名前）
+  const LEGACY_KEY = 'dxr-ranking-progress';   // 以前の版がブラウザ内に保存していた記録
 
   const LIST_URL = (lv, d) =>
     `/maimai-mobile/ranking/search/?search=L-${lv}&scoreType=${SCORE_TYPE}&rankingType=${RANKING_TYPE}&diff=${d}`;
@@ -175,7 +178,21 @@
     .c-num { text-align: right; }
     .r.head .c-num { text-align: center; }
     .name { font-weight: 700; line-height: 1.35; word-break: break-word; }
-    .meta { font-size: 11px; color: #6E6892; margin-top: 2px; }
+    .meta { font-size: 11px; color: #6E6892; margin-top: 3px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+    .chip { display: inline-block; font-size: 11px; font-weight: 700; line-height: 1; padding: 4px 7px;
+      border-radius: 6px; color: #fff; white-space: nowrap; }
+    .kind-DX { background: linear-gradient(90deg, #E0348C, #F29A2E); }
+    .kind-ST { background: #3B82C4; }
+    .kind-unknown { background: #999; }
+    .diff-BASIC { background: #2E9E5B; }
+    .diff-ADVANCED { background: #D98E04; }
+    .diff-EXPERT { background: #E0434B; }
+    .diff-MASTER { background: #8E44D6; }
+    .diff-REMASTER { background: #fff; color: #8E44D6; box-shadow: inset 0 0 0 1.5px #B68BE0; }
+    .const { background: #EFECF9; color: #2B2350; }
+    .lv { background: transparent; color: #6E6892; padding-left: 2px; }
+    .nw { white-space: nowrap; }
     .pct { font-weight: 800; }
     .empty { padding: 20px; text-align: center; color: #6E6892; }
     @media (max-width: 520px) {
@@ -215,7 +232,7 @@
 
   function toCsv(rows) {
     const head = ['取得日時', '曲名', '種別', '難易度', 'レベル', '公式定数', '最大値', '掲載人数',
-      '1位スコア', '50行目スコア', '50行目の順位', '100行目スコア', '100行目の順位',
+      '1位スコア', '50位スコア', '50位の同率順位', '100位スコア', '100位の同率順位',
       '平均取得率(%)', '平均☆', 'MAX人数'];
     const keys = ['date', 'name', 'kind', 'diff', 'level', 'const', 'max', 'count',
       'top1', 'row50', 'rank50', 'row100', 'rank100', 'avgPct', 'avgStar', 'maxCount'];
@@ -241,15 +258,18 @@
     return;
   }
 
-  // 途中経過の読み込み
-  let store = { results: {} };
+  // 集計結果は「譜面 → 1行」の表で持つ（キー：曲名|種別|難易度|レベル）
+  const keyOfRow = (r) => `${r.name}|${r.kind}|${r.diff}|${r.level}`;
+  let results = {};
+  let loadedCount = 0;
+  const rows = () => Object.values(results);
+
+  // 以前の版がブラウザ内に保存していた記録があれば、結果に合流させる（消さずに引き継ぐ）
+  let legacyRows = [];
   try {
-    store = JSON.parse(localStorage.getItem(STORE_KEY)) ?? store;
-  } catch { /* 読めなければ新規 */ }
-  const save = () => {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch { /* 容量不足などは無視 */ }
-  };
-  const rows = () => Object.values(store.results);
+    legacyRows = Object.values(JSON.parse(localStorage.getItem(LEGACY_KEY))?.results ?? {});
+  } catch { /* なし */ }
+
   const stamp = () => {
     const d = new Date();
     const p = (x) => String(x).padStart(2, '0');
@@ -289,15 +309,26 @@
 
   const actRow = el('div', 'row');
   const startBtn = el('button', 'primary', '集計を開始');
-  const viewBtn = el('button', '', '保存済みの結果を見る');
-  const resetBtn = el('button', '', '記録を消去');
-  actRow.append(startBtn, viewBtn, resetBtn);
+  const viewBtn = el('button', '', '集計済みの結果を見る');
+  const legacyBtn = el('button', '', 'ブラウザ内の古い記録を消去');
+  actRow.append(startBtn, viewBtn, legacyBtn);
+
+  // 全件取り直しの切り替え
+  const refetchLabel = el('label', 'chk');
+  const refetchCb = el('input');
+  refetchCb.type = 'checkbox';
+  refetchLabel.append(refetchCb, document.createTextNode('集計済みの譜面も取り直す（全件取得）'));
+  const refetchRow = el('div', 'row');
+  refetchRow.appendChild(refetchLabel);
+  const loadInfo = el('div', 'note', 'GitHubの集計結果を読み込み中…');
 
   setup.append(
     el('div', 'label', 'レベルの範囲'), levelRow,
     el('div', 'label', '難易度'), diffRow,
+    el('div', 'label', '取得のしかた'), refetchRow,
     actRow,
-    el('div', 'note', '集計済みの譜面は飛ばすので、途中で中止しても次回は続きから再開できます。プレーヤー名は保存しません。')
+    loadInfo,
+    el('div', 'note', '集計結果はブラウザに保存しません。終わったら「JSONをダウンロード」で保存し、GitHubの dxscore_ranking.json を置き換えてください。プレーヤー名は保存しません。')
   );
   wrap.appendChild(setup);
 
@@ -323,15 +354,36 @@
   closeBtn.onclick = () => { stopped = true; host.remove(); };
   stopBtn.onclick = () => { stopped = true; stopBtn.disabled = true; setStatus('中止しています…（取得中のページが終わりしだい止まります）'); };
 
-  resetBtn.onclick = () => {
-    if (!confirm('保存されている集計結果をすべて消去しますか？')) return;
-    store = { results: {} };
-    save();
-    resultCard.classList.add('hidden');
-    viewBtn.disabled = true;
+  legacyBtn.classList.toggle('hidden', legacyRows.length === 0);
+  legacyBtn.onclick = () => {
+    if (!confirm('ブラウザ内に残っている以前の版の記録を消去しますか？（今の結果一覧には残ります）')) return;
+    try { localStorage.removeItem(LEGACY_KEY); } catch { /* 無視 */ }
+    legacyBtn.classList.add('hidden');
   };
-  viewBtn.disabled = rows().length === 0;
+  viewBtn.disabled = true;
   viewBtn.onclick = () => renderResults();
+
+  // GitHub の集計結果を読み込む（なければ空から始める）
+  startBtn.disabled = true;
+  try {
+    const res = await fetch(RESULTS_URL + '?' + Date.now());
+    if (res.ok) {
+      const list = await res.json();
+      (Array.isArray(list) ? list : Object.values(list)).forEach((r) => { results[keyOfRow(r)] = r; });
+    }
+  } catch { /* 読めなければ空のまま */ }
+  loadedCount = rows().length;
+  // 以前の版のブラウザ内の記録を合流（GitHubにない譜面だけ）
+  let legacyAdded = 0;
+  legacyRows.forEach((r) => {
+    if (!results[keyOfRow(r)]) { results[keyOfRow(r)] = r; legacyAdded++; }
+  });
+  loadInfo.textContent =
+    `GitHubの集計結果：${loadedCount} 譜面` +
+    (legacyAdded ? `（ブラウザ内の以前の記録から ${legacyAdded} 譜面を追加）` : '') +
+    (loadedCount ? '' : '（ファイルがないか、まだ空です）');
+  startBtn.disabled = false;
+  viewBtn.disabled = rows().length === 0;
 
   // ---- 結果表示：レベルごとのタブ、平均取得率の高い順 ----
   function renderResults(prefer) {
@@ -348,7 +400,7 @@
     const csvBtn = el('button', 'primary', 'CSVをダウンロード');
     const jsonBtn = el('button', '', 'JSONをダウンロード');
     csvBtn.onclick = () => download(`dxscore_ranking_${stamp()}.csv`, toCsv(all.sort(byAvgDesc)), 'text/csv');
-    jsonBtn.onclick = () => download(`dxscore_ranking_${stamp()}.json`, JSON.stringify(all.sort(byAvgDesc), null, 1), 'application/json');
+    jsonBtn.onclick = () => download(RESULTS_FILE, JSON.stringify(all.sort(byAvgDesc), null, 1), 'application/json');
     dl.append(csvBtn, jsonBtn);
 
     const levels = [...new Set(all.map((r) => r.level))].sort((a, b) => levelOrder(b) - levelOrder(a));
@@ -375,10 +427,23 @@
         const row = el('div', 'r');
         const main = el('div');
         main.appendChild(el('div', 'name', r.name));
-        const parts = [`${r.kind} ${r.diff}`, key === '*' ? `Lv${r.level}` : null,
-          r.const !== null && r.const !== undefined ? `定数${r.const}` : null,
-          `1位 ${r.top1 ?? '-'} / 50行目 ${r.row50 ?? '-'} / 100行目 ${r.row100 ?? '-'}（MAX ${r.max ?? '-'}・${r.count}人）`];
-        main.appendChild(el('div', 'meta', parts.filter(Boolean).join('　')));
+        // 2fRATE と同じ表記：DX/ST、難易度、定数のラベル
+        const chips = el('div', 'chips');
+        chips.append(
+          el('span', `chip kind-${r.kind === '?' ? 'unknown' : r.kind}`, r.kind),
+          el('span', `chip diff-${String(r.diff).replace(':', '').toUpperCase()}`, r.diff)
+        );
+        if (r.const !== null && r.const !== undefined) chips.appendChild(el('span', 'chip const', Number(r.const).toFixed(1)));
+        if (key === '*') chips.appendChild(el('span', 'chip lv', `Lv${r.level}`));
+        main.appendChild(chips);
+        // 「1位 1711」などの区切りの途中で改行されないよう、項目ごとにまとめる
+        const meta = el('div', 'meta');
+        [`1位 ${r.top1 ?? '-'}`, `50位 ${r.row50 ?? '-'}`, `100位 ${r.row100 ?? '-'}`, `MAX ${r.max ?? '-'}`]
+          .forEach((t, i) => {
+            if (i) meta.appendChild(document.createTextNode(i === 3 ? '　' : ' / '));
+            meta.appendChild(el('span', 'nw', t));
+          });
+        main.appendChild(meta);
         row.append(
           el('div', 'c-rank', String(i + 1)),
           main,
@@ -411,7 +476,7 @@
     stopped = false;
     startBtn.disabled = true;
     viewBtn.disabled = true;
-    resetBtn.disabled = true;
+    legacyBtn.disabled = true;
     stopBtn.disabled = false;
     runCard.classList.remove('hidden');
     resultCard.classList.add('hidden');
@@ -438,27 +503,30 @@
 
       // 2. まだ集計していない譜面のランキングを順に取得
       const keyOf = (c) => `${c.name}|${c.kind}|${DIFF_NAMES[c.diff]}|${c.level}`;
-      const todo = charts.filter((c) => !store.results[keyOf(c)]);
+      // 集計済みの譜面は飛ばす（全件取得にチェックがあれば、すべて取り直す）
+      const todo = refetchCb.checked ? charts : charts.filter((c) => !results[keyOf(c)]);
       const done0 = charts.length - todo.length;
+      let newCount = 0;
       for (const [i, c] of todo.entries()) {
         if (stopped) break;
         setStatus(`集計中… ${done0 + i + 1}/${charts.length}　${c.name}（${c.kind} ${DIFF_NAMES[c.diff]}）`);
         setProgress((done0 + i) / Math.max(charts.length, 1));
         try {
           const detail = parseDetail(await fetchDoc(DETAIL_URL(c.idx, c.diff)));
-          store.results[keyOf(c)] = summarize(c, detail, consts);
-          save();
+          results[keyOf(c)] = summarize(c, detail, consts);
+          newCount++;
         } catch (e) {
           console.warn('取得に失敗した譜面', c.name, e);
         }
         await sleep(WAIT_MS);
       }
 
-      const doneNow = charts.filter((c) => store.results[keyOf(c)]).length;
+      const doneNow = charts.filter((c) => results[keyOf(c)]).length;
       setProgress(doneNow / Math.max(charts.length, 1));
-      setStatus(stopped
-        ? `中止しました（選んだ範囲の ${doneNow}/${charts.length} 譜面を集計済み）。もう一度開始すると続きから再開します。`
-        : `完了しました（${doneNow} 譜面）。`);
+      setStatus((stopped
+        ? `中止しました（選んだ範囲の ${doneNow}/${charts.length} 譜面が集計済み、今回 ${newCount} 譜面を取得）。`
+        : `完了しました（今回 ${newCount} 譜面を取得）。`) +
+        (newCount ? '「JSONをダウンロード」で保存し、GitHubのファイルを置き換えてください。' : ''));
       renderResults(levelLabel(to));
     } catch (e) {
       setStatus('エラー: ' + e.message);
@@ -466,7 +534,7 @@
     } finally {
       running = false;
       startBtn.disabled = false;
-      resetBtn.disabled = false;
+      legacyBtn.disabled = false;
       viewBtn.disabled = rows().length === 0;
       stopBtn.disabled = true;
     }
