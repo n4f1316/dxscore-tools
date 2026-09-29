@@ -24,6 +24,10 @@
   const RESULTS_FILE = 'dxscore_ranking.json'; // ダウンロード時のファイル名（そのままアップロードできる名前）
   const LEGACY_KEY = 'dxr-ranking-progress';   // 以前の版がブラウザ内に保存していた記録
 
+  // ジャケット画像（2fRATE と同じ対応表を使う）
+  const JACKETS_URL = 'https://n4f1316.github.io/dxscore-tools/maimai_jackets.json';
+  const JACKET_BASE = 'https://maimaidx.jp/maimai-mobile/img/Music/';
+
   const LIST_URL = (lv, d) =>
     `/maimai-mobile/ranking/search/?search=L-${lv}&scoreType=${SCORE_TYPE}&rankingType=${RANKING_TYPE}&diff=${d}`;
   const DETAIL_URL = (idx, d) =>
@@ -58,6 +62,20 @@
     const next = STAR_THRESHOLDS.find((x) => x.stars === t.stars + 1);
     if (!next) return t.stars;
     return t.stars + Math.floor(((pct - t.pct) * 10) / (next.pct - t.pct)) / 10;
+  }
+
+  // スコアと最大値 → 小数つき☆（2fRATE と同じ計算。整数で比べるので境界の誤差がない）
+  function starOfScore(cur, max) {
+    if (!max || cur === null || cur === undefined) return null;
+    let s = 0;
+    for (const t of STAR_THRESHOLDS) {
+      if (cur * 100 >= max * t.pct) { s = t.stars; break; }
+    }
+    const lo = STAR_THRESHOLDS.find((t) => t.stars === s)?.pct ?? 0;
+    const hi = STAR_THRESHOLDS.find((t) => t.stars === s + 1)?.pct;
+    if (hi === undefined) return s.toFixed(1);
+    const tenths = Math.floor(((cur * 100 - max * lo) * 10) / (max * (hi - lo)));
+    return (s + tenths / 10).toFixed(1);
   }
 
   async function fetchDoc(url) {
@@ -170,13 +188,19 @@
     .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
     .tabs button[aria-pressed="true"] { background: #2B2350; border-color: #2B2350; color: #fff; }
     .list { background: #fff; border: 1.5px solid #E4DFF3; border-radius: 16px; overflow: hidden; }
-    .r { display: grid; grid-template-columns: 30px 1fr 64px 44px 44px; gap: 8px; align-items: center;
+    .r { display: grid; grid-template-columns: 30px 44px 1fr 64px 44px 44px; gap: 8px; align-items: center;
       padding: 8px 12px; border-top: 1px solid #E4DFF3; font-variant-numeric: tabular-nums; }
     .r:nth-child(even) { background: #FBFAFE; }
     .r.head { border-top: 0; background: #2B2350 !important; color: #fff; font-size: 11px; font-weight: 700; padding-top: 7px; padding-bottom: 7px; }
     .c-rank { text-align: center; font-weight: 800; color: #6E6892; }
     .c-num { text-align: right; }
     .r.head .c-num { text-align: center; }
+    .r.head button.sort { all: unset; cursor: pointer; text-align: center; color: rgba(255,255,255,.75);
+      font-size: 11px; font-weight: 700; white-space: nowrap; border-radius: 6px; padding: 2px 0; }
+    .r.head button.sort.on { color: #fff; }
+    .r.head button.sort:focus-visible { outline: 2px solid #1FA9C9; outline-offset: 1px; }
+    .jacket { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; display: block;
+      background: #EFECF9; box-shadow: 0 0 0 1px #E4DFF3; }
     .name { font-weight: 700; line-height: 1.35; word-break: break-word; }
     .meta { font-size: 11px; color: #6E6892; margin-top: 3px; }
     .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
@@ -196,7 +220,8 @@
     .pct { font-weight: 800; }
     .empty { padding: 20px; text-align: center; color: #6E6892; }
     @media (max-width: 520px) {
-      .r { grid-template-columns: 22px 1fr 58px 36px 36px; gap: 6px; padding: 8px 10px; }
+      .r { grid-template-columns: 22px 40px 1fr 58px 36px 36px; gap: 6px; padding: 8px 10px; }
+      .jacket { width: 40px; height: 40px; }
     }
   `;
 
@@ -262,6 +287,7 @@
   const keyOfRow = (r) => `${r.name}|${r.kind}|${r.diff}|${r.level}`;
   let results = {};
   let loadedCount = 0;
+  let jackets = null; // 曲名 → ジャケット画像のファイル名
   const rows = () => Object.values(results);
 
   // 以前の版がブラウザ内に保存していた記録があれば、結果に合流させる（消さずに引き継ぐ）
@@ -365,6 +391,11 @@
 
   // GitHub の集計結果を読み込む（なければ空から始める）
   startBtn.disabled = true;
+  // ジャケットの対応表は並行して読み込む（読めなくても集計は動く）
+  const jacketsPromise = fetch(JACKETS_URL + '?' + Date.now())
+    .then((res) => (res.ok ? res.json() : null))
+    .then((obj) => (obj ? new Map(Object.entries(obj)) : null))
+    .catch(() => null);
   try {
     const res = await fetch(RESULTS_URL + '?' + Date.now());
     if (res.ok) {
@@ -373,6 +404,7 @@
     }
   } catch { /* 読めなければ空のまま */ }
   loadedCount = rows().length;
+  jackets = await jacketsPromise;
   // 以前の版のブラウザ内の記録を合流（GitHubにない譜面だけ）
   let legacyAdded = 0;
   legacyRows.forEach((r) => {
@@ -415,14 +447,39 @@
       return b;
     });
 
+    // 並び替えの状態（見出しを押すと切り替わる。同じ見出しをもう一度押すと昇順/降順が逆になる）
+    const SORTS = { avgPct: '平均取得率', avgStar: '平均☆', maxCount: 'MAX' };
+    let sortKey = 'avgPct';
+    let sortDir = -1; // -1 = 高い順, 1 = 低い順
+    let currentTab = null;
+    const sortFn = (a, b) => {
+      const va = a[sortKey] ?? -Infinity;
+      const vb = b[sortKey] ?? -Infinity;
+      if (va !== vb) return (va - vb) * sortDir;
+      return byAvgDesc(a, b); // 同じ値なら平均取得率の高い順
+    };
+
     function select(key) {
+      currentTab = key;
       buttons.forEach((b, i) => b.setAttribute('aria-pressed', String(tabDefs[i].key === key)));
       const list = el('div', 'list');
       const head = el('div', 'r head');
-      head.append(el('div', 'c-rank', '#'), el('div', '', '曲名'), el('div', 'c-num', '平均取得率'),
-        el('div', 'c-num', '平均☆'), el('div', 'c-num', 'MAX'));
+      const sortHead = (k) => {
+        const b = el('button', 'c-num sort' + (sortKey === k ? ' on' : ''),
+          SORTS[k] + (sortKey === k ? (sortDir < 0 ? '▼' : '▲') : ''));
+        b.type = 'button';
+        b.title = '押すと並び替え';
+        b.onclick = () => {
+          if (sortKey === k) sortDir = -sortDir;
+          else { sortKey = k; sortDir = -1; }
+          select(currentTab);
+        };
+        return b;
+      };
+      head.append(el('div', 'c-rank', '#'), el('div'), el('div', '', '曲名'),
+        sortHead('avgPct'), sortHead('avgStar'), sortHead('maxCount'));
       list.appendChild(head);
-      const items = all.filter((r) => key === '*' || r.level === key).sort(byAvgDesc);
+      const items = all.filter((r) => key === '*' || r.level === key).sort(sortFn);
       items.forEach((r, i) => {
         const row = el('div', 'r');
         const main = el('div');
@@ -438,14 +495,33 @@
         main.appendChild(chips);
         // 「1位 1711」などの区切りの途中で改行されないよう、項目ごとにまとめる
         const meta = el('div', 'meta');
-        [`1位 ${r.top1 ?? '-'}`, `50位 ${r.row50 ?? '-'}`, `100位 ${r.row100 ?? '-'}`, `MAX ${r.max ?? '-'}`]
+        const withStar = (v) => {
+          if (v === null || v === undefined) return '-';
+          const st = starOfScore(v, r.max);
+          return st === null ? String(v) : `${v}(☆${st})`;
+        };
+        [`1位 ${withStar(r.top1)}`, `50位 ${withStar(r.row50)}`, `100位 ${withStar(r.row100)}`, `MAX ${r.max ?? '-'}`]
           .forEach((t, i) => {
             if (i) meta.appendChild(document.createTextNode(i === 3 ? '　' : ' / '));
             meta.appendChild(el('span', 'nw', t));
           });
         main.appendChild(meta);
+        // ジャケット画像（見つからない・読み込めない場合は空の枠）
+        let jacket;
+        const file = jackets?.get(r.name);
+        if (file) {
+          jacket = el('img', 'jacket');
+          jacket.src = JACKET_BASE + file;
+          jacket.alt = '';
+          jacket.loading = 'lazy';
+          jacket.decoding = 'async';
+          jacket.onerror = () => jacket.removeAttribute('src');
+        } else {
+          jacket = el('div', 'jacket');
+        }
         row.append(
           el('div', 'c-rank', String(i + 1)),
+          jacket,
           main,
           el('div', 'c-num pct', r.avgPct === null ? '-' : `${r.avgPct.toFixed(2)}%`),
           el('div', 'c-num', r.avgStar === null ? '-' : r.avgStar.toFixed(1)),
