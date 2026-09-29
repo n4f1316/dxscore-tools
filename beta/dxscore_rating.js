@@ -23,6 +23,7 @@
   // 計算するレートの種類（capStars: この☆を上限として計算。☆6以上を☆5扱いにするなら 5）
   const RATE_MODES = [
     { id: 'full', label: '☆7まで', capStars: MAX_STARS },
+    { id: 'cap6', label: '☆6まで', capStars: 6 },
     { id: 'cap5', label: '☆5まで', capStars: 5 },
   ];
 
@@ -230,7 +231,7 @@
     .dxr-player { font-size: 22px; font-weight: 800; letter-spacing: .02em; line-height: 1.3; word-break: break-all; }
 
     /* レート表示：押すと表が切り替わる */
-    .dxr-plates { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+    .dxr-plates { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
     .dxr-plate {
       font: inherit; text-align: left; cursor: pointer; color: var(--ink);
       background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 12px 16px;
@@ -290,7 +291,10 @@
 
     /* スマホ幅：MAX差を曲名の下へ回す */
     @media (max-width: 520px) {
-      .dxr-plate-value { font-size: 28px; }
+      .dxr-plates { gap: 6px; }
+      .dxr-plate { padding: 10px 10px; border-radius: 14px; }
+      .dxr-plate-value { font-size: 22px; }
+      .dxr-plate-hint { display: none; }
       .dxr-icon { width: 56px; height: 56px; border-radius: 12px; }
       .dxr-player { font-size: 20px; }
       .dxr-star-pill { min-width: 0; padding: 3px 5px; font-size: 12px; }
@@ -562,7 +566,7 @@
       `${info}。` +
       (hasEst ? '定数の * は定数表にない譜面で、レベル表示からの概算値（下限）です。' : '') +
       '☆の小数は次の☆までの進み具合で、計算には整数部分のみ使います。' +
-      '「☆5まで」は☆6以上を☆5として計算しています。' +
+      '「☆6まで」は☆7を☆6として、「☆5まで」は☆6以上を☆5として計算しています。' +
       (jackets ? '' : 'ジャケット画像の対応表を読み込めなかったため、画像は表示していません。'));
 
     ui.body.append(player, plates, ...lists, note);
