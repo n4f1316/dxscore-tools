@@ -267,11 +267,16 @@
     .dxr-const { background: #EFECF9; color: var(--ink); }
     .dxr-const.is-est { color: var(--sub); }
     .dxr-star, .dxr-diffmax, .dxr-val { text-align: right; font-variant-numeric: tabular-nums; }
-    .dxr-star { font-weight: 800; }
-    .dxr-star.s7 { color: var(--gold); }
-    .dxr-star.s6 { color: var(--pink); }
-    .dxr-star.s5 { color: var(--cyan); }
-    .dxr-star.low { color: var(--sub); }
+    /* ☆の色分け（Discordアイコンと共通）：☆1・2 黄緑 / ☆3・4 オレンジ / ☆5・6 黄色 / ☆7 虹色 */
+    .dxr-star-pill {
+      display: inline-block; min-width: 3.6em; padding: 3px 7px; border-radius: 999px; text-align: center;
+      font-size: 13px; font-weight: 800; line-height: 1.3; color: #2B2350; background: #EFECF9;
+    }
+    .dxr-star-pill.g12 { background: #B5E05A; }
+    .dxr-star-pill.g34 { background: #FF8C2E; }
+    .dxr-star-pill.g56 { background: #FFE066; }
+    .dxr-star-pill.g7 { background: linear-gradient(90deg, #FF5E7E, #FFB347, #FFE66D, #7EE081, #5CC8FF, #A78BFA); }
+    .dxr-star-pill.g0 { color: var(--sub); }
     .dxr-diffmax { font-size: 12px; color: var(--sub); }
     .dxr-diffmax.is-max { color: var(--gold); font-weight: 800; }
     .dxr-val { font-weight: 800; font-size: 15px; }
@@ -288,6 +293,7 @@
       .dxr-plate-value { font-size: 28px; }
       .dxr-icon { width: 56px; height: 56px; border-radius: 12px; }
       .dxr-player { font-size: 20px; }
+      .dxr-star-pill { min-width: 0; padding: 3px 5px; font-size: 12px; }
       .dxr-row { grid-template-columns: 1.6em 40px 1fr 3.6em 4em; gap: 7px; padding: 9px 10px; }
       .dxr-jacket { width: 40px; height: 40px; }
       .dxr-row > .dxr-diffmax { display: none; }
@@ -351,11 +357,13 @@
   }
 
   function starClass(stars) {
-    if (stars >= 7) return 's7';
-    if (stars === 6) return 's6';
-    if (stars === 5) return 's5';
-    return 'low';
+    if (stars >= 7) return 'g7';
+    if (stars >= 5) return 'g56';
+    if (stars >= 3) return 'g34';
+    if (stars >= 1) return 'g12';
+    return 'g0';
   }
+
 
   function buildList(top, mode, jackets) {
     const list = el('div', 'dxr-list');
@@ -399,7 +407,11 @@
         el('div', 'dxr-rank', String(i + 1)),
         jacket,
         main,
-        el('div', `dxr-star ${starClass(s.stars)}`, `☆${starDisplay(s.cur, s.max)}`),
+        (() => {
+          const cell = el('div', 'dxr-star');
+          cell.appendChild(el('span', `dxr-star-pill ${starClass(s.stars)}`, `☆${starDisplay(s.cur, s.max)}`));
+          return cell;
+        })(),
         el('div', `dxr-diffmax${isMax ? ' is-max' : ''}`, diffText),
         el('div', 'dxr-val', s.values[mode.id].toFixed(3))
       );
