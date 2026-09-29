@@ -255,6 +255,7 @@
     .dxr-head { border-top: 0; background: var(--ink) !important; color: #fff; font-size: 11px; font-weight: 700; padding-top: 7px; padding-bottom: 7px; }
     .dxr-rank { font-weight: 800; color: var(--sub); text-align: center; font-variant-numeric: tabular-nums; }
     .dxr-name { font-weight: 700; line-height: 1.35; word-break: break-word; }
+    .dxr-genre { font-size: 11px; font-weight: 700; color: var(--sub); margin-left: 2px; }
     .dxr-meta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
     .dxr-chip {
       display: inline-block; font-size: 11px; font-weight: 700; line-height: 1; padding: 4px 7px;
@@ -375,6 +376,22 @@
   }
 
 
+  // ジャケット対応表から曲を特定する
+  //   通常の曲：値は画像ファイル名（文字列）
+  //   同名の別曲：値は候補の配列 [{ img, genre, st: [BAS..ReMAS のレベル], dx: [...] }]
+  //   → 種別・難易度・レベルが一致する候補が1つだけなら、その曲と判断する
+  const DIFF_ORDER = ['BASIC', 'ADVANCED', 'EXPERT', 'MASTER', 'Re:MASTER'];
+  function resolveSong(map, name, kind, diff, level) {
+    const v = map?.get(name);
+    if (!v) return null;
+    if (typeof v === 'string') return { img: v, genre: null };
+    if (!Array.isArray(v)) return null;
+    const k = kind === 'ST' ? 'st' : 'dx';
+    const i = DIFF_ORDER.indexOf(diff);
+    const hits = v.filter((c) => c[k]?.[i] === level);
+    return hits.length === 1 ? { img: hits[0].img, genre: hits[0].genre } : null;
+  }
+
   function buildList(top, mode, jackets) {
     const list = el('div', 'dxr-list');
 
@@ -389,7 +406,11 @@
       const isMax = s.cur === s.max;
 
       const main = el('div');
-      main.appendChild(el('div', 'dxr-name', s.name));
+      const song = resolveSong(jackets, s.name, s.kind, s.diff, s.level);
+      const nameEl = el('div', 'dxr-name', s.name);
+      // 同名の別曲は、判別できたときにジャンルを添える
+      if (song?.genre) nameEl.appendChild(el('span', 'dxr-genre', `（${song.genre}）`));
+      main.appendChild(nameEl);
       const meta = el('div', 'dxr-meta');
       meta.append(
         el('span', `dxr-chip dxr-kind-${s.kind === '?' ? 'unknown' : s.kind}`, s.kind),
@@ -401,7 +422,7 @@
 
       // ジャケット画像（見つからない・読み込めない場合は空の枠）
       let jacket;
-      const file = jackets?.get(s.name);
+      const file = song?.img;
       if (file) {
         jacket = el('img', 'dxr-jacket');
         jacket.src = JACKET_BASE + file;
