@@ -5,6 +5,9 @@
   //  設定
   // ============================================================
 
+  // 版の表示（β版では 'β版'、正式版では空にする）
+  const EDITION = '';
+
   // でらっくスコア取得率(%) → 星の数（上から順に判定）
   const STAR_THRESHOLDS = [
     { stars: 7, pct: 100 },
@@ -27,6 +30,11 @@
   const WAIT_MS = 1500;      // ページ取得の間隔（サーバー負荷対策）
   const LEVEL_MAX = 23;      // level=23 が Lv15
   const PLAYER_URL = '/maimai-mobile/home/';
+
+  // ジャケット画像：「曲名 → 画像ファイル名」の対応表（collect_jackets.js で作成）を読み、
+  // maimai DX NET 上の画像をそのまま表示する（画像そのものはコピーしない）
+  const JACKETS_URL = 'https://n4f1316.github.io/dxscore-tools/maimai_jackets.json';
+  const JACKET_BASE = 'https://maimaidx.jp/maimai-mobile/img/Music/';
   const LEVEL_URL = (n) => `/maimai-mobile/record/musicLevel/search/?level=${n}`;
 
   // 譜面定数表（JSON）のURL。空なら表示レベルからの概算値（下限）を使う
@@ -39,7 +47,11 @@
     name:  '.music_name_block',         // 曲名
     score: '.music_score_block',        // 達成率・でらっくスコア
     // DX / スタンダードの判定はアイコン画像のファイル名（music_dx.png / music_standard.png）で行う
-    playerName: '.name_block',          // プレイヤー名（ホーム画面などに表示される）
+    playerName: '.name_block',          // プレイヤー名（ホーム画面）
+    profile: '.basic_block',            // プレイヤー情報の枠（ホーム画面）
+    icon: 'img[src*="/img/Icon/"]',     // アイコン画像
+    trophy: '.trophy_block',            // 称号の枠（クラス名 trophy_Gold などで色がわかる）
+    trophyText: '.trophy_inner_block',  // 称号の文字
   };
 
   // 枠のクラス名 music_○○_score_back の ○○ → 難易度名
@@ -162,114 +174,398 @@
     return { ...s, c, estimated: !inTable, stars, values };
   }
 
+  // ============================================================
+  //  表示（見た目）
+  // ============================================================
+
+  const STYLE = `
+    :host {
+      all: initial; display: block;
+      --ink: #2B2350; --sub: #6E6892; --line: #E4DFF3; --bg: #F6F4FC; --card: #FFFFFF;
+      --pink: #E0348C; --cyan: #1FA9C9; --gold: #C98A00;
+      --basic: #2E9E5B; --advanced: #D98E04; --expert: #E0434B; --master: #8E44D6; --remaster: #B68BE0;
+      position: fixed; inset: 0; z-index: 99999; overflow: auto;
+      background: var(--bg); color: var(--ink);
+      font: 14px/1.6 "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
+      -webkit-text-size-adjust: 100%;
+    }
+    * { box-sizing: border-box; }
+    .dxr-wrap {
+      max-width: 760px; margin: 0 auto; padding: 16px 14px 40px;
+      font: 14px/1.6 "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
+      color: var(--ink); text-align: left;
+    }
+    .dxr-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .dxr-title { font-size: 13px; color: var(--sub); font-weight: 700; }
+    .dxr-close {
+      font: inherit; font-weight: 700; color: var(--ink); background: var(--card);
+      border: 1.5px solid var(--line); border-radius: 999px; padding: 6px 16px; cursor: pointer;
+    }
+    button:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+    .dxr-status { margin: 10px 0 0; color: var(--sub); font-size: 13px; }
+    .dxr-status.is-error { color: var(--expert); font-weight: 700; }
+
+    /* プレイヤー情報（アイコン・称号・名前） */
+    .dxr-profile { display: flex; align-items: center; gap: 14px; margin: 18px 0 14px; }
+    .dxr-icon {
+      width: 64px; height: 64px; flex: none; border-radius: 14px; object-fit: cover;
+      background: #EFECF9; box-shadow: 0 0 0 1.5px var(--line);
+    }
+    .dxr-profile-text { min-width: 0; }
+    .dxr-trophy {
+      display: inline-block; max-width: 100%; font-size: 12px; font-weight: 700; line-height: 1.4;
+      padding: 3px 12px; border-radius: 999px; margin-bottom: 4px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      background: #F1F1F4; color: #4A4A57; box-shadow: inset 0 0 0 1px #D9D9E2;
+    }
+    .dxr-trophy.t-Bronze { background: #F4E3D3; color: #7A4A1E; box-shadow: inset 0 0 0 1px #D9AC82; }
+    .dxr-trophy.t-Silver { background: #ECEFF3; color: #4B5563; box-shadow: inset 0 0 0 1px #B8C0CC; }
+    .dxr-trophy.t-Gold { background: #FFF1C7; color: #7A5600; box-shadow: inset 0 0 0 1px #E3B63A; }
+    .dxr-trophy.t-Rainbow {
+      color: #2B2350; box-shadow: none;
+      background: linear-gradient(90deg, #FFD1DC, #FFE9B8, #D6F5C9, #C9EBFF, #E3D4FF);
+    }
+    .dxr-trophy-official { max-width: 100%; margin-bottom: 4px; }
+    .dxr-trophy-official > * { max-width: 100%; margin-left: 0 !important; }
+    .dxr-player { font-size: 22px; font-weight: 800; letter-spacing: .02em; line-height: 1.3; word-break: break-all; }
+
+    /* レート表示：押すと表が切り替わる */
+    .dxr-plates { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+    .dxr-plate {
+      font: inherit; text-align: left; cursor: pointer; color: var(--ink);
+      background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 12px 16px;
+    }
+    .dxr-plate[aria-pressed="true"] { border-color: var(--pink); box-shadow: 0 0 0 3px rgba(224,52,140,.15); }
+    .dxr-plate-label { display: block; font-size: 12px; color: var(--sub); font-weight: 700; }
+    .dxr-plate-value { display: block; font-size: 34px; font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
+    .dxr-plate[aria-pressed="true"] .dxr-plate-value { color: var(--pink); }
+    .dxr-plate-hint { display: block; font-size: 11px; color: var(--sub); }
+
+    /* 譜面の一覧 */
+    .dxr-list { background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; overflow: hidden; }
+    .dxr-row {
+      display: grid; grid-template-columns: 2.2em 44px 1fr 4.2em 4.6em 4.4em; align-items: center; gap: 10px;
+      padding: 9px 14px; border-top: 1px solid var(--line);
+    }
+    .dxr-row:nth-child(even) { background: #FBFAFE; }
+    .dxr-head { border-top: 0; background: var(--ink) !important; color: #fff; font-size: 11px; font-weight: 700; padding: 7px 14px; }
+    .dxr-rank { font-weight: 800; color: var(--sub); text-align: right; font-variant-numeric: tabular-nums; }
+    .dxr-name { font-weight: 700; line-height: 1.35; word-break: break-word; }
+    .dxr-meta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+    .dxr-chip {
+      display: inline-block; font-size: 11px; font-weight: 700; line-height: 1; padding: 4px 7px;
+      border-radius: 6px; color: #fff; white-space: nowrap;
+    }
+    .dxr-kind-DX { background: linear-gradient(90deg, var(--pink), #F29A2E); }
+    .dxr-kind-ST { background: #3B82C4; }
+    .dxr-kind-unknown { background: #999; }
+    .dxr-diff-BASIC { background: var(--basic); }
+    .dxr-diff-ADVANCED { background: var(--advanced); }
+    .dxr-diff-EXPERT { background: var(--expert); }
+    .dxr-diff-MASTER { background: var(--master); }
+    .dxr-diff-REMASTER { background: #fff; color: var(--master); box-shadow: inset 0 0 0 1.5px var(--remaster); }
+    .dxr-const { background: #EFECF9; color: var(--ink); }
+    .dxr-const.is-est { color: var(--sub); }
+    .dxr-star, .dxr-diffmax, .dxr-val { text-align: right; font-variant-numeric: tabular-nums; }
+    /* ☆の色分け（Discordアイコンと共通）：☆1・2 黄緑 / ☆3・4 オレンジ / ☆5・6 黄色 / ☆7 虹色 */
+    .dxr-star-pill {
+      display: inline-block; min-width: 3.6em; padding: 3px 7px; border-radius: 999px; text-align: center;
+      font-size: 13px; font-weight: 800; line-height: 1.3; color: #2B2350; background: #EFECF9;
+    }
+    .dxr-star-pill.g12 { background: #B5E05A; }
+    .dxr-star-pill.g34 { background: #FF8C2E; }
+    .dxr-star-pill.g56 { background: #FFE066; }
+    .dxr-star-pill.g7 { background: linear-gradient(90deg, #FF5E7E, #FFB347, #FFE66D, #7EE081, #5CC8FF, #A78BFA); }
+    .dxr-star-pill.g0 { color: var(--sub); }
+    .dxr-diffmax { font-size: 12px; color: var(--sub); }
+    .dxr-diffmax.is-max { color: var(--gold); font-weight: 800; }
+    .dxr-val { font-weight: 800; font-size: 15px; }
+    .dxr-head .dxr-star, .dxr-head .dxr-diffmax, .dxr-head .dxr-val { color: #fff; font-size: 11px; }
+
+    .dxr-jacket {
+      width: 44px; height: 44px; border-radius: 8px; object-fit: cover; display: block;
+      background: #EFECF9; box-shadow: 0 0 0 1px var(--line);
+    }
+    .dxr-note { margin-top: 14px; font-size: 12px; color: var(--sub); line-height: 1.7; }
+
+    /* スマホ幅：MAX差を曲名の下へ回す */
+    @media (max-width: 520px) {
+      .dxr-plate-value { font-size: 28px; }
+      .dxr-icon { width: 56px; height: 56px; border-radius: 12px; }
+      .dxr-player { font-size: 20px; }
+      .dxr-star-pill { min-width: 0; padding: 3px 5px; font-size: 12px; }
+      .dxr-row { grid-template-columns: 1.6em 40px 1fr 3.6em 4em; gap: 7px; padding: 9px 10px; }
+      .dxr-jacket { width: 40px; height: 40px; }
+      .dxr-row > .dxr-diffmax { display: none; }
+      .dxr-meta .dxr-diffmax-inline { display: inline-block; }
+    }
+    .dxr-diffmax-inline { display: none; background: transparent; color: var(--sub); padding-left: 2px; }
+    .dxr-diffmax-inline.is-max { color: var(--gold); }
+  `;
+
+  // 要素を作る小さな補助関数（textContent で入れるので安全）
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
   function createPanel() {
     document.getElementById('dxr-panel')?.remove(); // 二重起動対策
+    if (!document.getElementById('dxr-font')) {
+      // フォントはページ全体に読み込む（シャドウDOMの中からも使える）
+      const font = document.createElement('link');
+      font.id = 'dxr-font';
+      font.rel = 'stylesheet';
+      font.href = 'https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap';
+      document.head.appendChild(font);
+    }
 
-    const panel = document.createElement('div');
-    panel.id = 'dxr-panel';
-    panel.style.cssText =
-      'position:fixed;inset:0;z-index:99999;overflow:auto;' +
-      'background:#fdfdfd;color:#222;font:14px/1.5 sans-serif;padding:12px;';
+    // 公式サイトのCSSの影響を受けないよう、シャドウDOMの中に画面を作る
+    const host = el('div');
+    host.id = 'dxr-panel';
+    // 外枠だけはページ側のCSSに上書きされないよう直接指定する
+    host.style.cssText =
+      'all:initial;position:fixed;inset:0;z-index:99999;display:block;' +
+      'overflow:auto;background:#F6F4FC;color:#2B2350;font-size:14px;line-height:1.6;';
+    const root = host.attachShadow({ mode: 'open' });
+    const style = el('style');
+    style.textContent = STYLE;
 
-    const close = document.createElement('button');
-    close.textContent = '閉じる';
-    close.style.cssText = 'float:right;font-size:16px;padding:4px 14px;';
-    close.onclick = () => panel.remove();
+    const wrap = el('div', 'dxr-wrap');
+    const top = el('div', 'dxr-top');
+    const title = el('div', 'dxr-title', EDITION ? `2fRATE ${EDITION}` : '2fRATE');
+    const close = el('button', 'dxr-close', '閉じる');
+    close.type = 'button';
+    close.onclick = () => host.remove();
+    top.append(title, close);
 
-    const status = document.createElement('p');
-    const body = document.createElement('div');
-    panel.append(close, status, body);
-    document.body.appendChild(panel);
+    const status = el('p', 'dxr-status');
+    const body = el('div');
+    wrap.append(top, status, body);
+    root.append(style, wrap);
+    document.body.appendChild(host);
 
-    return { body, status: (t) => { status.textContent = t; } };
+    return {
+      body,
+      status: (t, isError = false) => {
+        status.textContent = t;
+        status.classList.toggle('is-error', isError);
+      },
+    };
+  }
+
+  function starClass(stars) {
+    if (stars >= 7) return 'g7';
+    if (stars >= 5) return 'g56';
+    if (stars >= 3) return 'g34';
+    if (stars >= 1) return 'g12';
+    return 'g0';
+  }
+
+
+  function buildList(top, mode, jackets) {
+    const list = el('div', 'dxr-list');
+
+    const head = el('div', 'dxr-row dxr-head');
+    head.append(el('div', 'dxr-rank', '#'), el('div'), el('div', '', '曲名'), el('div', 'dxr-star', '☆'),
+      el('div', 'dxr-diffmax', 'MAX差'), el('div', 'dxr-val', 'レート値'));
+    list.appendChild(head);
+
+    top.forEach((s, i) => {
+      const row = el('div', 'dxr-row');
+      const diffText = s.cur === s.max ? 'MAX' : `MAX-${(s.max - s.cur).toLocaleString()}`;
+      const isMax = s.cur === s.max;
+
+      const main = el('div');
+      main.appendChild(el('div', 'dxr-name', s.name));
+      const meta = el('div', 'dxr-meta');
+      meta.append(
+        el('span', `dxr-chip dxr-kind-${s.kind === '?' ? 'unknown' : s.kind}`, s.kind),
+        el('span', `dxr-chip dxr-diff-${s.diff.replace(':', '').toUpperCase()}`, `${s.diff} ${s.level}`),
+        el('span', `dxr-chip dxr-const${s.estimated ? ' is-est' : ''}`, `定数 ${s.c.toFixed(1)}${s.estimated ? '*' : ''}`),
+        el('span', `dxr-chip dxr-diffmax-inline${isMax ? ' is-max' : ''}`, diffText)
+      );
+      main.appendChild(meta);
+
+      // ジャケット画像（見つからない・読み込めない場合は空の枠）
+      let jacket;
+      const file = jackets?.get(s.name);
+      if (file) {
+        jacket = el('img', 'dxr-jacket');
+        jacket.src = JACKET_BASE + file;
+        jacket.alt = '';
+        jacket.loading = 'lazy';
+        jacket.decoding = 'async';
+        jacket.onerror = () => { jacket.removeAttribute('src'); };
+      } else {
+        jacket = el('div', 'dxr-jacket');
+      }
+
+      row.append(
+        el('div', 'dxr-rank', String(i + 1)),
+        jacket,
+        main,
+        (() => {
+          const cell = el('div', 'dxr-star');
+          cell.appendChild(el('span', `dxr-star-pill ${starClass(s.stars)}`, `☆${starDisplay(s.cur, s.max)}`));
+          return cell;
+        })(),
+        el('div', `dxr-diffmax${isMax ? ' is-max' : ''}`, diffText),
+        el('div', 'dxr-val', s.values[mode.id].toFixed(3))
+      );
+      list.appendChild(row);
+    });
+    return list;
+  }
+
+  // 「曲名 → 画像ファイル名」の対応表を読み込む（同名の別曲は null で登録されている）
+  async function loadJacketMap() {
+    try {
+      const res = await fetch(JACKETS_URL + '?' + Date.now());
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return new Map(Object.entries(await res.json()));
+    } catch (e) {
+      console.warn('ジャケット画像の対応表を読み込めませんでした', e);
+      return null;
+    }
   }
 
   // プレイヤー名を取得（今のページになければホーム画面から読む。失敗しても空文字で続行）
-  async function getPlayerName() {
-    const here = document.querySelector(SEL.playerName)?.textContent.trim();
-    if (here) return here;
+  // プレイヤー情報（名前・アイコン・称号）を取得する
+  // 今のページがホーム画面ならそこから、そうでなければホーム画面を1回だけ取得して読む
+  function readProfile(doc) {
+    const box = doc.querySelector(SEL.profile) ?? doc;
+    const name = box.querySelector(SEL.playerName)?.textContent.trim() ?? '';
+    const icon = box.querySelector(SEL.icon)?.getAttribute('src') ?? '';
+    const trophyEl = box.querySelector(SEL.trophy);
+    const trophy = trophyEl?.querySelector(SEL.trophyText)?.textContent.trim() ?? '';
+    const trophyRank = trophyEl?.className.match(/trophy_(Normal|Bronze|Silver|Gold|Rainbow)/)?.[1] ?? '';
+    return { name, icon, trophy, trophyRank, trophyEl };
+  }
+
+  async function getPlayerProfile() {
+    const here = readProfile(document);
+    if (here.name && here.icon) return here;
     try {
       const res = await fetch(PLAYER_URL, { credentials: 'same-origin' });
-      if (!res.ok) return '';
+      if (!res.ok) return here;
       const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
-      return doc.querySelector(SEL.playerName)?.textContent.trim() ?? '';
+      const got = readProfile(doc);
+      return got.name ? got : here;
     } catch {
-      return '';
+      return here;
     }
   }
 
-  function buildTable(top, mode) {
-    const table = document.createElement('table');
-    table.style.cssText = 'border-collapse:collapse;width:100%;font-size:13px;';
 
-    const tr0 = table.insertRow();
-    ['#', '曲名', '譜面', '定数', '☆', 'MAX差', 'レート値'].forEach((t) => {
-      const th = document.createElement('th');
-      th.textContent = t;
-      th.style.cssText = 'border-bottom:2px solid #888;padding:4px;text-align:left;';
-      tr0.appendChild(th);
-    });
+  // 公式サイトの称号の見た目を再現するため、今のページに読み込まれている公式CSSから、
+  // 称号の要素に関係するルールだけを取り出す（画面全体には適用しないので崩れない）
+  function extractOfficialCss(node) {
+    const used = new Set();
+    [node, ...node.querySelectorAll('*')].forEach((e) => e.classList.forEach((c) => used.add(c)));
 
-    top.forEach((s, i) => {
-      const tr = table.insertRow();
-      [
-        i + 1,
-        s.name,
-        `${s.kind} ${s.diff} ${s.level}`,
-        s.c.toFixed(1) + (s.estimated ? '*' : ''),
-        starDisplay(s.cur, s.max),
-        s.cur === s.max ? 'MAX' : `MAX-${(s.max - s.cur).toLocaleString()}`,
-        s.values[mode.id].toFixed(3),
-      ].forEach((v) => {
-        const td = tr.insertCell();
-        td.textContent = v;
-        td.style.cssText = 'border-bottom:1px solid #ddd;padding:4px;';
+    const relevant = (selector) =>
+      selector.split(',').some((sel) => {
+        const t = sel.trim();
+        if (t.includes('trophy')) return true;
+        // 「.p_3」「.t_c.f_13」のような、クラスだけで書かれたルールで、称号に使われているもの
+        if (!/^(\.[\w-]+)+$/.test(t)) return false;
+        return t.slice(1).split('.').every((c) => used.has(c));
       });
-    });
-    return table;
+
+    const out = [];
+    const walk = (rules, base) => {
+      for (const r of rules) {
+        if (r.cssRules && r.media) {
+          const inner = [];
+          const saved = out.length;
+          walk(r.cssRules, base);
+          inner.push(...out.splice(saved));
+          if (inner.length) out.push(`@media ${r.media.mediaText}{${inner.join('')}}`);
+        } else if (r.selectorText && relevant(r.selectorText)) {
+          // 画像の相対パスは、CSSファイルの場所を基準に絶対URLへ直す
+          out.push(r.cssText.replace(/url\((['"]?)([^'")]+)\1\)/g, (m, q, u) => {
+            try { return `url("${new URL(u, base).href}")`; } catch { return m; }
+          }));
+        }
+      }
+    };
+    for (const sheet of document.styleSheets) {
+      try {
+        walk(sheet.cssRules, sheet.href || location.href);
+      } catch {
+        // 読めないCSS（別サイトのもの）は飛ばす
+      }
+    }
+    return out.join('\n');
   }
 
   // results: [{ mode, rating, top }, ...]
-  function renderResult(ui, playerName, results, info) {
-    const who = document.createElement('div');
-    who.textContent = playerName || '（プレイヤー名を取得できませんでした）';
-    who.style.cssText = 'font-size:18px;font-weight:bold;margin-top:4px;';
+  function renderResult(ui, profile, results, info, jackets) {
+    // プレイヤー情報：アイコン / 称号 / 名前
+    const player = el('div', 'dxr-profile');
+    if (profile.icon) {
+      const icon = el('img', 'dxr-icon');
+      icon.src = profile.icon;
+      icon.alt = '';
+      icon.onerror = () => icon.remove();
+      player.appendChild(icon);
+    }
+    const text = el('div', 'dxr-profile-text');
+    if (profile.trophy) {
+      const officialCss = profile.trophyEl ? extractOfficialCss(profile.trophyEl) : '';
+      if (officialCss) {
+        // 公式の称号をそのまま複製し、取り出した公式CSSで表示する
+        const style = el('style');
+        style.textContent = officialCss;
+        ui.body.getRootNode().appendChild(style);
+        const clone = document.importNode(profile.trophyEl, true);
+        [clone, ...clone.querySelectorAll('[id]')].forEach((e) => e.removeAttribute('id'));
+        const holder = el('div', 'dxr-trophy-official');
+        holder.appendChild(clone);
+        text.appendChild(holder);
+      } else {
+        // 公式CSSが読めない場合は、色だけ合わせた簡易表示
+        const trophy = el('div', `dxr-trophy${profile.trophyRank ? ' t-' + profile.trophyRank : ''}`, profile.trophy);
+        trophy.title = profile.trophy;
+        text.appendChild(trophy);
+      }
+    }
+    text.appendChild(el('div', 'dxr-player', profile.name || 'プレイヤー名を取得できませんでした'));
+    player.appendChild(text);
 
-    // 各レートの数値
-    const rates = document.createElement('div');
-    rates.style.cssText = 'margin:4px 0 12px;';
-    results.forEach(({ mode, rating }) => {
-      const line = document.createElement('div');
-      line.textContent = `DXスコアレート（${mode.label}）: ${rating.toFixed(3)}`;
-      line.style.cssText = 'font-size:20px;font-weight:bold;';
-      rates.appendChild(line);
-    });
-
-    // 表の切り替えボタンと、レートごとの表（選んだ1つだけ表示）
-    const tabs = document.createElement('div');
-    tabs.style.cssText = 'margin-bottom:8px;';
-    const tables = results.map(({ mode, top }) => buildTable(top, mode));
-    const buttons = results.map(({ mode }, i) => {
-      const b = document.createElement('button');
-      b.textContent = `${mode.label}の上位${TOP_N}`;
-      b.style.cssText = 'font-size:14px;padding:4px 10px;margin-right:6px;';
+    // レートの札（押すとその上位50に切り替わる）
+    const plates = el('div', 'dxr-plates');
+    const lists = results.map(({ mode, top }) => buildList(top, mode, jackets));
+    const buttons = results.map(({ mode, rating }, i) => {
+      const b = el('button', 'dxr-plate');
+      b.type = 'button';
+      b.append(
+        el('span', 'dxr-plate-label', mode.label),
+        el('span', 'dxr-plate-value', rating.toFixed(3)),
+        el('span', 'dxr-plate-hint', `押すと上位${TOP_N}を表示`)
+      );
       b.onclick = () => select(i);
-      tabs.appendChild(b);
+      plates.appendChild(b);
       return b;
     });
     function select(i) {
-      tables.forEach((t, j) => { t.style.display = i === j ? '' : 'none'; });
-      buttons.forEach((b, j) => { b.style.fontWeight = i === j ? 'bold' : 'normal'; });
+      lists.forEach((l, j) => { l.style.display = i === j ? '' : 'none'; });
+      buttons.forEach((b, j) => b.setAttribute('aria-pressed', String(i === j)));
     }
     select(0);
 
-    const note = document.createElement('p');
-    note.style.cssText = 'color:#666;font-size:12px;';
-    note.textContent =
-      `${info}。定数の * は表示レベルからの概算値（下限）です。` +
-      '☆欄は実際の☆を表示し、「☆5まで」の値は☆6以上を☆5として計算しています。';
+    const hasEst = results.some(({ top }) => top.some((s) => s.estimated));
+    const note = el('p', 'dxr-note',
+      `${info}。` +
+      (hasEst ? '定数の * は定数表にない譜面で、レベル表示からの概算値（下限）です。' : '') +
+      '☆の小数は次の☆までの進み具合で、計算には整数部分のみ使います。' +
+      '「☆5まで」は☆6以上を☆5として計算しています。' +
+      (jackets ? '' : 'ジャケット画像の対応表を読み込めなかったため、画像は表示していません。'));
 
-    ui.body.append(who, rates, tabs, ...tables, note);
+    ui.body.append(player, plates, ...lists, note);
   }
 
   // ============================================================
@@ -288,16 +584,25 @@
     let constTable = {};
     if (CONST_URL) {
       try {
-        constTable = await (await fetch(CONST_URL + '?' + Date.now())).json();
-      } catch {
-        ui.status('譜面定数表を読み込めませんでした。概算値で計算します。');
-        await sleep(1000);
+        const res = await fetch(CONST_URL + '?' + Date.now());
+        if (!res.ok) throw new Error(`HTTP ${res.status}（ファイルが見つからない可能性があります）`);
+        const text = await res.text();
+        try {
+          constTable = JSON.parse(text);
+        } catch {
+          throw new Error('JSONとして読み込めませんでした（ファイルの中身が壊れている可能性があります）');
+        }
+      } catch (err) {
+        ui.status(`譜面定数表を読み込めませんでした：${err.message}／URL: ${CONST_URL}　概算値で計算します。`, true);
+        console.error('定数表の読み込みエラー', err);
+        await sleep(4000);
       }
     }
 
     // プレイヤー名
     ui.status('プレイヤー情報を取得中…');
-    const playerName = await getPlayerName();
+    const profile = await getPlayerProfile();
+    const jacketPromise = loadJacketMap(); // 別サーバーなので並行して読み込む
 
     // 高いレベルから順に取得し、下のレベルが上位に入り得なくなったら打ち切る
     let scored = [];
@@ -333,15 +638,19 @@
       return { mode, rating, top };
     });
 
-    ui.status('計算完了');
+    ui.status('');
+    ui.status('ジャケット画像の対応表を確認中…');
+    const jackets = await jacketPromise;
+    ui.status('');
     renderResult(
       ui,
-      playerName,
+      profile,
       results,
-      `Lv15〜Lv${levelInfo(lastLevel).label} の ${fetched} ページを取得し、${scored.length} 譜面から計算`
+      `Lv15〜Lv${levelInfo(lastLevel).label} の ${fetched} ページを取得し、${scored.length} 譜面から計算`,
+      jackets
     );
   } catch (e) {
-    ui.status('エラー: ' + e.message);
+    ui.status('エラー: ' + e.message, true);
     console.error(e);
   }
 })();
