@@ -31,9 +31,9 @@
   const LEVEL_MAX = 23;      // level=23 が Lv15
   const PLAYER_URL = '/maimai-mobile/home/';
 
-  // ジャケット画像：SEGA公式の楽曲リストから「曲名 → 画像ファイル名」を作り、
-  // maimai DX NET 上の画像をそのまま表示する（画像はコピーしない）
-  const SONGS_JSON_URL = 'https://maimai.sega.jp/data/maimai_songs.json';
+  // ジャケット画像：「曲名 → 画像ファイル名」の対応表（collect_jackets.js で作成）を読み、
+  // maimai DX NET 上の画像をそのまま表示する（画像そのものはコピーしない）
+  const JACKETS_URL = 'https://n4f1316.github.io/dxscore-tools/maimai_jackets.json';
   const JACKET_BASE = 'https://maimaidx.jp/maimai-mobile/img/Music/';
   const LEVEL_URL = (n) => `/maimai-mobile/record/musicLevel/search/?level=${n}`;
 
@@ -368,22 +368,14 @@
     return list;
   }
 
-  // 公式の楽曲リストから「曲名 → 画像ファイル名」の対応表を作る
-  // 同じ曲名で画像が違う曲（同名の別曲）は判別できないので null にする
+  // 「曲名 → 画像ファイル名」の対応表を読み込む（同名の別曲は null で登録されている）
   async function loadJacketMap() {
     try {
-      const res = await fetch(SONGS_JSON_URL);
+      const res = await fetch(JACKETS_URL + '?' + Date.now());
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const list = await res.json();
-      const map = new Map();
-      for (const song of list) {
-        if (!song.title || !song.image_url || song.catcode === '宴会場') continue;
-        const prev = map.get(song.title);
-        map.set(song.title, prev !== undefined && prev !== song.image_url ? null : song.image_url);
-      }
-      return map;
+      return new Map(Object.entries(await res.json()));
     } catch (e) {
-      console.warn('ジャケット画像の一覧を取得できませんでした', e);
+      console.warn('ジャケット画像の対応表を読み込めませんでした', e);
       return null;
     }
   }
@@ -433,7 +425,7 @@
       (hasEst ? '定数の * は定数表にない譜面で、レベル表示からの概算値（下限）です。' : '') +
       '☆の小数は次の☆までの進み具合で、計算には整数部分のみ使います。' +
       '「☆5まで」は☆6以上を☆5として計算しています。' +
-      (jackets ? '' : 'ジャケット画像の一覧を取得できなかったため、画像は表示していません。'));
+      (jackets ? '' : 'ジャケット画像の対応表を読み込めなかったため、画像は表示していません。'));
 
     ui.body.append(player, plates, ...lists, note);
   }
@@ -509,7 +501,7 @@
     });
 
     ui.status('');
-    ui.status('ジャケット画像の一覧を確認中…');
+    ui.status('ジャケット画像の対応表を確認中…');
     const jackets = await jacketPromise;
     ui.status('');
     renderResult(
