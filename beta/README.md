@@ -66,7 +66,7 @@ javascript:(()=>{const s=document.createElement('script');s.src='https://n4f1316
 
 ## 感想・不具合の連絡先
 
-（ここに連絡先を記入してください）
+感想や不具合等はDiscordサーバーにて連絡してください。
 
 ## 注意事項
 
