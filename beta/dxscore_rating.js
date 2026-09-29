@@ -248,12 +248,12 @@
     /* 譜面の一覧 */
     .dxr-list { background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; overflow: hidden; }
     .dxr-row {
-      display: grid; grid-template-columns: 2.2em 44px 1fr 4.2em 4.6em 4.4em; align-items: center; gap: 10px;
+      display: grid; grid-template-columns: 30px 44px 1fr 66px 72px 72px; align-items: center; gap: 10px;
       padding: 9px 14px; border-top: 1px solid var(--line);
     }
     .dxr-row:nth-child(even) { background: #FBFAFE; }
-    .dxr-head { border-top: 0; background: var(--ink) !important; color: #fff; font-size: 11px; font-weight: 700; padding: 7px 14px; }
-    .dxr-rank { font-weight: 800; color: var(--sub); text-align: right; font-variant-numeric: tabular-nums; }
+    .dxr-head { border-top: 0; background: var(--ink) !important; color: #fff; font-size: 11px; font-weight: 700; padding-top: 7px; padding-bottom: 7px; }
+    .dxr-rank { font-weight: 800; color: var(--sub); text-align: center; font-variant-numeric: tabular-nums; }
     .dxr-name { font-weight: 700; line-height: 1.35; word-break: break-word; }
     .dxr-meta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
     .dxr-chip {
@@ -270,7 +270,8 @@
     .dxr-diff-REMASTER { background: #fff; color: var(--master); box-shadow: inset 0 0 0 1.5px var(--remaster); }
     .dxr-const { background: #EFECF9; color: var(--ink); }
     .dxr-const.is-est { color: var(--sub); }
-    .dxr-star, .dxr-diffmax, .dxr-val { text-align: right; font-variant-numeric: tabular-nums; }
+    .dxr-diffmax, .dxr-val { text-align: right; font-variant-numeric: tabular-nums; }
+    .dxr-star { text-align: center; font-variant-numeric: tabular-nums; }
     /* ☆の色分け（Discordアイコンと共通）：☆1・2 黄緑 / ☆3・4 オレンジ / ☆5・6 黄色 / ☆7 虹色 */
     .dxr-star-pill {
       display: inline-block; min-width: 3.6em; padding: 3px 7px; border-radius: 999px; text-align: center;
@@ -301,7 +302,7 @@
       .dxr-icon { width: 56px; height: 56px; border-radius: 12px; }
       .dxr-player { font-size: 20px; }
       .dxr-star-pill { min-width: 0; padding: 3px 5px; font-size: 12px; }
-      .dxr-row { grid-template-columns: 1.6em 40px 1fr 3.6em 4em; gap: 7px; padding: 9px 10px; }
+      .dxr-row { grid-template-columns: 22px 40px 1fr 54px 60px; gap: 7px; padding: 9px 10px; }
       .dxr-jacket { width: 40px; height: 40px; }
       .dxr-row > .dxr-diffmax { display: none; }
       .dxr-meta .dxr-diffmax-inline { display: inline-block; }
