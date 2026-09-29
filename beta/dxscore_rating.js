@@ -394,7 +394,7 @@
       meta.append(
         el('span', `dxr-chip dxr-kind-${s.kind === '?' ? 'unknown' : s.kind}`, s.kind),
         el('span', `dxr-chip dxr-diff-${s.diff.replace(':', '').toUpperCase()}`, `${s.diff} ${s.level}`),
-        el('span', `dxr-chip dxr-const${s.estimated ? ' is-est' : ''}`, `定数 ${s.c.toFixed(1)}${s.estimated ? '*' : ''}`),
+        el('span', `dxr-chip dxr-const${s.estimated ? ' is-est' : ''}`, `${s.c.toFixed(1)}${s.estimated ? '*' : ''}`),
         el('span', `dxr-chip dxr-diffmax-inline${isMax ? ' is-max' : ''}`, diffText)
       );
       main.appendChild(meta);
