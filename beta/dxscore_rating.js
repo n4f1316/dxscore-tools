@@ -30,6 +30,11 @@
   const WAIT_MS = 1500;      // ページ取得の間隔（サーバー負荷対策）
   const LEVEL_MAX = 23;      // level=23 が Lv15
   const PLAYER_URL = '/maimai-mobile/home/';
+
+  // ジャケット画像：SEGA公式の楽曲リストから「曲名 → 画像ファイル名」を作り、
+  // maimai DX NET 上の画像をそのまま表示する（画像はコピーしない）
+  const SONGS_JSON_URL = 'https://maimai.sega.jp/data/maimai_songs.json';
+  const JACKET_BASE = 'https://maimaidx.jp/maimai-mobile/img/Music/';
   const LEVEL_URL = (n) => `/maimai-mobile/record/musicLevel/search/?level=${n}`;
 
   // 譜面定数表（JSON）のURL。空なら表示レベルからの概算値（下限）を使う
@@ -208,7 +213,7 @@
     /* 譜面の一覧 */
     #dxr-panel .dxr-list { background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; overflow: hidden; }
     #dxr-panel .dxr-row {
-      display: grid; grid-template-columns: 2.2em 1fr 4.2em 4.6em 4.4em; align-items: center; gap: 8px;
+      display: grid; grid-template-columns: 2.2em 44px 1fr 4.2em 4.6em 4.4em; align-items: center; gap: 10px;
       padding: 9px 14px; border-top: 1px solid var(--line);
     }
     #dxr-panel .dxr-row:nth-child(even) { background: #FBFAFE; }
@@ -241,12 +246,17 @@
     #dxr-panel .dxr-val { font-weight: 800; font-size: 15px; }
     #dxr-panel .dxr-head .dxr-star, #dxr-panel .dxr-head .dxr-diffmax, #dxr-panel .dxr-head .dxr-val { color: #fff; font-size: 11px; }
 
+    #dxr-panel .dxr-jacket {
+      width: 44px; height: 44px; border-radius: 8px; object-fit: cover; display: block;
+      background: #EFECF9; box-shadow: 0 0 0 1px var(--line);
+    }
     #dxr-panel .dxr-note { margin-top: 14px; font-size: 12px; color: var(--sub); line-height: 1.7; }
 
     /* スマホ幅：MAX差を曲名の下へ回す */
     @media (max-width: 520px) {
       #dxr-panel .dxr-plate-value { font-size: 28px; }
-      #dxr-panel .dxr-row { grid-template-columns: 1.8em 1fr 3.6em 4em; gap: 6px; padding: 9px 10px; }
+      #dxr-panel .dxr-row { grid-template-columns: 1.6em 40px 1fr 3.6em 4em; gap: 7px; padding: 9px 10px; }
+      #dxr-panel .dxr-jacket { width: 40px; height: 40px; }
       #dxr-panel .dxr-row > .dxr-diffmax { display: none; }
       #dxr-panel .dxr-meta .dxr-diffmax-inline { display: inline-block; }
     }
@@ -307,11 +317,11 @@
     return 'low';
   }
 
-  function buildList(top, mode) {
+  function buildList(top, mode, jackets) {
     const list = el('div', 'dxr-list');
 
     const head = el('div', 'dxr-row dxr-head');
-    head.append(el('div', 'dxr-rank', '#'), el('div', '', '曲名'), el('div', 'dxr-star', '☆'),
+    head.append(el('div', 'dxr-rank', '#'), el('div'), el('div', '', '曲名'), el('div', 'dxr-star', '☆'),
       el('div', 'dxr-diffmax', 'MAX差'), el('div', 'dxr-val', 'レート値'));
     list.appendChild(head);
 
@@ -331,8 +341,23 @@
       );
       main.appendChild(meta);
 
+      // ジャケット画像（見つからない・読み込めない場合は空の枠）
+      let jacket;
+      const file = jackets?.get(s.name);
+      if (file) {
+        jacket = el('img', 'dxr-jacket');
+        jacket.src = JACKET_BASE + file;
+        jacket.alt = '';
+        jacket.loading = 'lazy';
+        jacket.decoding = 'async';
+        jacket.onerror = () => { jacket.removeAttribute('src'); };
+      } else {
+        jacket = el('div', 'dxr-jacket');
+      }
+
       row.append(
         el('div', 'dxr-rank', String(i + 1)),
+        jacket,
         main,
         el('div', `dxr-star ${starClass(s.stars)}`, `☆${starDisplay(s.cur, s.max)}`),
         el('div', `dxr-diffmax${isMax ? ' is-max' : ''}`, diffText),
@@ -341,6 +366,26 @@
       list.appendChild(row);
     });
     return list;
+  }
+
+  // 公式の楽曲リストから「曲名 → 画像ファイル名」の対応表を作る
+  // 同じ曲名で画像が違う曲（同名の別曲）は判別できないので null にする
+  async function loadJacketMap() {
+    try {
+      const res = await fetch(SONGS_JSON_URL);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const list = await res.json();
+      const map = new Map();
+      for (const song of list) {
+        if (!song.title || !song.image_url || song.catcode === '宴会場') continue;
+        const prev = map.get(song.title);
+        map.set(song.title, prev !== undefined && prev !== song.image_url ? null : song.image_url);
+      }
+      return map;
+    } catch (e) {
+      console.warn('ジャケット画像の一覧を取得できませんでした', e);
+      return null;
+    }
   }
 
   // プレイヤー名を取得（今のページになければホーム画面から読む。失敗しても空文字で続行）
@@ -358,12 +403,12 @@
   }
 
   // results: [{ mode, rating, top }, ...]
-  function renderResult(ui, playerName, results, info) {
+  function renderResult(ui, playerName, results, info, jackets) {
     const player = el('div', 'dxr-player', playerName || 'プレイヤー名を取得できませんでした');
 
     // レートの札（押すとその上位50に切り替わる）
     const plates = el('div', 'dxr-plates');
-    const lists = results.map(({ mode, top }) => buildList(top, mode));
+    const lists = results.map(({ mode, top }) => buildList(top, mode, jackets));
     const buttons = results.map(({ mode, rating }, i) => {
       const b = el('button', 'dxr-plate');
       b.type = 'button';
@@ -387,7 +432,8 @@
       `${info}。` +
       (hasEst ? '定数の * は定数表にない譜面で、レベル表示からの概算値（下限）です。' : '') +
       '☆の小数は次の☆までの進み具合で、計算には整数部分のみ使います。' +
-      '「☆5まで」は☆6以上を☆5として計算しています。');
+      '「☆5まで」は☆6以上を☆5として計算しています。' +
+      (jackets ? '' : 'ジャケット画像の一覧を取得できなかったため、画像は表示していません。'));
 
     ui.body.append(player, plates, ...lists, note);
   }
@@ -426,6 +472,7 @@
     // プレイヤー名
     ui.status('プレイヤー情報を取得中…');
     const playerName = await getPlayerName();
+    const jacketPromise = loadJacketMap(); // 別サーバーなので並行して読み込む
 
     // 高いレベルから順に取得し、下のレベルが上位に入り得なくなったら打ち切る
     let scored = [];
@@ -462,11 +509,15 @@
     });
 
     ui.status('');
+    ui.status('ジャケット画像の一覧を確認中…');
+    const jackets = await jacketPromise;
+    ui.status('');
     renderResult(
       ui,
       playerName,
       results,
-      `Lv15〜Lv${levelInfo(lastLevel).label} の ${fetched} ページを取得し、${scored.length} 譜面から計算`
+      `Lv15〜Lv${levelInfo(lastLevel).label} の ${fetched} ページを取得し、${scored.length} 譜面から計算`,
+      jackets
     );
   } catch (e) {
     ui.status('エラー: ' + e.message, true);
