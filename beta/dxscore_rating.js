@@ -270,7 +270,9 @@
     .dxr-diff-REMASTER { background: #fff; color: var(--master); box-shadow: inset 0 0 0 1.5px var(--remaster); }
     .dxr-const { background: #EFECF9; color: var(--ink); }
     .dxr-const.is-est { color: var(--sub); }
-    .dxr-diffmax, .dxr-val { text-align: right; font-variant-numeric: tabular-nums; }
+    .dxr-diffmax { text-align: right; font-variant-numeric: tabular-nums; }
+    .dxr-val { text-align: right; font-variant-numeric: tabular-nums; }
+    .dxr-head .dxr-val { text-align: center; }
     .dxr-star { text-align: center; font-variant-numeric: tabular-nums; }
     /* ☆の色分け（Discordアイコンと共通）：☆1・2 黄緑 / ☆3・4 オレンジ / ☆5・6 黄色 / ☆7 虹色 */
     .dxr-star-pill {
