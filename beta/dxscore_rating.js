@@ -47,7 +47,11 @@
     name:  '.music_name_block',         // 曲名
     score: '.music_score_block',        // 達成率・でらっくスコア
     // DX / スタンダードの判定はアイコン画像のファイル名（music_dx.png / music_standard.png）で行う
-    playerName: '.name_block',          // プレイヤー名（ホーム画面などに表示される）
+    playerName: '.name_block',          // プレイヤー名（ホーム画面）
+    profile: '.basic_block',            // プレイヤー情報の枠（ホーム画面）
+    icon: 'img[src*="/img/Icon/"]',     // アイコン画像
+    trophy: '.trophy_block',            // 称号の枠（クラス名 trophy_Gold などで色がわかる）
+    trophyText: '.trophy_inner_block',  // 称号の文字
   };
 
   // 枠のクラス名 music_○○_score_back の ○○ → 難易度名
@@ -201,7 +205,27 @@
     .dxr-status { margin: 10px 0 0; color: var(--sub); font-size: 13px; }
     .dxr-status.is-error { color: var(--expert); font-weight: 700; }
 
-    .dxr-player { margin: 18px 0 10px; font-size: 22px; font-weight: 800; letter-spacing: .02em; word-break: break-all; }
+    /* プレイヤー情報（アイコン・称号・名前） */
+    .dxr-profile { display: flex; align-items: center; gap: 14px; margin: 18px 0 14px; }
+    .dxr-icon {
+      width: 64px; height: 64px; flex: none; border-radius: 14px; object-fit: cover;
+      background: #EFECF9; box-shadow: 0 0 0 1.5px var(--line);
+    }
+    .dxr-profile-text { min-width: 0; }
+    .dxr-trophy {
+      display: inline-block; max-width: 100%; font-size: 12px; font-weight: 700; line-height: 1.4;
+      padding: 3px 12px; border-radius: 999px; margin-bottom: 4px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      background: #F1F1F4; color: #4A4A57; box-shadow: inset 0 0 0 1px #D9D9E2;
+    }
+    .dxr-trophy.t-Bronze { background: #F4E3D3; color: #7A4A1E; box-shadow: inset 0 0 0 1px #D9AC82; }
+    .dxr-trophy.t-Silver { background: #ECEFF3; color: #4B5563; box-shadow: inset 0 0 0 1px #B8C0CC; }
+    .dxr-trophy.t-Gold { background: #FFF1C7; color: #7A5600; box-shadow: inset 0 0 0 1px #E3B63A; }
+    .dxr-trophy.t-Rainbow {
+      color: #2B2350; box-shadow: none;
+      background: linear-gradient(90deg, #FFD1DC, #FFE9B8, #D6F5C9, #C9EBFF, #E3D4FF);
+    }
+    .dxr-player { font-size: 22px; font-weight: 800; letter-spacing: .02em; line-height: 1.3; word-break: break-all; }
 
     /* レート表示：押すと表が切り替わる */
     .dxr-plates { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
@@ -260,6 +284,8 @@
     /* スマホ幅：MAX差を曲名の下へ回す */
     @media (max-width: 520px) {
       .dxr-plate-value { font-size: 28px; }
+      .dxr-icon { width: 56px; height: 56px; border-radius: 12px; }
+      .dxr-player { font-size: 20px; }
       .dxr-row { grid-template-columns: 1.6em 40px 1fr 3.6em 4em; gap: 7px; padding: 9px 10px; }
       .dxr-jacket { width: 40px; height: 40px; }
       .dxr-row > .dxr-diffmax { display: none; }
@@ -393,22 +419,52 @@
   }
 
   // プレイヤー名を取得（今のページになければホーム画面から読む。失敗しても空文字で続行）
-  async function getPlayerName() {
-    const here = document.querySelector(SEL.playerName)?.textContent.trim();
-    if (here) return here;
+  // プレイヤー情報（名前・アイコン・称号）を取得する
+  // 今のページがホーム画面ならそこから、そうでなければホーム画面を1回だけ取得して読む
+  function readProfile(doc) {
+    const box = doc.querySelector(SEL.profile) ?? doc;
+    const name = box.querySelector(SEL.playerName)?.textContent.trim() ?? '';
+    const icon = box.querySelector(SEL.icon)?.getAttribute('src') ?? '';
+    const trophyEl = box.querySelector(SEL.trophy);
+    const trophy = trophyEl?.querySelector(SEL.trophyText)?.textContent.trim() ?? '';
+    const trophyRank = trophyEl?.className.match(/trophy_(Normal|Bronze|Silver|Gold|Rainbow)/)?.[1] ?? '';
+    return { name, icon, trophy, trophyRank };
+  }
+
+  async function getPlayerProfile() {
+    const here = readProfile(document);
+    if (here.name && here.icon) return here;
     try {
       const res = await fetch(PLAYER_URL, { credentials: 'same-origin' });
-      if (!res.ok) return '';
+      if (!res.ok) return here;
       const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
-      return doc.querySelector(SEL.playerName)?.textContent.trim() ?? '';
+      const got = readProfile(doc);
+      return got.name ? got : here;
     } catch {
-      return '';
+      return here;
     }
   }
 
+
   // results: [{ mode, rating, top }, ...]
-  function renderResult(ui, playerName, results, info, jackets) {
-    const player = el('div', 'dxr-player', playerName || 'プレイヤー名を取得できませんでした');
+  function renderResult(ui, profile, results, info, jackets) {
+    // プレイヤー情報：アイコン / 称号 / 名前
+    const player = el('div', 'dxr-profile');
+    if (profile.icon) {
+      const icon = el('img', 'dxr-icon');
+      icon.src = profile.icon;
+      icon.alt = '';
+      icon.onerror = () => icon.remove();
+      player.appendChild(icon);
+    }
+    const text = el('div', 'dxr-profile-text');
+    if (profile.trophy) {
+      const trophy = el('div', `dxr-trophy${profile.trophyRank ? ' t-' + profile.trophyRank : ''}`, profile.trophy);
+      trophy.title = profile.trophy; // 長い称号は省略表示になるので、全文を確認できるように
+      text.appendChild(trophy);
+    }
+    text.appendChild(el('div', 'dxr-player', profile.name || 'プレイヤー名を取得できませんでした'));
+    player.appendChild(text);
 
     // レートの札（押すとその上位50に切り替わる）
     const plates = el('div', 'dxr-plates');
@@ -475,7 +531,7 @@
 
     // プレイヤー名
     ui.status('プレイヤー情報を取得中…');
-    const playerName = await getPlayerName();
+    const profile = await getPlayerProfile();
     const jacketPromise = loadJacketMap(); // 別サーバーなので並行して読み込む
 
     // 高いレベルから順に取得し、下のレベルが上位に入り得なくなったら打ち切る
@@ -518,7 +574,7 @@
     ui.status('');
     renderResult(
       ui,
-      playerName,
+      profile,
       results,
       `Lv15〜Lv${levelInfo(lastLevel).label} の ${fetched} ページを取得し、${scored.length} 譜面から計算`,
       jackets
