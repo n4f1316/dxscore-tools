@@ -175,7 +175,8 @@
   // ============================================================
 
   const STYLE = `
-    #dxr-panel {
+    :host {
+      all: initial; display: block;
       --ink: #2B2350; --sub: #6E6892; --line: #E4DFF3; --bg: #F6F4FC; --card: #FFFFFF;
       --pink: #E0348C; --cyan: #1FA9C9; --gold: #C98A00;
       --basic: #2E9E5B; --advanced: #D98E04; --expert: #E0434B; --master: #8E44D6; --remaster: #B68BE0;
@@ -184,84 +185,88 @@
       font: 14px/1.6 "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
       -webkit-text-size-adjust: 100%;
     }
-    #dxr-panel * { box-sizing: border-box; }
-    #dxr-panel .dxr-wrap { max-width: 760px; margin: 0 auto; padding: 16px 14px 40px; }
-    #dxr-panel .dxr-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    #dxr-panel .dxr-title { font-size: 13px; color: var(--sub); font-weight: 700; }
-    #dxr-panel .dxr-close {
+    * { box-sizing: border-box; }
+    .dxr-wrap {
+      max-width: 760px; margin: 0 auto; padding: 16px 14px 40px;
+      font: 14px/1.6 "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
+      color: var(--ink); text-align: left;
+    }
+    .dxr-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .dxr-title { font-size: 13px; color: var(--sub); font-weight: 700; }
+    .dxr-close {
       font: inherit; font-weight: 700; color: var(--ink); background: var(--card);
       border: 1.5px solid var(--line); border-radius: 999px; padding: 6px 16px; cursor: pointer;
     }
-    #dxr-panel button:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
-    #dxr-panel .dxr-status { margin: 10px 0 0; color: var(--sub); font-size: 13px; }
-    #dxr-panel .dxr-status.is-error { color: var(--expert); font-weight: 700; }
+    button:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+    .dxr-status { margin: 10px 0 0; color: var(--sub); font-size: 13px; }
+    .dxr-status.is-error { color: var(--expert); font-weight: 700; }
 
-    #dxr-panel .dxr-player { margin: 18px 0 10px; font-size: 22px; font-weight: 800; letter-spacing: .02em; word-break: break-all; }
+    .dxr-player { margin: 18px 0 10px; font-size: 22px; font-weight: 800; letter-spacing: .02em; word-break: break-all; }
 
     /* レート表示：押すと表が切り替わる */
-    #dxr-panel .dxr-plates { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
-    #dxr-panel .dxr-plate {
+    .dxr-plates { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+    .dxr-plate {
       font: inherit; text-align: left; cursor: pointer; color: var(--ink);
       background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 12px 16px;
     }
-    #dxr-panel .dxr-plate[aria-pressed="true"] { border-color: var(--pink); box-shadow: 0 0 0 3px rgba(224,52,140,.15); }
-    #dxr-panel .dxr-plate-label { display: block; font-size: 12px; color: var(--sub); font-weight: 700; }
-    #dxr-panel .dxr-plate-value { display: block; font-size: 34px; font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
-    #dxr-panel .dxr-plate[aria-pressed="true"] .dxr-plate-value { color: var(--pink); }
-    #dxr-panel .dxr-plate-hint { display: block; font-size: 11px; color: var(--sub); }
+    .dxr-plate[aria-pressed="true"] { border-color: var(--pink); box-shadow: 0 0 0 3px rgba(224,52,140,.15); }
+    .dxr-plate-label { display: block; font-size: 12px; color: var(--sub); font-weight: 700; }
+    .dxr-plate-value { display: block; font-size: 34px; font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
+    .dxr-plate[aria-pressed="true"] .dxr-plate-value { color: var(--pink); }
+    .dxr-plate-hint { display: block; font-size: 11px; color: var(--sub); }
 
     /* 譜面の一覧 */
-    #dxr-panel .dxr-list { background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; overflow: hidden; }
-    #dxr-panel .dxr-row {
+    .dxr-list { background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; overflow: hidden; }
+    .dxr-row {
       display: grid; grid-template-columns: 2.2em 44px 1fr 4.2em 4.6em 4.4em; align-items: center; gap: 10px;
       padding: 9px 14px; border-top: 1px solid var(--line);
     }
-    #dxr-panel .dxr-row:nth-child(even) { background: #FBFAFE; }
-    #dxr-panel .dxr-head { border-top: 0; background: var(--ink) !important; color: #fff; font-size: 11px; font-weight: 700; padding: 7px 14px; }
-    #dxr-panel .dxr-rank { font-weight: 800; color: var(--sub); text-align: right; font-variant-numeric: tabular-nums; }
-    #dxr-panel .dxr-name { font-weight: 700; line-height: 1.35; word-break: break-word; }
-    #dxr-panel .dxr-meta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-    #dxr-panel .dxr-chip {
+    .dxr-row:nth-child(even) { background: #FBFAFE; }
+    .dxr-head { border-top: 0; background: var(--ink) !important; color: #fff; font-size: 11px; font-weight: 700; padding: 7px 14px; }
+    .dxr-rank { font-weight: 800; color: var(--sub); text-align: right; font-variant-numeric: tabular-nums; }
+    .dxr-name { font-weight: 700; line-height: 1.35; word-break: break-word; }
+    .dxr-meta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+    .dxr-chip {
       display: inline-block; font-size: 11px; font-weight: 700; line-height: 1; padding: 4px 7px;
       border-radius: 6px; color: #fff; white-space: nowrap;
     }
-    #dxr-panel .dxr-kind-DX { background: linear-gradient(90deg, var(--pink), #F29A2E); }
-    #dxr-panel .dxr-kind-ST { background: #3B82C4; }
-    #dxr-panel .dxr-kind-unknown { background: #999; }
-    #dxr-panel .dxr-diff-BASIC { background: var(--basic); }
-    #dxr-panel .dxr-diff-ADVANCED { background: var(--advanced); }
-    #dxr-panel .dxr-diff-EXPERT { background: var(--expert); }
-    #dxr-panel .dxr-diff-MASTER { background: var(--master); }
-    #dxr-panel .dxr-diff-REMASTER { background: #fff; color: var(--master); box-shadow: inset 0 0 0 1.5px var(--remaster); }
-    #dxr-panel .dxr-const { background: #EFECF9; color: var(--ink); }
-    #dxr-panel .dxr-const.is-est { color: var(--sub); }
-    #dxr-panel .dxr-star, #dxr-panel .dxr-diffmax, #dxr-panel .dxr-val { text-align: right; font-variant-numeric: tabular-nums; }
-    #dxr-panel .dxr-star { font-weight: 800; }
-    #dxr-panel .dxr-star.s7 { color: var(--gold); }
-    #dxr-panel .dxr-star.s6 { color: var(--pink); }
-    #dxr-panel .dxr-star.s5 { color: var(--cyan); }
-    #dxr-panel .dxr-star.low { color: var(--sub); }
-    #dxr-panel .dxr-diffmax { font-size: 12px; color: var(--sub); }
-    #dxr-panel .dxr-diffmax.is-max { color: var(--gold); font-weight: 800; }
-    #dxr-panel .dxr-val { font-weight: 800; font-size: 15px; }
-    #dxr-panel .dxr-head .dxr-star, #dxr-panel .dxr-head .dxr-diffmax, #dxr-panel .dxr-head .dxr-val { color: #fff; font-size: 11px; }
+    .dxr-kind-DX { background: linear-gradient(90deg, var(--pink), #F29A2E); }
+    .dxr-kind-ST { background: #3B82C4; }
+    .dxr-kind-unknown { background: #999; }
+    .dxr-diff-BASIC { background: var(--basic); }
+    .dxr-diff-ADVANCED { background: var(--advanced); }
+    .dxr-diff-EXPERT { background: var(--expert); }
+    .dxr-diff-MASTER { background: var(--master); }
+    .dxr-diff-REMASTER { background: #fff; color: var(--master); box-shadow: inset 0 0 0 1.5px var(--remaster); }
+    .dxr-const { background: #EFECF9; color: var(--ink); }
+    .dxr-const.is-est { color: var(--sub); }
+    .dxr-star, .dxr-diffmax, .dxr-val { text-align: right; font-variant-numeric: tabular-nums; }
+    .dxr-star { font-weight: 800; }
+    .dxr-star.s7 { color: var(--gold); }
+    .dxr-star.s6 { color: var(--pink); }
+    .dxr-star.s5 { color: var(--cyan); }
+    .dxr-star.low { color: var(--sub); }
+    .dxr-diffmax { font-size: 12px; color: var(--sub); }
+    .dxr-diffmax.is-max { color: var(--gold); font-weight: 800; }
+    .dxr-val { font-weight: 800; font-size: 15px; }
+    .dxr-head .dxr-star, .dxr-head .dxr-diffmax, .dxr-head .dxr-val { color: #fff; font-size: 11px; }
 
-    #dxr-panel .dxr-jacket {
+    .dxr-jacket {
       width: 44px; height: 44px; border-radius: 8px; object-fit: cover; display: block;
       background: #EFECF9; box-shadow: 0 0 0 1px var(--line);
     }
-    #dxr-panel .dxr-note { margin-top: 14px; font-size: 12px; color: var(--sub); line-height: 1.7; }
+    .dxr-note { margin-top: 14px; font-size: 12px; color: var(--sub); line-height: 1.7; }
 
     /* スマホ幅：MAX差を曲名の下へ回す */
     @media (max-width: 520px) {
-      #dxr-panel .dxr-plate-value { font-size: 28px; }
-      #dxr-panel .dxr-row { grid-template-columns: 1.6em 40px 1fr 3.6em 4em; gap: 7px; padding: 9px 10px; }
-      #dxr-panel .dxr-jacket { width: 40px; height: 40px; }
-      #dxr-panel .dxr-row > .dxr-diffmax { display: none; }
-      #dxr-panel .dxr-meta .dxr-diffmax-inline { display: inline-block; }
+      .dxr-plate-value { font-size: 28px; }
+      .dxr-row { grid-template-columns: 1.6em 40px 1fr 3.6em 4em; gap: 7px; padding: 9px 10px; }
+      .dxr-jacket { width: 40px; height: 40px; }
+      .dxr-row > .dxr-diffmax { display: none; }
+      .dxr-meta .dxr-diffmax-inline { display: inline-block; }
     }
-    #dxr-panel .dxr-diffmax-inline { display: none; background: transparent; color: var(--sub); padding-left: 2px; }
-    #dxr-panel .dxr-diffmax-inline.is-max { color: var(--gold); }
+    .dxr-diffmax-inline { display: none; background: transparent; color: var(--sub); padding-left: 2px; }
+    .dxr-diffmax-inline.is-max { color: var(--gold); }
   `;
 
   // 要素を作る小さな補助関数（textContent で入れるので安全）
@@ -274,32 +279,39 @@
 
   function createPanel() {
     document.getElementById('dxr-panel')?.remove(); // 二重起動対策
-    if (!document.getElementById('dxr-style')) {
+    if (!document.getElementById('dxr-font')) {
+      // フォントはページ全体に読み込む（シャドウDOMの中からも使える）
       const font = document.createElement('link');
+      font.id = 'dxr-font';
       font.rel = 'stylesheet';
       font.href = 'https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap';
       document.head.appendChild(font);
-      const style = el('style');
-      style.id = 'dxr-style';
-      style.textContent = STYLE;
-      document.head.appendChild(style);
     }
 
-    const panel = el('div');
-    panel.id = 'dxr-panel';
+    // 公式サイトのCSSの影響を受けないよう、シャドウDOMの中に画面を作る
+    const host = el('div');
+    host.id = 'dxr-panel';
+    // 外枠だけはページ側のCSSに上書きされないよう直接指定する
+    host.style.cssText =
+      'all:initial;position:fixed;inset:0;z-index:99999;display:block;' +
+      'overflow:auto;background:#F6F4FC;color:#2B2350;font-size:14px;line-height:1.6;';
+    const root = host.attachShadow({ mode: 'open' });
+    const style = el('style');
+    style.textContent = STYLE;
+
     const wrap = el('div', 'dxr-wrap');
     const top = el('div', 'dxr-top');
     const title = el('div', 'dxr-title', EDITION ? `DXスコアレート ${EDITION}` : 'DXスコアレート');
     const close = el('button', 'dxr-close', '閉じる');
     close.type = 'button';
-    close.onclick = () => panel.remove();
+    close.onclick = () => host.remove();
     top.append(title, close);
 
     const status = el('p', 'dxr-status');
     const body = el('div');
     wrap.append(top, status, body);
-    panel.appendChild(wrap);
-    document.body.appendChild(panel);
+    root.append(style, wrap);
+    document.body.appendChild(host);
 
     return {
       body,
