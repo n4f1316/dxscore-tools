@@ -27,6 +27,9 @@
     { id: 'cap5', label: '☆5まで', capStars: 5 },
   ];
 
+  // 単曲レート値 = 定数 × 定数 × ☆ ÷ RATE_DIVISOR
+  const RATE_DIVISOR = 100;
+
   const TOP_N = 50;          // 平均を取る曲数
   const WAIT_MS = 1500;      // ページ取得の間隔（サーバー負荷対策）
   const LEVEL_MAX = 23;      // level=23 が Lv15
@@ -82,7 +85,7 @@
   }
 
   // そのレベルの譜面が取りうる値の上限（☆上限・定数最大のとき）
-  const upperBound = (n, capStars) => (levelInfo(n).max ** 2 * capStars) / 1000;
+  const upperBound = (n, capStars) => (levelInfo(n).max ** 2 * capStars) / RATE_DIVISOR;
 
   // 小数の誤差を避けるため整数同士で比較する（cur/max >= pct% と同じ意味）
   function starsOf(cur, max) {
@@ -171,7 +174,7 @@
     const stars = starsOf(s.cur, s.max);
     // レートの種類ごとに値を計算（☆は capStars を上限に切り詰める）
     const values = {};
-    for (const m of RATE_MODES) values[m.id] = (c * c * Math.min(stars, m.capStars)) / 1000;
+    for (const m of RATE_MODES) values[m.id] = (c * c * Math.min(stars, m.capStars)) / RATE_DIVISOR;
     return { ...s, c, estimated: !inTable, stars, values };
   }
 
