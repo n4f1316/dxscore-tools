@@ -301,7 +301,7 @@
 
     const wrap = el('div', 'dxr-wrap');
     const top = el('div', 'dxr-top');
-    const title = el('div', 'dxr-title', EDITION ? `DXスコアレート ${EDITION}` : 'DXスコアレート');
+    const title = el('div', 'dxr-title', EDITION ? `2fRATE ${EDITION}` : '2fRATE');
     const close = el('button', 'dxr-close', '閉じる');
     close.type = 'button';
     close.onclick = () => host.remove();
