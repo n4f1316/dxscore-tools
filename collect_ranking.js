@@ -20,8 +20,11 @@
   const RANKING_TYPE = 99;         // 99 = 全国
   const CONST_URL = 'https://n4f1316.github.io/dxscore-tools/maimai_consts_magical.json';
   // 集計結果の保存先：GitHub に置いた JSON を読み込み、取得済みの譜面は飛ばす
-  const RESULTS_URL = 'https://n4f1316.github.io/dxscore-tools/dxscore_ranking.json';
-  const RESULTS_FILE = 'dxscore_ranking.json'; // ダウンロード時のファイル名（そのままアップロードできる名前）
+  // レベルごとに1ファイル：ranking/lv13p.json（13+）、ranking/lv14.json（14）… の形でGitHubに置く
+  const RESULTS_DIR = 'https://n4f1316.github.io/dxscore-tools/ranking/';
+  const fileOfLevel = (label) => `lv${String(label).replace('+', 'p')}.json`;
+  // 以前の1ファイル方式のJSON（残っていれば読み込んでレベルごとに振り分ける）
+  const OLD_RESULTS_URL = 'https://n4f1316.github.io/dxscore-tools/dxscore_ranking.json';
   const LEGACY_KEY = 'dxr-ranking-progress';   // 以前の版がブラウザ内に保存していた記録
 
   // ジャケット画像（2fRATE と同じ対応表を使う）
@@ -288,6 +291,7 @@
   let results = {};
   let loadedCount = 0;
   let jackets = null; // 曲名 → ジャケット画像のファイル名
+  const changedLevels = new Set(); // 今回の実行で内容が変わったレベル（ダウンロード対象）
   const rows = () => Object.values(results);
 
   // 以前の版がブラウザ内に保存していた記録があれば、結果に合流させる（消さずに引き継ぐ）
@@ -354,7 +358,7 @@
     el('div', 'label', '取得のしかた'), refetchRow,
     actRow,
     loadInfo,
-    el('div', 'note', '集計結果はブラウザに保存しません。終わったら「JSONをダウンロード」で保存し、GitHubの dxscore_ranking.json を置き換えてください。プレーヤー名は保存しません。')
+    el('div', 'note', '集計結果はブラウザに保存しません。終わったら「更新したレベルのJSONをダウンロード」で保存し、GitHubの ranking フォルダに同じ名前でアップロードしてください（例：Lv13+ は lv13p.json）。プレーヤー名は保存しません。')
   );
   wrap.appendChild(setup);
 
@@ -396,24 +400,40 @@
     .then((res) => (res.ok ? res.json() : null))
     .then((obj) => (obj ? new Map(Object.entries(obj)) : null))
     .catch(() => null);
-  try {
-    const res = await fetch(RESULTS_URL + '?' + Date.now());
-    if (res.ok) {
-      const list = await res.json();
-      (Array.isArray(list) ? list : Object.values(list)).forEach((r) => { results[keyOfRow(r)] = r; });
-    }
-  } catch { /* 読めなければ空のまま */ }
+  // 各レベルのファイルを並行して読み込む（GitHubへのアクセスなので公式サイトの負荷にはならない）
+  const fetchJson = (url) =>
+    fetch(url + '?' + Date.now()).then((res) => (res.ok ? res.json() : null)).catch(() => null);
+  const labels = [];
+  for (let n = LEVEL_MAX; n >= LEVEL_MIN; n--) labels.push(levelLabel(n));
+  const perLevel = await Promise.all(labels.map((lb) => fetchJson(RESULTS_DIR + fileOfLevel(lb))));
+  const loadedLevels = [];
+  perLevel.forEach((list, i) => {
+    if (!list) return;
+    const arr = Array.isArray(list) ? list : Object.values(list);
+    arr.forEach((r) => { results[keyOfRow(r)] = r; });
+    loadedLevels.push(`Lv${labels[i]}（${arr.length}）`);
+  });
   loadedCount = rows().length;
   jackets = await jacketsPromise;
-  // 以前の版のブラウザ内の記録を合流（GitHubにない譜面だけ）
-  let legacyAdded = 0;
-  legacyRows.forEach((r) => {
-    if (!results[keyOfRow(r)]) { results[keyOfRow(r)] = r; legacyAdded++; }
+
+  // 以前の1ファイル方式のJSON・ブラウザ内の記録は、レベルごとのファイルにない譜面だけ合流させる
+  // （合流した譜面のレベルは「更新あり」にして、次のダウンロードでレベルごとのファイルに書き出す）
+  let migrated = 0;
+  const merge = (arr) => arr.forEach((r) => {
+    if (!r || results[keyOfRow(r)]) return;
+    results[keyOfRow(r)] = r;
+    changedLevels.add(r.level);
+    migrated++;
   });
+  const oldList = await fetchJson(OLD_RESULTS_URL);
+  if (oldList) merge(Array.isArray(oldList) ? oldList : Object.values(oldList));
+  merge(legacyRows);
+
   loadInfo.textContent =
-    `GitHubの集計結果：${loadedCount} 譜面` +
-    (legacyAdded ? `（ブラウザ内の以前の記録から ${legacyAdded} 譜面を追加）` : '') +
-    (loadedCount ? '' : '（ファイルがないか、まだ空です）');
+    (loadedLevels.length
+      ? `GitHubの集計結果：${loadedLevels.join('、')}`
+      : 'GitHubの集計結果：まだありません') +
+    (migrated ? `。以前の形式の記録から ${migrated} 譜面を引き継ぎました（ダウンロードしてレベルごとのファイルに移してください）` : '');
   startBtn.disabled = false;
   viewBtn.disabled = rows().length === 0;
 
@@ -429,11 +449,22 @@
 
     const dl = el('div', 'row');
     dl.style.marginTop = '14px';
-    const csvBtn = el('button', 'primary', 'CSVをダウンロード');
-    const jsonBtn = el('button', '', 'JSONをダウンロード');
+    // レベルごとのJSONを書き出す（ブラウザが「複数ファイルのダウンロード」の許可を求めることがあります）
+    const downloadLevels = async (lvList) => {
+      for (const lv of lvList) {
+        const arr = all.filter((r) => r.level === lv).sort(byAvgDesc);
+        download(fileOfLevel(lv), JSON.stringify(arr, null, 1), 'application/json');
+        await sleep(400);
+      }
+    };
+    const changed = [...changedLevels].sort((a, b) => levelOrder(b) - levelOrder(a));
+    const jsonBtn = el('button', 'primary',
+      changed.length ? `更新したレベルのJSONをダウンロード（${changed.map((l) => 'Lv' + l).join('・')}）` : '更新したレベルはありません');
+    jsonBtn.disabled = !changed.length;
+    jsonBtn.onclick = () => downloadLevels(changed);
+    const csvBtn = el('button', '', 'CSVをダウンロード（全レベル）');
     csvBtn.onclick = () => download(`dxscore_ranking_${stamp()}.csv`, toCsv(all.sort(byAvgDesc)), 'text/csv');
-    jsonBtn.onclick = () => download(RESULTS_FILE, JSON.stringify(all.sort(byAvgDesc), null, 1), 'application/json');
-    dl.append(csvBtn, jsonBtn);
+    dl.append(jsonBtn, csvBtn);
 
     const levels = [...new Set(all.map((r) => r.level))].sort((a, b) => levelOrder(b) - levelOrder(a));
     const tabs = el('div', 'tabs');
@@ -529,7 +560,14 @@
         );
         list.appendChild(row);
       });
-      listBox.replaceChildren(list);
+      const tools = el('div', 'row');
+      tools.style.margin = '0 0 8px';
+      if (key !== '*') {
+        const one = el('button', '', `Lv${key} のJSONをダウンロード`);
+        one.onclick = () => downloadLevels([key]);
+        tools.appendChild(one);
+      }
+      listBox.replaceChildren(tools, list);
     }
 
     resultCard.append(dl, tabs, listBox);
@@ -591,6 +629,7 @@
           const detail = parseDetail(await fetchDoc(DETAIL_URL(c.idx, c.diff)));
           results[keyOf(c)] = summarize(c, detail, consts);
           newCount++;
+          changedLevels.add(c.level);
         } catch (e) {
           console.warn('取得に失敗した譜面', c.name, e);
         }
@@ -602,7 +641,7 @@
       setStatus((stopped
         ? `中止しました（選んだ範囲の ${doneNow}/${charts.length} 譜面が集計済み、今回 ${newCount} 譜面を取得）。`
         : `完了しました（今回 ${newCount} 譜面を取得）。`) +
-        (newCount ? '「JSONをダウンロード」で保存し、GitHubのファイルを置き換えてください。' : ''));
+        (changedLevels.size ? '「更新したレベルのJSONをダウンロード」で保存し、GitHubの ranking フォルダのファイルを置き換えてください。' : ''));
       renderResults(levelLabel(to));
     } catch (e) {
       setStatus('エラー: ' + e.message);
