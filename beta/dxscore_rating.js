@@ -724,30 +724,47 @@
       // 順位（ジャケット左上）
       pill(ctx, jx + 6, jy + 6, `#${i + 1}`, { bg: 'rgba(43,35,80,.88)', fg: '#FFFFFF', h: 26, size: 14, padX: 9 });
 
-      // 1段目：DX/ST・難易度（左）、譜面定数（右）
-      const r1 = jy + J + 8;
-      let px = jx;
+      // ジャケット下部：DX/ST・難易度（左）、譜面定数（右）
+      // 文字が絵柄に埋もれないよう、下側を暗くしてからラベルを置く
+      ctx.save();
+      roundRect(ctx, jx, jy, J, J, 12);
+      ctx.clip();
+      const shade = ctx.createLinearGradient(0, jy + J - 56, 0, jy + J);
+      shade.addColorStop(0, 'rgba(20,16,40,0)');
+      shade.addColorStop(1, 'rgba(20,16,40,.72)');
+      ctx.fillStyle = shade;
+      ctx.fillRect(jx, jy + J - 56, J, 56);
+      ctx.restore();
+
+      const r1 = jy + J - 30;
+      let px = jx + 6;
       px += pill(ctx, px, r1, s.kind, {
         bg: s.kind === 'ST' ? '#3B82C4' : (lx, w) => {
           const g = ctx.createLinearGradient(lx, 0, lx + w, 0);
           g.addColorStop(0, '#E0348C'); g.addColorStop(1, '#F29A2E');
           return g;
         },
-        fg: '#FFFFFF', h: 22, size: 12, padX: 7,
+        fg: '#FFFFFF', h: 24, size: 12, padX: 7,
       }) + 4;
       const isRe = s.diff === 'Re:MASTER';
       pill(ctx, px, r1, s.diff, {
         bg: isRe ? '#FFFFFF' : DIFF_COLOR[s.diff] ?? '#999', fg: isRe ? '#8E44D6' : '#FFFFFF',
-        border: isRe ? '#B68BE0' : null, h: 22, size: 12, padX: 7,
+        border: isRe ? '#B68BE0' : null, h: 24, size: 12, padX: 7,
       });
-      ctx.font = `800 17px ${IMG.font}`;
+      pill(ctx, jx + J - 6, r1, `${s.c.toFixed(1)}${s.estimated ? '*' : ''}`, {
+        bg: 'rgba(255,255,255,.95)', fg: IMG.ink, h: 24, size: 14, padX: 8, align: 'right',
+      });
+
+      // 1段目：楽曲名（長い場合は末尾を「…」で省略）
+      const r0 = jy + J + 8;
+      ctx.font = `700 15px ${IMG.font}`;
       ctx.fillStyle = IMG.ink;
-      ctx.textAlign = 'right';
+      ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText(`${s.c.toFixed(1)}${s.estimated ? '*' : ''}`, jx + J, r1 + 12);
+      ctx.fillText(fitText(ctx, s.name, J), jx, r0 + 11);
 
       // 2段目：☆（左）、単曲レート値（右）
-      const r2 = r1 + 30;
+      const r2 = r0 + 30;
       const sc = starPillColor(s.stars);
       pill(ctx, jx, r2, `☆${starDisplay(s.cur, s.max)}`, {
         bg: s.stars >= 7 ? (lx, w) => rainbow(ctx, lx, w) : sc, fg: IMG.ink, h: 26, size: 14, padX: 10,
