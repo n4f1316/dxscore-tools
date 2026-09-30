@@ -324,6 +324,11 @@
       font: inherit; font-weight: 800; color: #fff; background: var(--pink); border: 0; cursor: pointer;
     }
     .dxr-share:disabled { opacity: .6; cursor: default; }
+    .dxr-share-opt {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      margin: -8px 0 16px; font-size: 13px; font-weight: 700; color: var(--sub); cursor: pointer;
+    }
+    .dxr-share-opt input { width: 16px; height: 16px; accent-color: var(--pink); }
     .dxr-note { margin-top: 14px; font-size: 12px; color: var(--sub); line-height: 1.7; }
 
     /* スマホ幅：MAX差を曲名の下へ回す */
@@ -652,7 +657,8 @@
     return '#EFECF9';
   }
 
-  async function buildShareImage(profile, result, jackets) {
+  // options.hideProfile が true なら、プレイヤー名と称号を載せない（アイコンとレートは載せる）
+  async function buildShareImage(profile, result, jackets, options = {}) {
     const { cols, rows, pad, gap, cellW, jacket: J, cellH, headH, footH } = IMG;
     const W = pad * 2 + cols * cellW + (cols - 1) * gap;
     const H = pad * 2 + headH + rows * cellH + (rows - 1) * gap + footH;
@@ -702,18 +708,27 @@
     const tx = ix + iconSize + 20;
     const rateW = 400;
     const textMax = W - pad * 2 - (tx - hx) - rateW - 20;
-    if (profile.trophy) {
-      ctx.font = `800 21px ${IMG.font}`;
-      const [tbg, tfg] = TROPHY_COLOR[profile.trophyRank] ?? TROPHY_COLOR.Normal;
-      pill(ctx, tx, iy + 8, fitText(ctx, profile.trophy, textMax - 36), {
-        bg: tbg ?? ((x, w) => rainbow(ctx, x, w)), fg: tfg, h: 40, size: 21, padX: 18,
-      });
+    if (options.hideProfile) {
+      // 名前と称号の代わりに、何の画像かがわかる見出しを入れる
+      ctx.font = `800 40px ${IMG.font}`;
+      ctx.fillStyle = IMG.ink;
+      ctx.textBaseline = 'alphabetic';
+      ctx.textAlign = 'left';
+      ctx.fillText(fitText(ctx, `レート対象曲 上位${TOP_N}`, textMax), tx, iy + 84);
+    } else {
+      if (profile.trophy) {
+        ctx.font = `800 21px ${IMG.font}`;
+        const [tbg, tfg] = TROPHY_COLOR[profile.trophyRank] ?? TROPHY_COLOR.Normal;
+        pill(ctx, tx, iy + 8, fitText(ctx, profile.trophy, textMax - 36), {
+          bg: tbg ?? ((x, w) => rainbow(ctx, x, w)), fg: tfg, h: 40, size: 21, padX: 18,
+        });
+      }
+      ctx.font = `800 50px ${IMG.font}`;
+      ctx.fillStyle = IMG.ink;
+      ctx.textBaseline = 'alphabetic';
+      ctx.textAlign = 'left';
+      ctx.fillText(fitText(ctx, profile.name || 'プレイヤー', textMax), tx, iy + 114);
     }
-    ctx.font = `800 50px ${IMG.font}`;
-    ctx.fillStyle = IMG.ink;
-    ctx.textBaseline = 'alphabetic';
-    ctx.textAlign = 'left';
-    ctx.fillText(fitText(ctx, profile.name || 'プレイヤー', textMax), tx, iy + 114);
 
     const rx = W - pad - 24;
     ctx.textAlign = 'right';
@@ -823,7 +838,7 @@
   }
 
   // 別タブに画像を表示する（スマホは長押しで保存、PCはダウンロードボタン）
-  async function openShareImage(profile, result, jackets, button) {
+  async function openShareImage(profile, result, jackets, button, options = {}) {
     // ポップアップがブロックされないよう、押した瞬間に先にタブを開いておく
     const win = window.open('', '_blank');
     if (win) {
@@ -835,7 +850,7 @@
     button.disabled = true;
     button.textContent = '画像を作成中…';
     try {
-      const canvas = await buildShareImage(profile, result, jackets);
+      const canvas = await buildShareImage(profile, result, jackets, options);
       const url = canvas.toDataURL('image/png');
       const d = new Date();
       const p2 = (v) => String(v).padStart(2, '0');
@@ -936,7 +951,14 @@
       shareBtn.textContent = `「${results[i].mode.label}」の上位${TOP_N}を画像にする`;
     }
     select(0);
-    shareBtn.onclick = () => openShareImage(profile, results[selected], jackets, shareBtn);
+    // 画像にプレイヤー名と称号を載せるかの切り替え（両方表示 / 両方非表示）
+    const showLabel = el('label', 'dxr-share-opt');
+    const showCb = el('input');
+    showCb.type = 'checkbox';
+    showCb.checked = true;
+    showLabel.append(showCb, document.createTextNode('画像にプレイヤー名と称号を載せる'));
+    shareBtn.onclick = () =>
+      openShareImage(profile, results[selected], jackets, shareBtn, { hideProfile: !showCb.checked });
 
     const hasEst = results.some(({ top }) => top.some((s) => s.estimated));
     const note = el('p', 'dxr-note',
@@ -946,7 +968,7 @@
       '「☆6まで」は☆7を☆6として、「☆5まで」は☆6以上を☆5として計算しています。' +
       (jackets ? '' : 'ジャケット画像の対応表を読み込めなかったため、画像は表示していません。'));
 
-    ui.body.append(player, plates, shareBtn, ...lists, note);
+    ui.body.append(player, plates, shareBtn, showLabel, ...lists, note);
   }
 
   // ============================================================
