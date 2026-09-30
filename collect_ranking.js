@@ -29,6 +29,7 @@
 
   // ジャケット画像（2fRATE と同じ対応表を使う）
   const JACKETS_URL = 'https://n4f1316.github.io/dxscore-tools/maimai_jackets.json';
+  const OVERRIDES_URL = 'https://n4f1316.github.io/dxscore-tools/jacket_overrides.json'; // 同名曲の手動対応表
   const JACKET_BASE = 'https://maimaidx.jp/maimai-mobile/img/Music/';
 
   const LIST_URL = (lv, d) =>
@@ -85,11 +86,17 @@
   //   通常の曲：値は画像ファイル名（文字列）
   //   同名の別曲：値は候補の配列 [{ img, genre, st: [BAS..ReMAS のレベル], dx: [...] }]
   //   → 種別・難易度・レベルが一致する候補が1つだけなら、その曲と判断する
-  function resolveSong(map, name, kind, diffIdx, level) {
+  function resolveSong(map, name, kind, diffIdx, level, max) {
     const v = map?.get(name);
     if (!v) return null;
     if (typeof v === 'string') return { img: v, genre: null };
     if (!Array.isArray(v)) return null;
+    // 手動の対応表（同名の別曲で、レベルまで同じ譜面用）：「曲名|種別|難易度|最大値」→ ジャンル
+    const g = jacketOverrides?.[`${name}|${kind}|${DIFF_NAMES[diffIdx]}|${max}`];
+    if (g) {
+      const c = v.find((x) => x.genre === g);
+      if (c) return { img: c.img, genre: c.genre };
+    }
     const k = kind === 'ST' ? 'st' : 'dx';
     const hits = v.filter((c) => c[k]?.[diffIdx] === level);
     return hits.length === 1 ? { img: hits[0].img, genre: hits[0].genre } : null;
@@ -360,6 +367,7 @@
   let results = {};
   let loadedCount = 0;
   let jackets = null; // 曲名 → ジャケット画像のファイル名（同名の別曲は候補の一覧）
+  let jacketOverrides = {}; // 同名曲でレベルも同じ譜面の手動対応表
   const changedLevels = new Set(); // 今回の実行で内容が変わったレベル（ダウンロード対象）
   const rows = () => Object.values(results);
 
@@ -484,6 +492,7 @@
   });
   loadedCount = rows().length;
   jackets = await jacketsPromise;
+  jacketOverrides = (await fetch(OVERRIDES_URL + '?' + Date.now()).then((r) => (r.ok ? r.json() : {})).catch(() => ({}))) ?? {};
 
   // 以前の1ファイル方式のJSON・ブラウザ内の記録は、レベルごとのファイルにない譜面だけ合流させる
   // （合流した譜面のレベルは「更新あり」にして、次のダウンロードでレベルごとのファイルに書き出す）
@@ -586,7 +595,7 @@
       items.forEach((r, i) => {
         const row = el('div', 'r');
         const main = el('div');
-        const song = resolveSong(jackets, r.name, r.kind, DIFF_NAMES.indexOf(r.diff), r.level);
+        const song = resolveSong(jackets, r.name, r.kind, DIFF_NAMES.indexOf(r.diff), r.level, r.max);
         const nameEl = el('div', 'name', r.name);
         // 同名の別曲は、判別できたときにジャンルを添える
         if (song?.genre) nameEl.appendChild(el('span', 'genre', `（${song.genre}）`));

@@ -119,6 +119,7 @@
   // ===== 設定 =====
   const RESULTS_DIR = 'ranking/';                 // このページと同じ場所の ranking フォルダ
   const JACKETS_URL = 'maimai_jackets.json';      // ジャケット対応表
+  const OVERRIDES_URL = 'jacket_overrides.json';  // 同名曲でレベルも同じ譜面の手動対応表
   // ジャケット画像の置き場所（上から順に試す）
   const JACKET_BASES = [
     'https://maimaidx.jp/maimai-mobile/img/Music/',
@@ -169,11 +170,17 @@
     return isNaN(d) ? null : `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())}`;
   }
   // 同名の別曲は、種別・難易度・レベルが一致する候補が1つだけのときに特定する
-  function resolveSong(map, name, kind, diffIdx, level) {
+  function resolveSong(map, name, kind, diffIdx, level, max) {
     const v = map?.get(name);
     if (!v) return null;
     if (typeof v === 'string') return { img: v, genre: null };
     if (!Array.isArray(v)) return null;
+    // 手動の対応表（同名の別曲で、レベルまで同じ譜面用）：「曲名|種別|難易度|最大値」→ ジャンル
+    const g = jacketOverrides?.[`${name}|${kind}|${DIFF_NAMES[diffIdx]}|${max}`];
+    if (g) {
+      const c = v.find((x) => x.genre === g);
+      if (c) return { img: c.img, genre: c.genre };
+    }
     const k = kind === 'ST' ? 'st' : 'dx';
     const hits = v.filter((c) => c[k]?.[diffIdx] === level);
     return hits.length === 1 ? { img: hits[0].img, genre: hits[0].genre } : null;
@@ -184,6 +191,7 @@
   // ===== 状態 =====
   let all = [];
   let jackets = null;
+  let jacketOverrides = {};
   let currentLevel = null;
   let currentDiffs = null; // null = すべて
   let query = '';
@@ -342,7 +350,7 @@
     shown.forEach((r, j) => {
       const i = start + j; // 通し番号（2ページ目なら101から）
       const row = el('div', 'r');
-      const song = resolveSong(jackets, r.name, r.kind, DIFF_NAMES.indexOf(r.diff), r.level);
+      const song = resolveSong(jackets, r.name, r.kind, DIFF_NAMES.indexOf(r.diff), r.level, r.max);
       const main = el('div');
       const nameEl = el('div', 'name', r.name);
       if (song?.genre) nameEl.appendChild(el('span', 'genre', `（${song.genre}）`));
@@ -396,10 +404,12 @@
   async function load() {
     const labels = [];
     for (let n = LEVEL_MAX; n >= LEVEL_MIN; n--) labels.push(levelLabel(n));
-    const [lists, jmap] = await Promise.all([
+    const [lists, jmap, overrides] = await Promise.all([
       Promise.all(labels.map((lb) => fetchJson(RESULTS_DIR + fileOfLevel(lb)))),
       fetchJson(JACKETS_URL),
+      fetchJson(OVERRIDES_URL),
     ]);
+    jacketOverrides = overrides ?? {};
     jackets = jmap ? new Map(Object.entries(jmap)) : null;
     lists.forEach((list) => {
       if (!list) return;
