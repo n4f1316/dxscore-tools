@@ -318,18 +318,21 @@
   }
 
   // 平均取得率の高い順（取れなかった譜面は最後）
-  // ランキングは上位100人までしか載らないため、100人目まで☆6以上（または☆7）の譜面は、
-  // 実際の人数がもっと多い可能性がある。その場合は「88+」のように下限値として表示する
+  // ランキングは上位100人までしか載らないため、100人目まで☆6以上の譜面は、
+  // ☆6を達成した人（☆7を含む）が100人を超えている可能性がある。その場合は「100+」と表示する
   const isFull = (r) => r.count >= 100 && r.max && r.row100 !== null && r.row100 !== undefined;
   const sat7 = (r) => isFull(r) && r.row100 === r.max;             // 100人全員が☆7
   const sat6 = (r) => isFull(r) && r.row100 * 100 >= r.max * 99;   // 100人目まで☆6以上
   function countCell(r, key) {
     const v = r[key];
-    if (key === 'star6Count' && sat7(r)) return { text: '?', sort: null }; // 全員☆7で☆6の人数は不明
+    // 100人目まで☆6以上で埋まっている譜面は、☆6の欄を「100+」（☆6以上の人数が100人を超える）とする
+    if (key === 'star6Count' && sat6(r)) return { text: '100+', sort: 100.5 };
     if (v === null || v === undefined) return { text: '-', sort: null };
-    const lower = key === 'maxCount' ? sat7(r) : sat6(r);
-    return lower ? { text: `${v}+`, sort: v + 0.5 } : { text: String(v), sort: v };
+    // 100人全員が☆7なら、☆7の人数も100人を超える可能性がある
+    if (key === 'maxCount' && sat7(r)) return { text: `${v}+`, sort: v + 0.5 };
+    return { text: String(v), sort: v };
   }
+
   const sortValue = (r, key) => (key === 'avgPct' ? r.avgPct : countCell(r, key).sort);
 
   const byAvgDesc = (a, b) => (b.avgPct ?? -1) - (a.avgPct ?? -1);
