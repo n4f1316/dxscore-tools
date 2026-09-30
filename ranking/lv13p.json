@@ -1,6 +1,6 @@
 [
  {
-  "date": "2026/9/30 2:38:09",
+  "date": "2026/9/30 12:28:56",
   "name": "お返事まだカナ？おじさん構文！",
   "kind": "DX",
   "diff": "MASTER",
@@ -15,10 +15,11 @@
   "rank100": 95,
   "avgPct": 99.594,
   "avgStar": 6.5,
-  "maxCount": 3
+  "maxCount": 3,
+  "star6Count": 97
  },
  {
-  "date": "2026/9/30 2:38:07",
+  "date": "2026/9/30 12:28:54",
   "name": "モンダイナイトリッパー！",
   "kind": "DX",
   "diff": "MASTER",
@@ -33,10 +34,11 @@
   "rank100": 98,
   "avgPct": 99.582,
   "avgStar": 6.5,
-  "maxCount": 6
+  "maxCount": 6,
+  "star6Count": 94
  },
  {
-  "date": "2026/9/30 2:40:34",
+  "date": "2026/9/30 12:31:21",
   "name": "ありきたりな恋の歌",
   "kind": "DX",
   "diff": "MASTER",
@@ -51,10 +53,11 @@
   "rank100": 80,
   "avgPct": 99.559,
   "avgStar": 6.5,
-  "maxCount": 3
+  "maxCount": 3,
+  "star6Count": 97
  },
  {
-  "date": "2026/9/30 2:44:54",
+  "date": "2026/9/30 12:35:42",
   "name": "エゴロック",
   "kind": "DX",
   "diff": "MASTER",
@@ -69,10 +72,11 @@
   "rank100": 93,
   "avgPct": 99.503,
   "avgStar": 6.5,
-  "maxCount": 5
+  "maxCount": 5,
+  "star6Count": 95
  },
  {
-  "date": "2026/9/30 2:39:02",
+  "date": "2026/9/30 12:29:49",
   "name": "エンジェル ドリーム",
   "kind": "DX",
   "diff": "MASTER",
@@ -87,10 +91,11 @@
   "rank100": 96,
   "avgPct": 99.47,
   "avgStar": 6.4,
-  "maxCount": 1
+  "maxCount": 1,
+  "star6Count": 99
  },
  {
-  "date": "2026/9/30 2:38:58",
+  "date": "2026/9/30 12:29:45",
   "name": "Broomstick adventure!",
   "kind": "DX",
   "diff": "MASTER",
@@ -105,10 +110,11 @@
   "rank100": 94,
   "avgPct": 99.469,
   "avgStar": 6.4,
-  "maxCount": 1
+  "maxCount": 1,
+  "star6Count": 99
  },
  {
-  "date": "2026/9/30 2:46:06",
+  "date": "2026/9/30 12:36:54",
   "name": "Knight Rider",
   "kind": "DX",
   "diff": "MASTER",
@@ -123,10 +129,11 @@
   "rank100": 91,
   "avgPct": 99.406,
   "avgStar": 6.4,
-  "maxCount": 1
+  "maxCount": 1,
+  "star6Count": 99
  },
  {
-  "date": "2026/9/30 2:40:15",
+  "date": "2026/9/30 12:31:02",
   "name": "人マニア",
   "kind": "DX",
   "diff": "MASTER",
@@ -141,10 +148,11 @@
   "rank100": 94,
   "avgPct": 99.387,
   "avgStar": 6.3,
-  "maxCount": 1
+  "maxCount": 1,
+  "star6Count": 99
  },
  {
-  "date": "2026/9/30 2:41:33",
+  "date": "2026/9/30 12:32:21",
   "name": "LOSE CONTROL",
   "kind": "DX",
   "diff": "MASTER",
@@ -159,10 +167,11 @@
   "rank100": 99,
   "avgPct": 99.356,
   "avgStar": 6.3,
-  "maxCount": 1
+  "maxCount": 1,
+  "star6Count": 99
  },
  {
-  "date": "2026/9/30 2:46:38",
+  "date": "2026/9/30 12:37:27",
   "name": "ミルクミルクミルク",
   "kind": "DX",
   "diff": "MASTER",
@@ -177,10 +186,11 @@
   "rank100": 99,
   "avgPct": 99.352,
   "avgStar": 6.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 100
  },
  {
-  "date": "2026/9/30 2:45:00",
+  "date": "2026/9/30 12:35:48",
   "name": "最愛人生ランナー",
   "kind": "DX",
   "diff": "MASTER",
@@ -195,10 +205,11 @@
   "rank100": 91,
   "avgPct": 99.345,
   "avgStar": 6.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 100
  },
  {
-  "date": "2026/9/30 2:38:20",
+  "date": "2026/9/30 12:29:07",
   "name": "命テステス",
   "kind": "DX",
   "diff": "MASTER",
@@ -213,10 +224,11 @@
   "rank100": 97,
   "avgPct": 99.312,
   "avgStar": 6.3,
-  "maxCount": 1
+  "maxCount": 1,
+  "star6Count": 99
  },
  {
-  "date": "2026/9/30 2:43:50",
+  "date": "2026/9/30 12:34:38",
   "name": "See The Light",
   "kind": "DX",
   "diff": "MASTER",
@@ -231,10 +243,11 @@
   "rank100": 95,
   "avgPct": 99.31,
   "avgStar": 6.3,
-  "maxCount": 1
+  "maxCount": 1,
+  "star6Count": 93
  },
  {
-  "date": "2026/9/30 2:40:13",
+  "date": "2026/9/30 12:31:00",
   "name": "バベル",
   "kind": "DX",
   "diff": "MASTER",
@@ -249,10 +262,11 @@
   "rank100": 95,
   "avgPct": 99.306,
   "avgStar": 6.3,
-  "maxCount": 1
+  "maxCount": 1,
+  "star6Count": 99
  },
  {
-  "date": "2026/9/30 2:42:43",
+  "date": "2026/9/30 12:33:31",
   "name": "生命不詳",
   "kind": "DX",
   "diff": "MASTER",
@@ -267,10 +281,11 @@
   "rank100": 90,
   "avgPct": 99.302,
   "avgStar": 6.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 100
  },
  {
-  "date": "2026/9/30 2:45:53",
+  "date": "2026/9/30 12:36:42",
   "name": "Final Step!",
   "kind": "DX",
   "diff": "MASTER",
@@ -285,10 +300,11 @@
   "rank100": 88,
   "avgPct": 99.293,
   "avgStar": 6.2,
-  "maxCount": 1
+  "maxCount": 1,
+  "star6Count": 99
  },
  {
-  "date": "2026/9/30 2:38:13",
+  "date": "2026/9/30 12:29:01",
   "name": "化けの花",
   "kind": "DX",
   "diff": "MASTER",
@@ -303,10 +319,11 @@
   "rank100": 99,
   "avgPct": 99.281,
   "avgStar": 6.2,
-  "maxCount": 1
+  "maxCount": 1,
+  "star6Count": 97
  },
  {
-  "date": "2026/9/30 2:44:34",
+  "date": "2026/9/30 12:35:23",
   "name": "あつすぎの歌",
   "kind": "DX",
   "diff": "MASTER",
@@ -321,10 +338,11 @@
   "rank100": 95,
   "avgPct": 99.279,
   "avgStar": 6.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 79
  },
  {
-  "date": "2026/9/30 2:38:30",
+  "date": "2026/9/30 12:29:18",
   "name": "バカ通信",
   "kind": "DX",
   "diff": "MASTER",
@@ -339,10 +357,11 @@
   "rank100": 100,
   "avgPct": 99.263,
   "avgStar": 6.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 100
  },
  {
-  "date": "2026/9/30 2:43:09",
+  "date": "2026/9/30 12:33:57",
   "name": "TwisteD! XD",
   "kind": "DX",
   "diff": "MASTER",
@@ -357,10 +376,11 @@
   "rank100": 92,
   "avgPct": 99.258,
   "avgStar": 6.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 91
  },
  {
-  "date": "2026/9/30 2:40:25",
+  "date": "2026/9/30 12:31:13",
   "name": "ずんだパーリナイ",
   "kind": "DX",
   "diff": "MASTER",
@@ -375,10 +395,11 @@
   "rank100": 91,
   "avgPct": 99.244,
   "avgStar": 6.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 90
  },
  {
-  "date": "2026/9/30 2:45:02",
+  "date": "2026/9/30 12:35:50",
   "name": "しゅ～しん？変身☆ハカイシンzzZ",
   "kind": "DX",
   "diff": "MASTER",
@@ -393,10 +414,11 @@
   "rank100": 99,
   "avgPct": 99.243,
   "avgStar": 6.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 98
  },
  {
-  "date": "2026/9/30 2:53:44",
+  "date": "2026/9/30 12:43:08",
   "name": "シエルブルーマルシェ",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -411,10 +433,11 @@
   "rank100": 95,
   "avgPct": 99.238,
   "avgStar": 6.2,
-  "maxCount": 7
+  "maxCount": 7,
+  "star6Count": 75
  },
  {
-  "date": "2026/9/30 2:40:02",
+  "date": "2026/9/30 12:30:49",
   "name": "REVIVER オルタンシア・サーガ -蒼の騎士団- オリジナルVer.",
   "kind": "ST",
   "diff": "MASTER",
@@ -429,10 +452,11 @@
   "rank100": 93,
   "avgPct": 99.191,
   "avgStar": 6.1,
-  "maxCount": 2
+  "maxCount": 2,
+  "star6Count": 74
  },
  {
-  "date": "2026/9/30 2:41:12",
+  "date": "2026/9/30 12:32:00",
   "name": "RE Aoharu",
   "kind": "DX",
   "diff": "MASTER",
@@ -447,10 +471,11 @@
   "rank100": 92,
   "avgPct": 99.164,
   "avgStar": 6.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 67
  },
  {
-  "date": "2026/9/30 2:44:50",
+  "date": "2026/9/30 12:35:38",
   "name": "病み垢ステロイド",
   "kind": "DX",
   "diff": "MASTER",
@@ -465,10 +490,11 @@
   "rank100": 98,
   "avgPct": 99.149,
   "avgStar": 6.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 83
  },
  {
-  "date": "2026/9/30 2:42:11",
+  "date": "2026/9/30 12:32:59",
   "name": "Back 2 Back",
   "kind": "ST",
   "diff": "MASTER",
@@ -483,10 +509,11 @@
   "rank100": 98,
   "avgPct": 99.131,
   "avgStar": 6.1,
-  "maxCount": 3
+  "maxCount": 3,
+  "star6Count": 53
  },
  {
-  "date": "2026/9/30 2:49:57",
+  "date": "2026/9/30 12:39:33",
   "name": "推活天使ビビアンちゃん (feat.マスタード＆ビートまりお)",
   "kind": "DX",
   "diff": "MASTER",
@@ -501,10 +528,11 @@
   "rank100": 99,
   "avgPct": 99.126,
   "avgStar": 6.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 62
  },
  {
-  "date": "2026/9/30 2:46:59",
+  "date": "2026/9/30 12:37:48",
   "name": "Rainbow Rush Story",
   "kind": "DX",
   "diff": "MASTER",
@@ -519,10 +547,11 @@
   "rank100": 97,
   "avgPct": 99.119,
   "avgStar": 6.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 69
  },
  {
-  "date": "2026/9/30 2:38:39",
+  "date": "2026/9/30 12:29:26",
   "name": "木彫り鯰と右肩ゾンビ",
   "kind": "ST",
   "diff": "MASTER",
@@ -537,10 +566,11 @@
   "rank100": 99,
   "avgPct": 99.114,
   "avgStar": 6.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 70
  },
  {
-  "date": "2026/9/30 2:46:27",
+  "date": "2026/9/30 12:37:16",
   "name": "Maxi",
   "kind": "DX",
   "diff": "MASTER",
@@ -555,10 +585,11 @@
   "rank100": 98,
   "avgPct": 99.113,
   "avgStar": 6.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 61
  },
  {
-  "date": "2026/9/30 2:40:42",
+  "date": "2026/9/30 12:31:30",
   "name": "どうしてこうなった",
   "kind": "ST",
   "diff": "MASTER",
@@ -573,10 +604,11 @@
   "rank100": 100,
   "avgPct": 99.108,
   "avgStar": 6.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 66
  },
  {
-  "date": "2026/9/30 2:38:56",
+  "date": "2026/9/30 12:29:43",
   "name": "Paranoia",
   "kind": "ST",
   "diff": "MASTER",
@@ -591,10 +623,11 @@
   "rank100": 98,
   "avgPct": 99.102,
   "avgStar": 6.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 61
  },
  {
-  "date": "2026/9/30 2:50:24",
+  "date": "2026/9/30 12:39:56",
   "name": "マツヨイナイトバグ",
   "kind": "DX",
   "diff": "MASTER",
@@ -609,10 +642,11 @@
   "rank100": 93,
   "avgPct": 99.094,
   "avgStar": 6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 63
  },
  {
-  "date": "2026/9/30 2:46:44",
+  "date": "2026/9/30 12:37:33",
   "name": "Aides",
   "kind": "DX",
   "diff": "MASTER",
@@ -627,10 +661,11 @@
   "rank100": 91,
   "avgPct": 99.085,
   "avgStar": 6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 55
  },
  {
-  "date": "2026/9/30 2:44:24",
+  "date": "2026/9/30 12:35:12",
   "name": "ボックスワンターバ〜ン",
   "kind": "DX",
   "diff": "MASTER",
@@ -645,10 +680,11 @@
   "rank100": 96,
   "avgPct": 99.079,
   "avgStar": 6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 57
  },
  {
-  "date": "2026/9/30 2:38:49",
+  "date": "2026/9/30 12:29:37",
   "name": "むしみこうにゃーのハッピッピー",
   "kind": "DX",
   "diff": "MASTER",
@@ -663,10 +699,11 @@
   "rank100": 97,
   "avgPct": 99.07,
   "avgStar": 6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 52
  },
  {
-  "date": "2026/9/30 2:41:03",
+  "date": "2026/9/30 12:31:51",
   "name": "物凄い勢いでけーねが物凄いうた",
   "kind": "DX",
   "diff": "MASTER",
@@ -681,10 +718,11 @@
   "rank100": 91,
   "avgPct": 99.047,
   "avgStar": 6,
-  "maxCount": 1
+  "maxCount": 1,
+  "star6Count": 51
  },
  {
-  "date": "2026/9/30 2:45:58",
+  "date": "2026/9/30 12:36:46",
   "name": "Cyaegha",
   "kind": "DX",
   "diff": "MASTER",
@@ -699,10 +737,11 @@
   "rank100": 99,
   "avgPct": 99.019,
   "avgStar": 6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 48
  },
  {
-  "date": "2026/9/30 2:42:33",
+  "date": "2026/9/30 12:33:21",
   "name": "Geranium",
   "kind": "DX",
   "diff": "MASTER",
@@ -717,10 +756,11 @@
   "rank100": 95,
   "avgPct": 99.017,
   "avgStar": 6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 50
  },
  {
-  "date": "2026/9/30 2:45:30",
+  "date": "2026/9/30 12:36:18",
   "name": "ネクロファンタジア～Arr.Demetori",
   "kind": "ST",
   "diff": "MASTER",
@@ -735,10 +775,11 @@
   "rank100": 98,
   "avgPct": 99.007,
   "avgStar": 6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 49
  },
  {
-  "date": "2026/9/30 2:43:34",
+  "date": "2026/9/30 12:34:23",
   "name": "魔ジョ狩リ",
   "kind": "DX",
   "diff": "MASTER",
@@ -753,10 +794,11 @@
   "rank100": 99,
   "avgPct": 98.99,
   "avgStar": 5.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 38
  },
  {
-  "date": "2026/9/30 2:45:15",
+  "date": "2026/9/30 12:36:03",
   "name": "人生リセットボタン",
   "kind": "ST",
   "diff": "MASTER",
@@ -771,10 +813,11 @@
   "rank100": 100,
   "avgPct": 98.97,
   "avgStar": 5.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 47
  },
  {
-  "date": "2026/9/30 2:38:05",
+  "date": "2026/9/30 12:28:52",
   "name": "ホラフキパペット",
   "kind": "DX",
   "diff": "MASTER",
@@ -789,10 +832,11 @@
   "rank100": 100,
   "avgPct": 98.967,
   "avgStar": 5.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 37
  },
  {
-  "date": "2026/9/30 2:41:39",
+  "date": "2026/9/30 12:32:28",
   "name": "MAGENTA POTION",
   "kind": "DX",
   "diff": "MASTER",
@@ -807,10 +851,11 @@
   "rank100": 99,
   "avgPct": 98.959,
   "avgStar": 5.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 45
  },
  {
-  "date": "2026/9/30 2:49:27",
+  "date": "2026/9/30 12:39:02",
   "name": "Last Kingdom",
   "kind": "DX",
   "diff": "MASTER",
@@ -825,10 +870,11 @@
   "rank100": 97,
   "avgPct": 98.937,
   "avgStar": 5.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 44
  },
  {
-  "date": "2026/9/30 2:40:27",
+  "date": "2026/9/30 12:31:15",
   "name": "snooze",
   "kind": "DX",
   "diff": "MASTER",
@@ -843,10 +889,11 @@
   "rank100": 98,
   "avgPct": 98.931,
   "avgStar": 5.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 42
  },
  {
-  "date": "2026/9/30 2:54:07",
+  "date": "2026/9/30 12:43:32",
   "name": "INTERNET YAMERO",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -861,10 +908,11 @@
   "rank100": 97,
   "avgPct": 98.92,
   "avgStar": 5.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 30
  },
  {
-  "date": "2026/9/30 2:44:45",
+  "date": "2026/9/30 12:35:33",
   "name": "イガク",
   "kind": "DX",
   "diff": "MASTER",
@@ -879,10 +927,11 @@
   "rank100": 98,
   "avgPct": 98.9,
   "avgStar": 5.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 35
  },
  {
-  "date": "2026/9/30 2:38:52",
+  "date": "2026/9/30 12:29:39",
   "name": "Calamity Fortune",
   "kind": "DX",
   "diff": "MASTER",
@@ -897,10 +946,11 @@
   "rank100": 95,
   "avgPct": 98.888,
   "avgStar": 5.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 35
  },
  {
-  "date": "2026/9/30 2:45:45",
+  "date": "2026/9/30 12:36:33",
   "name": "Leave All Behind",
   "kind": "DX",
   "diff": "MASTER",
@@ -915,10 +965,11 @@
   "rank100": 91,
   "avgPct": 98.883,
   "avgStar": 5.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 33
  },
  {
-  "date": "2026/9/30 2:43:18",
+  "date": "2026/9/30 12:34:06",
   "name": "You Mean the World to Me",
   "kind": "DX",
   "diff": "MASTER",
@@ -933,10 +984,11 @@
   "rank100": 99,
   "avgPct": 98.869,
   "avgStar": 5.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 31
  },
  {
-  "date": "2026/9/30 2:44:28",
+  "date": "2026/9/30 12:35:16",
   "name": "きゅびびびびずむ",
   "kind": "DX",
   "diff": "MASTER",
@@ -951,10 +1003,11 @@
   "rank100": 97,
   "avgPct": 98.869,
   "avgStar": 5.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 31
  },
  {
-  "date": "2026/9/30 2:46:55",
+  "date": "2026/9/30 12:37:44",
   "name": "Eternal Return",
   "kind": "DX",
   "diff": "MASTER",
@@ -969,10 +1022,11 @@
   "rank100": 97,
   "avgPct": 98.856,
   "avgStar": 5.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 27
  },
  {
-  "date": "2026/9/30 2:53:54",
+  "date": "2026/9/30 12:43:19",
   "name": "時計の国のジェミニ",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -987,10 +1041,11 @@
   "rank100": 98,
   "avgPct": 98.853,
   "avgStar": 5.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 30
  },
  {
-  "date": "2026/9/30 2:51:46",
+  "date": "2026/9/30 12:41:11",
   "name": "Arty Party",
   "kind": "DX",
   "diff": "MASTER",
@@ -1005,10 +1060,11 @@
   "rank100": 98,
   "avgPct": 98.844,
   "avgStar": 5.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 33
  },
  {
-  "date": "2026/9/30 2:38:37",
+  "date": "2026/9/30 12:29:24",
   "name": "おちゃめ機能",
   "kind": "ST",
   "diff": "MASTER",
@@ -1023,10 +1079,11 @@
   "rank100": 95,
   "avgPct": 98.841,
   "avgStar": 5.9,
-  "maxCount": 2
+  "maxCount": 2,
+  "star6Count": 35
  },
  {
-  "date": "2026/9/30 2:45:49",
+  "date": "2026/9/30 12:36:37",
   "name": "OMAKENO Stroke",
   "kind": "DX",
   "diff": "MASTER",
@@ -1041,10 +1098,11 @@
   "rank100": 91,
   "avgPct": 98.833,
   "avgStar": 5.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 24
  },
  {
-  "date": "2026/9/30 2:40:00",
+  "date": "2026/9/30 12:30:47",
   "name": "スナネコのうた",
   "kind": "DX",
   "diff": "MASTER",
@@ -1059,10 +1117,11 @@
   "rank100": 98,
   "avgPct": 98.822,
   "avgStar": 5.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 22
  },
  {
-  "date": "2026/9/30 2:53:09",
+  "date": "2026/9/30 12:42:34",
   "name": "イーヴィルガール",
   "kind": "DX",
   "diff": "MASTER",
@@ -1077,10 +1136,11 @@
   "rank100": 95,
   "avgPct": 98.814,
   "avgStar": 5.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 28
  },
  {
-  "date": "2026/9/30 2:41:20",
+  "date": "2026/9/30 12:32:08",
   "name": "月面基地",
   "kind": "DX",
   "diff": "MASTER",
@@ -1095,10 +1155,11 @@
   "rank100": 97,
   "avgPct": 98.797,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 28
  },
  {
-  "date": "2026/9/30 2:38:03",
+  "date": "2026/9/30 12:28:50",
   "name": "どんぐりGAME",
   "kind": "DX",
   "diff": "MASTER",
@@ -1113,10 +1174,11 @@
   "rank100": 92,
   "avgPct": 98.784,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 21
  },
  {
-  "date": "2026/9/30 2:46:42",
+  "date": "2026/9/30 12:37:31",
   "name": "KNØCK ØUT!!",
   "kind": "DX",
   "diff": "MASTER",
@@ -1131,10 +1193,11 @@
   "rank100": 97,
   "avgPct": 98.783,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 27
  },
  {
-  "date": "2026/9/30 2:45:24",
+  "date": "2026/9/30 12:36:12",
   "name": "Nyan Cat EX",
   "kind": "ST",
   "diff": "MASTER",
@@ -1149,10 +1212,11 @@
   "rank100": 97,
   "avgPct": 98.775,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 40
  },
  {
-  "date": "2026/9/30 2:49:50",
+  "date": "2026/9/30 12:39:26",
   "name": "宛城、炎上！！",
   "kind": "DX",
   "diff": "MASTER",
@@ -1167,10 +1231,11 @@
   "rank100": 93,
   "avgPct": 98.771,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 19
  },
  {
-  "date": "2026/9/30 2:47:29",
+  "date": "2026/9/30 12:38:19",
   "name": "enchanted wanderer",
   "kind": "DX",
   "diff": "MASTER",
@@ -1185,10 +1250,11 @@
   "rank100": 93,
   "avgPct": 98.768,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 20
  },
  {
-  "date": "2026/9/30 2:53:24",
+  "date": "2026/9/30 12:42:49",
   "name": "プラネタリウム・レヴュー",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -1203,10 +1269,11 @@
   "rank100": 97,
   "avgPct": 98.746,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 21
  },
  {
-  "date": "2026/9/30 2:50:27",
+  "date": "2026/9/30 12:39:58",
   "name": "最終鬼畜妹・一部声",
   "kind": "ST",
   "diff": "MASTER",
@@ -1221,10 +1288,11 @@
   "rank100": 99,
   "avgPct": 98.741,
   "avgStar": 5.8,
-  "maxCount": 1
+  "maxCount": 1,
+  "star6Count": 27
  },
  {
-  "date": "2026/9/30 2:51:25",
+  "date": "2026/9/30 12:40:50",
   "name": "MEGATON KICK",
   "kind": "DX",
   "diff": "MASTER",
@@ -1239,10 +1307,30 @@
   "rank100": 93,
   "avgPct": 98.735,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 27
  },
  {
-  "date": "2026/9/30 2:53:35",
+  "date": "2026/9/30 12:31:57",
+  "name": "The Happycore Idol",
+  "kind": "DX",
+  "diff": "MASTER",
+  "level": "13+",
+  "const": 13.7,
+  "max": 2346,
+  "count": 100,
+  "top1": 2340,
+  "row50": 2314,
+  "rank50": 50,
+  "row100": 2307,
+  "rank100": 94,
+  "avgPct": 98.722,
+  "avgStar": 5.8,
+  "maxCount": 0,
+  "star6Count": 22
+ },
+ {
+  "date": "2026/9/30 12:43:00",
   "name": "テトリス",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -1257,28 +1345,11 @@
   "rank100": 86,
   "avgPct": 98.722,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 17
  },
  {
-  "date": "2026/9/30 2:41:10",
-  "name": "The Happycore Idol",
-  "kind": "DX",
-  "diff": "MASTER",
-  "level": "13+",
-  "const": 13.7,
-  "max": 2346,
-  "count": 100,
-  "top1": 2340,
-  "row50": 2314,
-  "rank50": 50,
-  "row100": 2307,
-  "rank100": 93,
-  "avgPct": 98.721,
-  "avgStar": 5.8,
-  "maxCount": 0
- },
- {
-  "date": "2026/9/30 2:49:42",
+  "date": "2026/9/30 12:39:17",
   "name": "ピュグマリオンの咒文",
   "kind": "DX",
   "diff": "MASTER",
@@ -1293,10 +1364,11 @@
   "rank100": 94,
   "avgPct": 98.72,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 17
  },
  {
-  "date": "2026/9/30 2:42:05",
+  "date": "2026/9/30 12:32:53",
   "name": "コトバ・カラフル",
   "kind": "ST",
   "diff": "MASTER",
@@ -1311,10 +1383,11 @@
   "rank100": 92,
   "avgPct": 98.704,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 23
  },
  {
-  "date": "2026/9/30 2:39:22",
+  "date": "2026/9/30 12:30:08",
   "name": "エスオーエス",
   "kind": "DX",
   "diff": "MASTER",
@@ -1329,10 +1402,11 @@
   "rank100": 97,
   "avgPct": 98.697,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 20
  },
  {
-  "date": "2026/9/30 2:43:00",
+  "date": "2026/9/30 12:33:49",
   "name": "ネコ日和。",
   "kind": "DX",
   "diff": "MASTER",
@@ -1347,10 +1421,11 @@
   "rank100": 90,
   "avgPct": 98.68,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 21
  },
  {
-  "date": "2026/9/30 2:45:28",
+  "date": "2026/9/30 12:36:16",
   "name": "儚きもの人間",
   "kind": "ST",
   "diff": "MASTER",
@@ -1365,10 +1440,11 @@
   "rank100": 96,
   "avgPct": 98.676,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 24
  },
  {
-  "date": "2026/9/30 2:41:35",
+  "date": "2026/9/30 12:32:23",
   "name": "Altale",
   "kind": "ST",
   "diff": "MASTER",
@@ -1383,10 +1459,11 @@
   "rank100": 93,
   "avgPct": 98.671,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 18
  },
  {
-  "date": "2026/9/30 2:51:33",
+  "date": "2026/9/30 12:40:58",
   "name": "Caterpillar Song",
   "kind": "DX",
   "diff": "MASTER",
@@ -1401,10 +1478,11 @@
   "rank100": 100,
   "avgPct": 98.654,
   "avgStar": 5.8,
-  "maxCount": 1
+  "maxCount": 1,
+  "star6Count": 20
  },
  {
-  "date": "2026/9/30 2:54:09",
+  "date": "2026/9/30 12:43:34",
   "name": "メズマライザー",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -1419,10 +1497,11 @@
   "rank100": 99,
   "avgPct": 98.648,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 19
  },
  {
-  "date": "2026/9/30 2:53:33",
+  "date": "2026/9/30 12:42:58",
   "name": "うぇいびー",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -1437,10 +1516,11 @@
   "rank100": 97,
   "avgPct": 98.644,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 19
  },
  {
-  "date": "2026/9/30 2:46:51",
+  "date": "2026/9/30 12:37:40",
   "name": "フェイクフェイス・フェイルセイフ",
   "kind": "DX",
   "diff": "MASTER",
@@ -1455,10 +1535,11 @@
   "rank100": 92,
   "avgPct": 98.643,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 11
  },
  {
-  "date": "2026/9/30 2:52:14",
+  "date": "2026/9/30 12:41:39",
   "name": "TAKE CONTROL",
   "kind": "DX",
   "diff": "MASTER",
@@ -1473,10 +1554,11 @@
   "rank100": 98,
   "avgPct": 98.627,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 16
  },
  {
-  "date": "2026/9/30 2:50:03",
+  "date": "2026/9/30 12:39:39",
   "name": "イレギュラーマン",
   "kind": "DX",
   "diff": "MASTER",
@@ -1491,10 +1573,11 @@
   "rank100": 99,
   "avgPct": 98.619,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 18
  },
  {
-  "date": "2026/9/30 2:44:30",
+  "date": "2026/9/30 12:35:18",
   "name": "偉大なる悪魔は実は大天使パトラちゃん様なのだ！",
   "kind": "DX",
   "diff": "MASTER",
@@ -1509,10 +1592,11 @@
   "rank100": 92,
   "avgPct": 98.615,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 17
  },
  {
-  "date": "2026/9/30 2:44:13",
+  "date": "2026/9/30 12:35:01",
   "name": "CHOCOLATE BOMB!!!!",
   "kind": "DX",
   "diff": "MASTER",
@@ -1527,10 +1611,11 @@
   "rank100": 89,
   "avgPct": 98.614,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 14
  },
  {
-  "date": "2026/9/30 2:47:31",
+  "date": "2026/9/30 12:38:21",
   "name": "Churros Parlor",
   "kind": "DX",
   "diff": "MASTER",
@@ -1545,10 +1630,11 @@
   "rank100": 99,
   "avgPct": 98.607,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 22
  },
  {
-  "date": "2026/9/30 2:40:36",
+  "date": "2026/9/30 12:31:23",
   "name": "月光",
   "kind": "DX",
   "diff": "MASTER",
@@ -1563,10 +1649,11 @@
   "rank100": 88,
   "avgPct": 98.602,
   "avgStar": 5.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 15
  },
  {
-  "date": "2026/9/30 2:49:59",
+  "date": "2026/9/30 12:39:35",
   "name": "モエチャッカファイア",
   "kind": "DX",
   "diff": "MASTER",
@@ -1581,10 +1668,11 @@
   "rank100": 97,
   "avgPct": 98.597,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 14
  },
  {
-  "date": "2026/9/30 2:38:41",
+  "date": "2026/9/30 12:29:28",
   "name": "運命線上のアリア",
   "kind": "DX",
   "diff": "MASTER",
@@ -1599,10 +1687,11 @@
   "rank100": 97,
   "avgPct": 98.589,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 14
  },
  {
-  "date": "2026/9/30 2:39:32",
+  "date": "2026/9/30 12:30:19",
   "name": "記憶、記録",
   "kind": "ST",
   "diff": "MASTER",
@@ -1617,10 +1706,11 @@
   "rank100": 96,
   "avgPct": 98.585,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 13
  },
  {
-  "date": "2026/9/30 2:41:14",
+  "date": "2026/9/30 12:32:02",
   "name": "MORNINGLOOM",
   "kind": "DX",
   "diff": "MASTER",
@@ -1635,10 +1725,11 @@
   "rank100": 99,
   "avgPct": 98.578,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 17
  },
  {
-  "date": "2026/9/30 2:40:55",
+  "date": "2026/9/30 12:31:42",
   "name": "Ultimate taste",
   "kind": "DX",
   "diff": "MASTER",
@@ -1653,10 +1744,11 @@
   "rank100": 95,
   "avgPct": 98.571,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 12
  },
  {
-  "date": "2026/9/30 2:46:48",
+  "date": "2026/9/30 12:37:37",
   "name": "YKWTD",
   "kind": "DX",
   "diff": "MASTER",
@@ -1671,10 +1763,11 @@
   "rank100": 95,
   "avgPct": 98.569,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 11
  },
  {
-  "date": "2026/9/30 2:41:26",
+  "date": "2026/9/30 12:32:14",
   "name": "Alice's Suitcase",
   "kind": "DX",
   "diff": "MASTER",
@@ -1689,10 +1782,11 @@
   "rank100": 94,
   "avgPct": 98.566,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 13
  },
  {
-  "date": "2026/9/30 2:40:48",
+  "date": "2026/9/30 12:31:36",
   "name": "リスペク風神",
   "kind": "DX",
   "diff": "MASTER",
@@ -1707,10 +1801,11 @@
   "rank100": 99,
   "avgPct": 98.554,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 9
  },
  {
-  "date": "2026/9/30 2:38:43",
+  "date": "2026/9/30 12:29:30",
   "name": "ゆけむり魂温泉 II",
   "kind": "DX",
   "diff": "MASTER",
@@ -1725,10 +1820,11 @@
   "rank100": 95,
   "avgPct": 98.551,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 10
  },
  {
-  "date": "2026/9/30 2:44:26",
+  "date": "2026/9/30 12:35:14",
   "name": "Hello, Hologram",
   "kind": "DX",
   "diff": "MASTER",
@@ -1743,10 +1839,11 @@
   "rank100": 98,
   "avgPct": 98.541,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 14
  },
  {
-  "date": "2026/9/30 2:39:39",
+  "date": "2026/9/30 12:30:25",
   "name": "Oshama Scramble!",
   "kind": "DX",
   "diff": "MASTER",
@@ -1761,10 +1858,11 @@
   "rank100": 95,
   "avgPct": 98.53,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 15
  },
  {
-  "date": "2026/9/30 2:41:48",
+  "date": "2026/9/30 12:32:36",
   "name": "MAKE IT FUNKY NOW",
   "kind": "DX",
   "diff": "MASTER",
@@ -1779,10 +1877,11 @@
   "rank100": 98,
   "avgPct": 98.528,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 7
  },
  {
-  "date": "2026/9/30 2:42:13",
+  "date": "2026/9/30 12:33:01",
   "name": "CiRCLE CAMPAiGN",
   "kind": "DX",
   "diff": "MASTER",
@@ -1797,10 +1896,11 @@
   "rank100": 99,
   "avgPct": 98.526,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 10
  },
  {
-  "date": "2026/9/30 2:43:56",
+  "date": "2026/9/30 12:34:44",
   "name": "無敵We are one!!",
   "kind": "ST",
   "diff": "MASTER",
@@ -1815,10 +1915,11 @@
   "rank100": 95,
   "avgPct": 98.521,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 10
  },
  {
-  "date": "2026/9/30 2:44:47",
+  "date": "2026/9/30 12:35:35",
   "name": "ウルトラトレーラー",
   "kind": "DX",
   "diff": "MASTER",
@@ -1833,10 +1934,11 @@
   "rank100": 94,
   "avgPct": 98.52,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 9
  },
  {
-  "date": "2026/9/30 2:46:08",
+  "date": "2026/9/30 12:36:56",
   "name": "Big Daddy",
   "kind": "DX",
   "diff": "MASTER",
@@ -1851,10 +1953,11 @@
   "rank100": 95,
   "avgPct": 98.52,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 9
  },
  {
-  "date": "2026/9/30 2:51:40",
+  "date": "2026/9/30 12:41:05",
   "name": "CHAOS",
   "kind": "DX",
   "diff": "MASTER",
@@ -1869,10 +1972,11 @@
   "rank100": 97,
   "avgPct": 98.517,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 17
  },
  {
-  "date": "2026/9/30 2:40:57",
+  "date": "2026/9/30 12:31:44",
   "name": "患部で止まってすぐ溶ける～狂気の優曇華院",
   "kind": "ST",
   "diff": "MASTER",
@@ -1887,10 +1991,11 @@
   "rank100": 95,
   "avgPct": 98.497,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 13
  },
  {
-  "date": "2026/9/30 2:49:14",
+  "date": "2026/9/30 12:38:49",
   "name": "Blows Up Everything",
   "kind": "DX",
   "diff": "MASTER",
@@ -1905,10 +2010,11 @@
   "rank100": 94,
   "avgPct": 98.489,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 11
  },
  {
-  "date": "2026/9/30 2:44:43",
+  "date": "2026/9/30 12:35:31",
   "name": "星界ちゃんと可不ちゃんのおつかい合騒曲",
   "kind": "DX",
   "diff": "MASTER",
@@ -1923,10 +2029,11 @@
   "rank100": 99,
   "avgPct": 98.488,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 10
  },
  {
-  "date": "2026/9/30 2:42:24",
+  "date": "2026/9/30 12:33:12",
   "name": "ECHO,",
   "kind": "DX",
   "diff": "MASTER",
@@ -1941,10 +2048,11 @@
   "rank100": 100,
   "avgPct": 98.487,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 10
  },
  {
-  "date": "2026/9/30 2:47:14",
+  "date": "2026/9/30 12:38:04",
   "name": "Selector",
   "kind": "ST",
   "diff": "MASTER",
@@ -1959,10 +2067,11 @@
   "rank100": 100,
   "avgPct": 98.486,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 14
  },
  {
-  "date": "2026/9/30 2:39:37",
+  "date": "2026/9/30 12:30:23",
   "name": "ぱぱぱらビーチ",
   "kind": "DX",
   "diff": "MASTER",
@@ -1977,10 +2086,11 @@
   "rank100": 99,
   "avgPct": 98.484,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 7
  },
  {
-  "date": "2026/9/30 2:39:11",
+  "date": "2026/9/30 12:29:58",
   "name": "Everybody Say HARDCORE TANO*C",
   "kind": "DX",
   "diff": "MASTER",
@@ -1995,10 +2105,11 @@
   "rank100": 95,
   "avgPct": 98.482,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 11
  },
  {
-  "date": "2026/9/30 2:42:16",
+  "date": "2026/9/30 12:33:04",
   "name": "にゃーにゃー冒険譚",
   "kind": "DX",
   "diff": "MASTER",
@@ -2013,10 +2124,11 @@
   "rank100": 100,
   "avgPct": 98.48,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 8
  },
  {
-  "date": "2026/9/30 2:54:18",
+  "date": "2026/9/30 12:43:43",
   "name": "最終鬼畜妹フランドール・S",
   "kind": "ST",
   "diff": "Re:MASTER",
@@ -2031,10 +2143,11 @@
   "rank100": 99,
   "avgPct": 98.473,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 13
  },
  {
-  "date": "2026/9/30 2:43:52",
+  "date": "2026/9/30 12:34:40",
   "name": "なんかノイズにきこえる",
   "kind": "DX",
   "diff": "MASTER",
@@ -2049,10 +2162,11 @@
   "rank100": 91,
   "avgPct": 98.463,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 9
  },
  {
-  "date": "2026/9/30 2:46:17",
+  "date": "2026/9/30 12:37:05",
   "name": "Rush-Hour",
   "kind": "DX",
   "diff": "MASTER",
@@ -2067,10 +2181,11 @@
   "rank100": 97,
   "avgPct": 98.461,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 11
  },
  {
-  "date": "2026/9/30 2:39:13",
+  "date": "2026/9/30 12:30:00",
   "name": "コンティニュー！ feat. 藍月なくる",
   "kind": "DX",
   "diff": "MASTER",
@@ -2085,10 +2200,11 @@
   "rank100": 99,
   "avgPct": 98.457,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 9
  },
  {
-  "date": "2026/9/30 2:39:20",
+  "date": "2026/9/30 12:30:06",
   "name": "地獄",
   "kind": "DX",
   "diff": "MASTER",
@@ -2103,10 +2219,11 @@
   "rank100": 92,
   "avgPct": 98.456,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 10
  },
  {
-  "date": "2026/9/30 2:43:43",
+  "date": "2026/9/30 12:34:31",
   "name": "Resolution",
   "kind": "DX",
   "diff": "MASTER",
@@ -2121,10 +2238,11 @@
   "rank100": 97,
   "avgPct": 98.453,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 8
  },
  {
-  "date": "2026/9/30 2:41:31",
+  "date": "2026/9/30 12:32:19",
   "name": "ヒミツCULT",
   "kind": "DX",
   "diff": "MASTER",
@@ -2139,10 +2257,11 @@
   "rank100": 96,
   "avgPct": 98.452,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 12
  },
  {
-  "date": "2026/9/30 2:39:51",
+  "date": "2026/9/30 12:30:38",
   "name": "Drivessover",
   "kind": "DX",
   "diff": "MASTER",
@@ -2157,10 +2276,11 @@
   "rank100": 95,
   "avgPct": 98.445,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 6
  },
  {
-  "date": "2026/9/30 2:38:28",
+  "date": "2026/9/30 12:29:15",
   "name": "新人類",
   "kind": "DX",
   "diff": "MASTER",
@@ -2175,10 +2295,11 @@
   "rank100": 98,
   "avgPct": 98.444,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 12
  },
  {
-  "date": "2026/9/30 2:43:26",
+  "date": "2026/9/30 12:34:14",
   "name": "Streak",
   "kind": "ST",
   "diff": "MASTER",
@@ -2193,10 +2314,11 @@
   "rank100": 89,
   "avgPct": 98.44,
   "avgStar": 5.7,
-  "maxCount": 2
+  "maxCount": 2,
+  "star6Count": 15
  },
  {
-  "date": "2026/9/30 2:39:00",
+  "date": "2026/9/30 12:29:47",
   "name": "3rd Avenue",
   "kind": "DX",
   "diff": "MASTER",
@@ -2211,10 +2333,11 @@
   "rank100": 95,
   "avgPct": 98.434,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 13
  },
  {
-  "date": "2026/9/30 2:38:11",
+  "date": "2026/9/30 12:28:58",
   "name": "トンデモワンダーズ",
   "kind": "DX",
   "diff": "MASTER",
@@ -2229,10 +2352,11 @@
   "rank100": 91,
   "avgPct": 98.432,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 12
  },
  {
-  "date": "2026/9/30 2:51:42",
+  "date": "2026/9/30 12:41:07",
   "name": "NULCTRL",
   "kind": "DX",
   "diff": "MASTER",
@@ -2247,10 +2371,11 @@
   "rank100": 100,
   "avgPct": 98.426,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 14
  },
  {
-  "date": "2026/9/30 2:43:41",
+  "date": "2026/9/30 12:34:29",
   "name": "最っ高のエンタメだ!!",
   "kind": "DX",
   "diff": "MASTER",
@@ -2265,10 +2390,11 @@
   "rank100": 99,
   "avgPct": 98.425,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 7
  },
  {
-  "date": "2026/9/30 2:40:08",
+  "date": "2026/9/30 12:30:55",
   "name": "み　む　かｩ　わ　ナ　イ　ス　ト　ラ　イ",
   "kind": "DX",
   "diff": "MASTER",
@@ -2283,10 +2409,11 @@
   "rank100": 100,
   "avgPct": 98.423,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 11
  },
  {
-  "date": "2026/9/30 2:48:55",
+  "date": "2026/9/30 12:38:30",
   "name": "白花の天使",
   "kind": "DX",
   "diff": "MASTER",
@@ -2301,10 +2428,11 @@
   "rank100": 99,
   "avgPct": 98.417,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 12
  },
  {
-  "date": "2026/9/30 2:49:36",
+  "date": "2026/9/30 12:39:11",
   "name": "管弦楽組曲 第3番 ニ長調「第2曲（G線上のアリア）」BWV.1068-2",
   "kind": "DX",
   "diff": "MASTER",
@@ -2319,10 +2447,11 @@
   "rank100": 99,
   "avgPct": 98.408,
   "avgStar": 5.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 9
  },
  {
-  "date": "2026/9/30 2:46:14",
+  "date": "2026/9/30 12:37:03",
   "name": "Black Lair",
   "kind": "DX",
   "diff": "MASTER",
@@ -2337,10 +2466,11 @@
   "rank100": 98,
   "avgPct": 98.4,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 12
  },
  {
-  "date": "2026/9/30 2:43:30",
+  "date": "2026/9/30 12:34:19",
   "name": "Life Feels Good",
   "kind": "ST",
   "diff": "MASTER",
@@ -2355,10 +2485,11 @@
   "rank100": 96,
   "avgPct": 98.394,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 15
  },
  {
-  "date": "2026/9/30 2:39:41",
+  "date": "2026/9/30 12:30:28",
   "name": "Irresistible",
   "kind": "DX",
   "diff": "MASTER",
@@ -2373,10 +2504,11 @@
   "rank100": 96,
   "avgPct": 98.391,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 6
  },
  {
-  "date": "2026/9/30 2:50:55",
+  "date": "2026/9/30 12:40:20",
   "name": "胡蝶乃舞",
   "kind": "DX",
   "diff": "MASTER",
@@ -2391,10 +2523,11 @@
   "rank100": 95,
   "avgPct": 98.391,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 7
  },
  {
-  "date": "2026/9/30 2:53:18",
+  "date": "2026/9/30 12:42:43",
   "name": "ハードコア・シンドローム",
   "kind": "DX",
   "diff": "MASTER",
@@ -2409,10 +2542,11 @@
   "rank100": 99,
   "avgPct": 98.389,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 8
  },
  {
-  "date": "2026/9/30 2:43:54",
+  "date": "2026/9/30 12:34:42",
   "name": "『ウソテイ』 ～一回戦せりなvsしろなvsなずな～",
   "kind": "DX",
   "diff": "MASTER",
@@ -2427,10 +2561,11 @@
   "rank100": 98,
   "avgPct": 98.381,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 5
  },
  {
-  "date": "2026/9/30 2:41:18",
+  "date": "2026/9/30 12:32:06",
   "name": "How To Make 音ゲ～曲！",
   "kind": "DX",
   "diff": "MASTER",
@@ -2445,10 +2580,11 @@
   "rank100": 98,
   "avgPct": 98.363,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:50:15",
+  "date": "2026/9/30 12:39:50",
   "name": "ウィーアーピコピコハンマーズ!!!!",
   "kind": "DX",
   "diff": "MASTER",
@@ -2463,10 +2599,11 @@
   "rank100": 95,
   "avgPct": 98.36,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 13
  },
  {
-  "date": "2026/9/30 2:43:45",
+  "date": "2026/9/30 12:34:33",
   "name": "Radiance",
   "kind": "DX",
   "diff": "MASTER",
@@ -2481,10 +2618,11 @@
   "rank100": 97,
   "avgPct": 98.357,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 7
  },
  {
-  "date": "2026/9/30 2:46:53",
+  "date": "2026/9/30 12:37:42",
   "name": "Unfinished Epic",
   "kind": "DX",
   "diff": "MASTER",
@@ -2499,10 +2637,11 @@
   "rank100": 93,
   "avgPct": 98.355,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 5
  },
  {
-  "date": "2026/9/30 2:49:00",
+  "date": "2026/9/30 12:38:34",
   "name": "Never Give Up!",
   "kind": "DX",
   "diff": "MASTER",
@@ -2517,10 +2656,11 @@
   "rank100": 100,
   "avgPct": 98.353,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 5
  },
  {
-  "date": "2026/9/30 2:41:37",
+  "date": "2026/9/30 12:32:25",
   "name": "Halfway(>∀<)",
   "kind": "DX",
   "diff": "MASTER",
@@ -2535,10 +2675,11 @@
   "rank100": 95,
   "avgPct": 98.343,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:38:18",
+  "date": "2026/9/30 12:29:05",
   "name": "ありふれたせかいせいふく",
   "kind": "ST",
   "diff": "MASTER",
@@ -2553,10 +2694,11 @@
   "rank100": 92,
   "avgPct": 98.341,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 15
  },
  {
-  "date": "2026/9/30 2:42:45",
+  "date": "2026/9/30 12:33:33",
   "name": "みんなのマイマイマー",
   "kind": "ST",
   "diff": "MASTER",
@@ -2571,10 +2713,11 @@
   "rank100": 100,
   "avgPct": 98.332,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 6
  },
  {
-  "date": "2026/9/30 2:39:53",
+  "date": "2026/9/30 12:30:40",
   "name": "Chasing destiny",
   "kind": "DX",
   "diff": "MASTER",
@@ -2589,10 +2732,11 @@
   "rank100": 100,
   "avgPct": 98.328,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 7
  },
  {
-  "date": "2026/9/30 2:47:03",
+  "date": "2026/9/30 12:37:53",
   "name": "Jouez Avec Moi?",
   "kind": "DX",
   "diff": "MASTER",
@@ -2607,10 +2751,11 @@
   "rank100": 94,
   "avgPct": 98.327,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 6
  },
  {
-  "date": "2026/9/30 2:40:06",
+  "date": "2026/9/30 12:30:53",
   "name": "きゅうくらりん",
   "kind": "DX",
   "diff": "MASTER",
@@ -2625,10 +2770,11 @@
   "rank100": 92,
   "avgPct": 98.326,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 10
  },
  {
-  "date": "2026/9/30 2:51:44",
+  "date": "2026/9/30 12:41:09",
   "name": "もぺもぺ",
   "kind": "DX",
   "diff": "MASTER",
@@ -2643,10 +2789,11 @@
   "rank100": 94,
   "avgPct": 98.324,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 16
  },
  {
-  "date": "2026/9/30 2:53:29",
+  "date": "2026/9/30 12:42:54",
   "name": "ダイダイダイダイダイキライ",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -2661,10 +2808,11 @@
   "rank100": 94,
   "avgPct": 98.318,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 10
  },
  {
-  "date": "2026/9/30 2:44:22",
+  "date": "2026/9/30 12:35:10",
   "name": "キスキツネ",
   "kind": "DX",
   "diff": "MASTER",
@@ -2679,10 +2827,11 @@
   "rank100": 95,
   "avgPct": 98.315,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 6
  },
  {
-  "date": "2026/9/30 2:52:31",
+  "date": "2026/9/30 12:41:56",
   "name": "Ether Second",
   "kind": "DX",
   "diff": "MASTER",
@@ -2697,10 +2846,11 @@
   "rank100": 97,
   "avgPct": 98.312,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 16
  },
  {
-  "date": "2026/9/30 2:51:06",
+  "date": "2026/9/30 12:40:31",
   "name": "tiny tales continue",
   "kind": "DX",
   "diff": "MASTER",
@@ -2715,10 +2865,11 @@
   "rank100": 98,
   "avgPct": 98.31,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 8
  },
  {
-  "date": "2026/9/30 2:40:29",
+  "date": "2026/9/30 12:31:17",
   "name": "サイバーサンダーサイダー",
   "kind": "DX",
   "diff": "MASTER",
@@ -2733,10 +2884,11 @@
   "rank100": 94,
   "avgPct": 98.303,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 5
  },
  {
-  "date": "2026/9/30 2:47:33",
+  "date": "2026/9/30 12:38:23",
   "name": "[X]",
   "kind": "DX",
   "diff": "MASTER",
@@ -2751,10 +2903,11 @@
   "rank100": 98,
   "avgPct": 98.296,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:44:39",
+  "date": "2026/9/30 12:35:27",
   "name": "Rodeo Machine",
   "kind": "ST",
   "diff": "MASTER",
@@ -2769,10 +2922,11 @@
   "rank100": 97,
   "avgPct": 98.294,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 6
  },
  {
-  "date": "2026/9/30 2:52:50",
+  "date": "2026/9/30 12:42:15",
   "name": "Last Samurai",
   "kind": "DX",
   "diff": "MASTER",
@@ -2787,10 +2941,11 @@
   "rank100": 97,
   "avgPct": 98.29,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 8
  },
  {
-  "date": "2026/9/30 2:53:52",
+  "date": "2026/9/30 12:43:17",
   "name": "Never Give Up!",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -2805,10 +2960,11 @@
   "rank100": 97,
   "avgPct": 98.29,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 5
  },
  {
-  "date": "2026/9/30 2:52:44",
+  "date": "2026/9/30 12:42:09",
   "name": "華の集落、秋のお届け",
   "kind": "DX",
   "diff": "MASTER",
@@ -2823,10 +2979,11 @@
   "rank100": 97,
   "avgPct": 98.289,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 5
  },
  {
-  "date": "2026/9/30 2:47:27",
+  "date": "2026/9/30 12:38:17",
   "name": "POWER OF UNITY",
   "kind": "DX",
   "diff": "MASTER",
@@ -2841,10 +2998,11 @@
   "rank100": 98,
   "avgPct": 98.288,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 5
  },
  {
-  "date": "2026/9/30 2:44:17",
+  "date": "2026/9/30 12:35:06",
   "name": "Kattobi KEIKYU Rider",
   "kind": "ST",
   "diff": "MASTER",
@@ -2859,10 +3017,11 @@
   "rank100": 98,
   "avgPct": 98.284,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:45:47",
+  "date": "2026/9/30 12:36:35",
   "name": "Luminescence",
   "kind": "DX",
   "diff": "MASTER",
@@ -2877,10 +3036,11 @@
   "rank100": 100,
   "avgPct": 98.283,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 5
  },
  {
-  "date": "2026/9/30 2:40:53",
+  "date": "2026/9/30 12:31:40",
   "name": "天狗の落とし文 feat. ｙｔｒ",
   "kind": "DX",
   "diff": "MASTER",
@@ -2895,10 +3055,11 @@
   "rank100": 93,
   "avgPct": 98.281,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 7
  },
  {
-  "date": "2026/9/30 2:53:14",
+  "date": "2026/9/30 12:42:39",
   "name": "folern",
   "kind": "DX",
   "diff": "MASTER",
@@ -2913,10 +3074,11 @@
   "rank100": 99,
   "avgPct": 98.275,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 12
  },
  {
-  "date": "2026/9/30 2:45:41",
+  "date": "2026/9/30 12:36:29",
   "name": "Restricted Access",
   "kind": "DX",
   "diff": "MASTER",
@@ -2931,10 +3093,11 @@
   "rank100": 94,
   "avgPct": 98.267,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:46:40",
+  "date": "2026/9/30 12:37:29",
   "name": "MissionDistortion",
   "kind": "DX",
   "diff": "MASTER",
@@ -2949,10 +3112,11 @@
   "rank100": 94,
   "avgPct": 98.267,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 9
  },
  {
-  "date": "2026/9/30 2:47:01",
+  "date": "2026/9/30 12:37:51",
   "name": "群青シグナル",
   "kind": "DX",
   "diff": "MASTER",
@@ -2967,10 +3131,11 @@
   "rank100": 94,
   "avgPct": 98.267,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 7
  },
  {
-  "date": "2026/9/30 2:54:05",
+  "date": "2026/9/30 12:43:30",
   "name": "Ex-Otogibanashi (Anime ver.)",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -2985,10 +3150,11 @@
   "rank100": 97,
   "avgPct": 98.267,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 9
  },
  {
-  "date": "2026/9/30 2:53:37",
+  "date": "2026/9/30 12:43:02",
   "name": "緋色のDance",
   "kind": "ST",
   "diff": "Re:MASTER",
@@ -3003,10 +3169,11 @@
   "rank100": 99,
   "avgPct": 98.262,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 9
  },
  {
-  "date": "2026/9/30 2:44:41",
+  "date": "2026/9/30 12:35:29",
   "name": "にじよめちゃん体操第一億",
   "kind": "ST",
   "diff": "MASTER",
@@ -3021,10 +3188,11 @@
   "rank100": 98,
   "avgPct": 98.261,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 13
  },
  {
-  "date": "2026/9/30 2:47:22",
+  "date": "2026/9/30 12:38:13",
   "name": "Flashback",
   "kind": "DX",
   "diff": "MASTER",
@@ -3039,10 +3207,11 @@
   "rank100": 100,
   "avgPct": 98.258,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:38:54",
+  "date": "2026/9/30 12:29:41",
   "name": "進捗どうですか？",
   "kind": "ST",
   "diff": "MASTER",
@@ -3057,10 +3226,11 @@
   "rank100": 90,
   "avgPct": 98.252,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 8
  },
  {
-  "date": "2026/9/30 2:39:05",
+  "date": "2026/9/30 12:29:51",
   "name": "DUAL ROZES",
   "kind": "DX",
   "diff": "MASTER",
@@ -3075,10 +3245,11 @@
   "rank100": 99,
   "avgPct": 98.245,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:44:15",
+  "date": "2026/9/30 12:35:03",
   "name": "光線チューニング",
   "kind": "ST",
   "diff": "MASTER",
@@ -3093,10 +3264,11 @@
   "rank100": 96,
   "avgPct": 98.234,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 6
  },
  {
-  "date": "2026/9/30 2:47:18",
+  "date": "2026/9/30 12:38:08",
   "name": "HyperdrivE",
   "kind": "DX",
   "diff": "MASTER",
@@ -3111,10 +3283,11 @@
   "rank100": 100,
   "avgPct": 98.233,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:54:33",
+  "date": "2026/9/30 12:43:58",
   "name": "花と、雪と、ドラムンベース。",
   "kind": "ST",
   "diff": "Re:MASTER",
@@ -3129,10 +3302,11 @@
   "rank100": 99,
   "avgPct": 98.228,
   "avgStar": 5.6,
-  "maxCount": 1
+  "maxCount": 1,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:44:09",
+  "date": "2026/9/30 12:34:57",
   "name": "MUSIC PЯAYER",
   "kind": "DX",
   "diff": "MASTER",
@@ -3147,10 +3321,11 @@
   "rank100": 100,
   "avgPct": 98.221,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 6
  },
  {
-  "date": "2026/9/30 2:38:22",
+  "date": "2026/9/30 12:29:09",
   "name": "M@GICAL☆CURE! LOVE ♥ SHOT!",
   "kind": "DX",
   "diff": "MASTER",
@@ -3165,10 +3340,11 @@
   "rank100": 95,
   "avgPct": 98.219,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:46:21",
+  "date": "2026/9/30 12:37:09",
   "name": "Estahv",
   "kind": "DX",
   "diff": "MASTER",
@@ -3183,10 +3359,11 @@
   "rank100": 97,
   "avgPct": 98.211,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 9
  },
  {
-  "date": "2026/9/30 2:50:07",
+  "date": "2026/9/30 12:39:43",
   "name": "初音天地開闢神話",
   "kind": "DX",
   "diff": "MASTER",
@@ -3201,10 +3378,11 @@
   "rank100": 100,
   "avgPct": 98.209,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 10
  },
  {
-  "date": "2026/9/30 2:51:59",
+  "date": "2026/9/30 12:41:24",
   "name": "Reach For The Stars",
   "kind": "ST",
   "diff": "MASTER",
@@ -3219,10 +3397,11 @@
   "rank100": 98,
   "avgPct": 98.206,
   "avgStar": 5.6,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 15
  },
  {
-  "date": "2026/9/30 2:39:49",
+  "date": "2026/9/30 12:30:36",
   "name": "-OutsideR:RequieM-",
   "kind": "ST",
   "diff": "MASTER",
@@ -3237,10 +3416,11 @@
   "rank100": 100,
   "avgPct": 98.198,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 6
  },
  {
-  "date": "2026/9/30 2:40:19",
+  "date": "2026/9/30 12:31:06",
   "name": "マネマネサイコトロピック",
   "kind": "DX",
   "diff": "MASTER",
@@ -3255,10 +3435,11 @@
   "rank100": 99,
   "avgPct": 98.198,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 6
  },
  {
-  "date": "2026/9/30 2:40:10",
+  "date": "2026/9/30 12:30:57",
   "name": "IMAWANOKIWA",
   "kind": "DX",
   "diff": "MASTER",
@@ -3273,10 +3454,11 @@
   "rank100": 94,
   "avgPct": 98.196,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 6
  },
  {
-  "date": "2026/9/30 2:47:24",
+  "date": "2026/9/30 12:38:15",
   "name": "Lunatic Vibes",
   "kind": "DX",
   "diff": "MASTER",
@@ -3291,10 +3473,11 @@
   "rank100": 100,
   "avgPct": 98.19,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:53:05",
+  "date": "2026/9/30 12:42:30",
   "name": "GEMINI -M-",
   "kind": "ST",
   "diff": "MASTER",
@@ -3309,10 +3492,11 @@
   "rank100": 93,
   "avgPct": 98.19,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 13
  },
  {
-  "date": "2026/9/30 2:45:34",
+  "date": "2026/9/30 12:36:22",
   "name": "Little \"Sister\" Bitch",
   "kind": "DX",
   "diff": "MASTER",
@@ -3327,10 +3511,11 @@
   "rank100": 92,
   "avgPct": 98.181,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:45:09",
+  "date": "2026/9/30 12:35:57",
   "name": "六兆年と一夜物語",
   "kind": "DX",
   "diff": "MASTER",
@@ -3345,10 +3530,11 @@
   "rank100": 95,
   "avgPct": 98.179,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:42:18",
+  "date": "2026/9/30 12:33:06",
   "name": "分解収束テイル",
   "kind": "DX",
   "diff": "MASTER",
@@ -3363,10 +3549,11 @@
   "rank100": 96,
   "avgPct": 98.177,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:45:43",
+  "date": "2026/9/30 12:36:31",
   "name": "ピポピポ -People People- feat. ななひら",
   "kind": "DX",
   "diff": "MASTER",
@@ -3381,10 +3568,11 @@
   "rank100": 100,
   "avgPct": 98.177,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 10
  },
  {
-  "date": "2026/9/30 2:46:19",
+  "date": "2026/9/30 12:37:07",
   "name": "Complex Mind",
   "kind": "DX",
   "diff": "MASTER",
@@ -3399,10 +3587,11 @@
   "rank100": 97,
   "avgPct": 98.171,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:39:56",
+  "date": "2026/9/30 12:30:42",
   "name": "壱雫空",
   "kind": "DX",
   "diff": "MASTER",
@@ -3417,10 +3606,11 @@
   "rank100": 84,
   "avgPct": 98.17,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 8
  },
  {
-  "date": "2026/9/30 2:49:55",
+  "date": "2026/9/30 12:39:30",
   "name": "立川浄穢捕物帳",
   "kind": "DX",
   "diff": "MASTER",
@@ -3435,10 +3625,11 @@
   "rank100": 95,
   "avgPct": 98.169,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 5
  },
  {
-  "date": "2026/9/30 2:42:41",
+  "date": "2026/9/30 12:33:29",
   "name": "とびだせ！TO THE COSMIC!!",
   "kind": "DX",
   "diff": "MASTER",
@@ -3453,10 +3644,11 @@
   "rank100": 98,
   "avgPct": 98.162,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 5
  },
  {
-  "date": "2026/9/30 2:49:06",
+  "date": "2026/9/30 12:38:41",
   "name": "Get Happy",
   "kind": "ST",
   "diff": "MASTER",
@@ -3471,10 +3663,11 @@
   "rank100": 88,
   "avgPct": 98.157,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 9
  },
  {
-  "date": "2026/9/30 2:38:15",
+  "date": "2026/9/30 12:29:03",
   "name": "2代目閻魔",
   "kind": "DX",
   "diff": "MASTER",
@@ -3489,10 +3682,11 @@
   "rank100": 100,
   "avgPct": 98.156,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 7
  },
  {
-  "date": "2026/9/30 2:41:59",
+  "date": "2026/9/30 12:32:47",
   "name": "STAIRWAY TO GENERATION",
   "kind": "ST",
   "diff": "MASTER",
@@ -3507,10 +3701,11 @@
   "rank100": 100,
   "avgPct": 98.145,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 9
  },
  {
-  "date": "2026/9/30 2:39:45",
+  "date": "2026/9/30 12:30:32",
   "name": "果ての空、僕らが見た光。",
   "kind": "DX",
   "diff": "MASTER",
@@ -3525,10 +3720,11 @@
   "rank100": 96,
   "avgPct": 98.143,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:46:04",
+  "date": "2026/9/30 12:36:52",
   "name": "プナイプナイせんそう",
   "kind": "DX",
   "diff": "MASTER",
@@ -3543,10 +3739,11 @@
   "rank100": 97,
   "avgPct": 98.137,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:39:24",
+  "date": "2026/9/30 12:30:11",
   "name": "宵の鳥",
   "kind": "DX",
   "diff": "MASTER",
@@ -3561,10 +3758,11 @@
   "rank100": 98,
   "avgPct": 98.136,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 6
  },
  {
-  "date": "2026/9/30 2:52:39",
+  "date": "2026/9/30 12:42:05",
   "name": "HAGAKIRI",
   "kind": "DX",
   "diff": "MASTER",
@@ -3579,10 +3777,11 @@
   "rank100": 95,
   "avgPct": 98.135,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 5
  },
  {
-  "date": "2026/9/30 2:54:37",
+  "date": "2026/9/30 12:44:03",
   "name": "熱異常",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -3597,10 +3796,11 @@
   "rank100": 100,
   "avgPct": 98.131,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:46:46",
+  "date": "2026/9/30 12:37:35",
   "name": "Phase: Theatre",
   "kind": "DX",
   "diff": "MASTER",
@@ -3615,10 +3815,11 @@
   "rank100": 98,
   "avgPct": 98.128,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:52:52",
+  "date": "2026/9/30 12:42:17",
   "name": "GRÄNDIR",
   "kind": "DX",
   "diff": "MASTER",
@@ -3633,10 +3834,11 @@
   "rank100": 100,
   "avgPct": 98.125,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:41:22",
+  "date": "2026/9/30 12:32:10",
   "name": "Empire of Winter",
   "kind": "DX",
   "diff": "MASTER",
@@ -3651,10 +3853,11 @@
   "rank100": 97,
   "avgPct": 98.124,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:39:28",
+  "date": "2026/9/30 12:30:15",
   "name": "OTOGEMA",
   "kind": "DX",
   "diff": "MASTER",
@@ -3669,10 +3872,11 @@
   "rank100": 92,
   "avgPct": 98.122,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:43:05",
+  "date": "2026/9/30 12:33:53",
   "name": "Fraq",
   "kind": "DX",
   "diff": "MASTER",
@@ -3687,10 +3891,11 @@
   "rank100": 95,
   "avgPct": 98.121,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:47:10",
+  "date": "2026/9/30 12:38:00",
   "name": "パラボラ",
   "kind": "DX",
   "diff": "MASTER",
@@ -3705,10 +3910,11 @@
   "rank100": 96,
   "avgPct": 98.121,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 5
  },
  {
-  "date": "2026/9/30 2:51:55",
+  "date": "2026/9/30 12:41:20",
   "name": "DRAGONLADY",
   "kind": "ST",
   "diff": "MASTER",
@@ -3723,10 +3929,11 @@
   "rank100": 100,
   "avgPct": 98.118,
   "avgStar": 5.5,
-  "maxCount": 1
+  "maxCount": 1,
+  "star6Count": 14
  },
  {
-  "date": "2026/9/30 2:49:38",
+  "date": "2026/9/30 12:39:13",
   "name": "TECHNOPOLIS 2085",
   "kind": "DX",
   "diff": "MASTER",
@@ -3741,10 +3948,11 @@
   "rank100": 93,
   "avgPct": 98.117,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 5
  },
  {
-  "date": "2026/9/30 2:40:59",
+  "date": "2026/9/30 12:31:47",
   "name": "オーディエンスを沸かす程度の能力 feat.タイツォン",
   "kind": "ST",
   "diff": "MASTER",
@@ -3759,10 +3967,11 @@
   "rank100": 87,
   "avgPct": 98.1,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:40:38",
+  "date": "2026/9/30 12:31:25",
   "name": "ネトゲ廃人シュプレヒコール",
   "kind": "ST",
   "diff": "MASTER",
@@ -3777,10 +3986,11 @@
   "rank100": 99,
   "avgPct": 98.098,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 6
  },
  {
-  "date": "2026/9/30 2:52:03",
+  "date": "2026/9/30 12:41:28",
   "name": "RE:INCARNATED DRAGNER",
   "kind": "DX",
   "diff": "MASTER",
@@ -3795,10 +4005,11 @@
   "rank100": 96,
   "avgPct": 98.098,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:39:09",
+  "date": "2026/9/30 12:29:56",
   "name": "BOOM! BOOM!! BOOM!!!",
   "kind": "DX",
   "diff": "MASTER",
@@ -3813,10 +4024,11 @@
   "rank100": 97,
   "avgPct": 98.097,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 6
  },
  {
-  "date": "2026/9/30 2:49:04",
+  "date": "2026/9/30 12:38:39",
   "name": "MAXRAGE",
   "kind": "DX",
   "diff": "MASTER",
@@ -3831,10 +4043,11 @@
   "rank100": 98,
   "avgPct": 98.097,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 7
  },
  {
-  "date": "2026/9/30 2:51:19",
+  "date": "2026/9/30 12:40:43",
   "name": "れっつ！みらくる☆はーどこあっ！",
   "kind": "DX",
   "diff": "MASTER",
@@ -3849,10 +4062,11 @@
   "rank100": 100,
   "avgPct": 98.093,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:46:57",
+  "date": "2026/9/30 12:37:46",
   "name": "ウタヒメナイトストーム",
   "kind": "DX",
   "diff": "MASTER",
@@ -3867,10 +4081,11 @@
   "rank100": 92,
   "avgPct": 98.091,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:38:45",
+  "date": "2026/9/30 12:29:32",
   "name": "HANIPAGANDA",
   "kind": "DX",
   "diff": "MASTER",
@@ -3885,10 +4100,11 @@
   "rank100": 96,
   "avgPct": 98.088,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 8
  },
  {
-  "date": "2026/9/30 2:44:58",
+  "date": "2026/9/30 12:35:46",
   "name": "トレジャーガーデン",
   "kind": "DX",
   "diff": "MASTER",
@@ -3903,10 +4119,11 @@
   "rank100": 100,
   "avgPct": 98.084,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:49:21",
+  "date": "2026/9/30 12:38:56",
   "name": "ここからはじまるプロローグ。 (Kanon Remix)",
   "kind": "DX",
   "diff": "MASTER",
@@ -3921,10 +4138,11 @@
   "rank100": 99,
   "avgPct": 98.078,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:42:58",
+  "date": "2026/9/30 12:33:47",
   "name": "ピーマンたべたら",
   "kind": "ST",
   "diff": "MASTER",
@@ -3939,10 +4157,11 @@
   "rank100": 98,
   "avgPct": 98.076,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:42:50",
+  "date": "2026/9/30 12:33:38",
   "name": "いっしそう電☆舞舞神拳！",
   "kind": "ST",
   "diff": "MASTER",
@@ -3957,10 +4176,11 @@
   "rank100": 99,
   "avgPct": 98.072,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:43:13",
+  "date": "2026/9/30 12:34:02",
   "name": "oboro",
   "kind": "DX",
   "diff": "MASTER",
@@ -3975,10 +4195,11 @@
   "rank100": 99,
   "avgPct": 98.071,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:49:44",
+  "date": "2026/9/30 12:39:19",
   "name": "8-EM",
   "kind": "DX",
   "diff": "MASTER",
@@ -3993,10 +4214,11 @@
   "rank100": 97,
   "avgPct": 98.065,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 5
  },
  {
-  "date": "2026/9/30 2:51:04",
+  "date": "2026/9/30 12:40:28",
   "name": "NO ONE YES MAN",
   "kind": "DX",
   "diff": "MASTER",
@@ -4011,10 +4233,11 @@
   "rank100": 100,
   "avgPct": 98.065,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:49:23",
+  "date": "2026/9/30 12:38:58",
   "name": "ICEBURN",
   "kind": "DX",
   "diff": "MASTER",
@@ -4029,10 +4252,11 @@
   "rank100": 94,
   "avgPct": 98.064,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:43:11",
+  "date": "2026/9/30 12:33:59",
   "name": "my flow",
   "kind": "DX",
   "diff": "MASTER",
@@ -4047,10 +4271,11 @@
   "rank100": 97,
   "avgPct": 98.058,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:46:25",
+  "date": "2026/9/30 12:37:14",
   "name": "energy trixxx",
   "kind": "DX",
   "diff": "MASTER",
@@ -4065,10 +4290,11 @@
   "rank100": 93,
   "avgPct": 98.047,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 5
  },
  {
-  "date": "2026/9/30 2:53:42",
+  "date": "2026/9/30 12:43:06",
   "name": "アンビバレンス",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -4083,10 +4309,11 @@
   "rank100": 97,
   "avgPct": 98.047,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:39:58",
+  "date": "2026/9/30 12:30:44",
   "name": "Baddest",
   "kind": "DX",
   "diff": "MASTER",
@@ -4101,10 +4328,11 @@
   "rank100": 100,
   "avgPct": 98.046,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:45:55",
+  "date": "2026/9/30 12:36:44",
   "name": "Lost Desire",
   "kind": "DX",
   "diff": "MASTER",
@@ -4119,10 +4347,11 @@
   "rank100": 95,
   "avgPct": 98.042,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:54:11",
+  "date": "2026/9/30 12:43:36",
   "name": "バグ",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -4137,10 +4366,11 @@
   "rank100": 97,
   "avgPct": 98.042,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:45:51",
+  "date": "2026/9/30 12:36:39",
   "name": "DANGEROOOOUS JUNGLE",
   "kind": "DX",
   "diff": "MASTER",
@@ -4155,10 +4385,11 @@
   "rank100": 100,
   "avgPct": 98.036,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 5
  },
  {
-  "date": "2026/9/30 2:50:01",
+  "date": "2026/9/30 12:39:37",
   "name": "BlackFlagBreaker!!",
   "kind": "DX",
   "diff": "MASTER",
@@ -4173,10 +4404,11 @@
   "rank100": 98,
   "avgPct": 98.034,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:40:46",
+  "date": "2026/9/30 12:31:34",
   "name": "バッド・ダンス・ホール",
   "kind": "DX",
   "diff": "MASTER",
@@ -4191,10 +4423,11 @@
   "rank100": 97,
   "avgPct": 98.032,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:40:17",
+  "date": "2026/9/30 12:31:04",
   "name": "終点",
   "kind": "ST",
   "diff": "MASTER",
@@ -4209,10 +4442,11 @@
   "rank100": 96,
   "avgPct": 98.028,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:43:03",
+  "date": "2026/9/30 12:33:51",
   "name": "炎歌 -ほむらうた-",
   "kind": "ST",
   "diff": "MASTER",
@@ -4227,10 +4461,11 @@
   "rank100": 98,
   "avgPct": 98.022,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:39:26",
+  "date": "2026/9/30 12:30:13",
   "name": "リフヴェイン",
   "kind": "DX",
   "diff": "MASTER",
@@ -4245,10 +4480,11 @@
   "rank100": 100,
   "avgPct": 98.021,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 5
  },
  {
-  "date": "2026/9/30 2:52:24",
+  "date": "2026/9/30 12:41:50",
   "name": "Colorfull:Encounter",
   "kind": "DX",
   "diff": "MASTER",
@@ -4263,10 +4499,11 @@
   "rank100": 94,
   "avgPct": 98.018,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:49:29",
+  "date": "2026/9/30 12:39:04",
   "name": "MAGNETAR GIRL",
   "kind": "DX",
   "diff": "MASTER",
@@ -4281,10 +4518,11 @@
   "rank100": 100,
   "avgPct": 98.015,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:37:56",
+  "date": "2026/9/30 12:28:44",
   "name": "Xaleid◆scopiX",
   "kind": "DX",
   "diff": "EXPERT",
@@ -4299,10 +4537,11 @@
   "rank100": 98,
   "avgPct": 98.011,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 7
  },
  {
-  "date": "2026/9/30 2:43:07",
+  "date": "2026/9/30 12:33:55",
   "name": "Treasure Chest Expedition",
   "kind": "DX",
   "diff": "MASTER",
@@ -4317,10 +4556,11 @@
   "rank100": 100,
   "avgPct": 98.011,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:53:31",
+  "date": "2026/9/30 12:42:56",
   "name": "おとせサンダー",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -4335,10 +4575,11 @@
   "rank100": 100,
   "avgPct": 98.007,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 5
  },
  {
-  "date": "2026/9/30 2:53:01",
+  "date": "2026/9/30 12:42:26",
   "name": "Mare Maris",
   "kind": "ST",
   "diff": "MASTER",
@@ -4353,10 +4594,11 @@
   "rank100": 95,
   "avgPct": 98.006,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:54:20",
+  "date": "2026/9/30 12:43:45",
   "name": "幻想に咲いた花",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -4371,10 +4613,11 @@
   "rank100": 94,
   "avgPct": 98.005,
   "avgStar": 5.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:41:24",
+  "date": "2026/9/30 12:32:12",
   "name": "迷える音色は恋の唄",
   "kind": "DX",
   "diff": "MASTER",
@@ -4389,10 +4632,11 @@
   "rank100": 96,
   "avgPct": 97.999,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:50:21",
+  "date": "2026/9/30 12:39:54",
   "name": "超最終鬼畜妹フランドール・S",
   "kind": "DX",
   "diff": "MASTER",
@@ -4407,10 +4651,11 @@
   "rank100": 100,
   "avgPct": 97.999,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:40:04",
+  "date": "2026/9/30 12:30:51",
   "name": "ギリギリ最強あいまいみー！",
   "kind": "ST",
   "diff": "MASTER",
@@ -4425,10 +4670,11 @@
   "rank100": 98,
   "avgPct": 97.995,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:49:46",
+  "date": "2026/9/30 12:39:22",
   "name": "Infantoon Fantasy",
   "kind": "ST",
   "diff": "MASTER",
@@ -4443,10 +4689,11 @@
   "rank100": 96,
   "avgPct": 97.995,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:50:05",
+  "date": "2026/9/30 12:39:41",
   "name": "Let's ミクササイズ！！",
   "kind": "DX",
   "diff": "MASTER",
@@ -4461,10 +4708,11 @@
   "rank100": 97,
   "avgPct": 97.992,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 6
  },
  {
-  "date": "2026/9/30 2:43:20",
+  "date": "2026/9/30 12:34:08",
   "name": "My My My",
   "kind": "DX",
   "diff": "MASTER",
@@ -4479,10 +4727,11 @@
   "rank100": 97,
   "avgPct": 97.989,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:42:37",
+  "date": "2026/9/30 12:33:25",
   "name": "遺伝子レベル∞スパイラル",
   "kind": "DX",
   "diff": "MASTER",
@@ -4497,10 +4746,11 @@
   "rank100": 99,
   "avgPct": 97.986,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:44:07",
+  "date": "2026/9/30 12:34:55",
   "name": "Lover's Trick",
   "kind": "DX",
   "diff": "MASTER",
@@ -4515,10 +4765,11 @@
   "rank100": 100,
   "avgPct": 97.984,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:51:08",
+  "date": "2026/9/30 12:40:33",
   "name": "Löschen",
   "kind": "DX",
   "diff": "MASTER",
@@ -4533,10 +4784,11 @@
   "rank100": 97,
   "avgPct": 97.979,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 6
  },
  {
-  "date": "2026/9/30 2:39:43",
+  "date": "2026/9/30 12:30:30",
   "name": "バーチャルダム　ネーション",
   "kind": "DX",
   "diff": "MASTER",
@@ -4551,10 +4803,11 @@
   "rank100": 93,
   "avgPct": 97.971,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:45:22",
+  "date": "2026/9/30 12:36:10",
   "name": "吉原ラメント",
   "kind": "ST",
   "diff": "MASTER",
@@ -4569,10 +4822,11 @@
   "rank100": 98,
   "avgPct": 97.971,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:52:33",
+  "date": "2026/9/30 12:41:58",
   "name": "モ°ルモ°ル",
   "kind": "DX",
   "diff": "MASTER",
@@ -4587,10 +4841,11 @@
   "rank100": 90,
   "avgPct": 97.965,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:53:46",
+  "date": "2026/9/30 12:43:11",
   "name": "みんなのマイマイマー",
   "kind": "ST",
   "diff": "Re:MASTER",
@@ -4605,10 +4860,11 @@
   "rank100": 96,
   "avgPct": 97.958,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:39:17",
+  "date": "2026/9/30 12:30:04",
   "name": "リッジでリッジでGO!GO!GO! -GMT mashup-",
   "kind": "ST",
   "diff": "MASTER",
@@ -4623,10 +4879,11 @@
   "rank100": 100,
   "avgPct": 97.949,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:40:32",
+  "date": "2026/9/30 12:31:19",
   "name": "すーぱーぬこになりたい",
   "kind": "ST",
   "diff": "MASTER",
@@ -4641,10 +4898,11 @@
   "rank100": 96,
   "avgPct": 97.943,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:51:57",
+  "date": "2026/9/30 12:41:22",
   "name": "Reach For The Stars (Re-Colors)",
   "kind": "DX",
   "diff": "MASTER",
@@ -4659,10 +4917,11 @@
   "rank100": 99,
   "avgPct": 97.94,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:40:40",
+  "date": "2026/9/30 12:31:27",
   "name": "赤心性：カマトト荒療治",
   "kind": "ST",
   "diff": "MASTER",
@@ -4677,10 +4936,11 @@
   "rank100": 98,
   "avgPct": 97.936,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:46:02",
+  "date": "2026/9/30 12:36:50",
   "name": "MilK",
   "kind": "ST",
   "diff": "MASTER",
@@ -4695,10 +4955,11 @@
   "rank100": 97,
   "avgPct": 97.929,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:49:10",
+  "date": "2026/9/30 12:38:45",
   "name": "Death Scythe",
   "kind": "ST",
   "diff": "MASTER",
@@ -4713,10 +4974,11 @@
   "rank100": 97,
   "avgPct": 97.929,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:49:25",
+  "date": "2026/9/30 12:39:00",
   "name": "Baqeela",
   "kind": "DX",
   "diff": "MASTER",
@@ -4731,10 +4993,11 @@
   "rank100": 100,
   "avgPct": 97.929,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:41:05",
+  "date": "2026/9/30 12:31:53",
   "name": "エテルニタス・ルドロジー",
   "kind": "ST",
   "diff": "MASTER",
@@ -4749,10 +5012,11 @@
   "rank100": 89,
   "avgPct": 97.928,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:51:38",
+  "date": "2026/9/30 12:41:03",
   "name": "Upshift",
   "kind": "DX",
   "diff": "MASTER",
@@ -4767,10 +5031,11 @@
   "rank100": 94,
   "avgPct": 97.921,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:43:37",
+  "date": "2026/9/30 12:34:25",
   "name": "Dragoon",
   "kind": "DX",
   "diff": "MASTER",
@@ -4785,10 +5050,11 @@
   "rank100": 95,
   "avgPct": 97.915,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:44:37",
+  "date": "2026/9/30 12:35:25",
   "name": "Princess♂",
   "kind": "DX",
   "diff": "MASTER",
@@ -4803,10 +5069,11 @@
   "rank100": 98,
   "avgPct": 97.914,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:50:59",
+  "date": "2026/9/30 12:40:24",
   "name": "ozma",
   "kind": "DX",
   "diff": "MASTER",
@@ -4821,10 +5088,11 @@
   "rank100": 98,
   "avgPct": 97.912,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:52:16",
+  "date": "2026/9/30 12:41:41",
   "name": "Paradoxical Empress",
   "kind": "DX",
   "diff": "MASTER",
@@ -4839,10 +5107,11 @@
   "rank100": 95,
   "avgPct": 97.905,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:44:56",
+  "date": "2026/9/30 12:35:44",
   "name": "電光刹歌",
   "kind": "DX",
   "diff": "MASTER",
@@ -4857,10 +5126,11 @@
   "rank100": 90,
   "avgPct": 97.902,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:53:26",
+  "date": "2026/9/30 12:42:51",
   "name": "PPPP (feat. Hatsune Miku, Kasane Teto)",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -4875,10 +5145,11 @@
   "rank100": 94,
   "avgPct": 97.901,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:52:05",
+  "date": "2026/9/30 12:41:30",
   "name": "ツムギボシ",
   "kind": "DX",
   "diff": "MASTER",
@@ -4893,10 +5164,11 @@
   "rank100": 99,
   "avgPct": 97.898,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:42:20",
+  "date": "2026/9/30 12:33:08",
   "name": "ワードワードワード",
   "kind": "DX",
   "diff": "MASTER",
@@ -4911,10 +5183,11 @@
   "rank100": 98,
   "avgPct": 97.893,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:54:03",
+  "date": "2026/9/30 12:43:28",
   "name": "レーイレーイ",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -4929,10 +5202,11 @@
   "rank100": 97,
   "avgPct": 97.887,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:38:47",
+  "date": "2026/9/30 12:29:35",
   "name": "魔理沙は大変なものを盗んでいきました",
   "kind": "DX",
   "diff": "MASTER",
@@ -4947,10 +5221,11 @@
   "rank100": 99,
   "avgPct": 97.885,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:52:37",
+  "date": "2026/9/30 12:42:02",
   "name": "Comet Panto Men!",
   "kind": "DX",
   "diff": "MASTER",
@@ -4965,10 +5240,11 @@
   "rank100": 98,
   "avgPct": 97.883,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:51:01",
+  "date": "2026/9/30 12:40:26",
   "name": "Good Bye, Mr. Jack",
   "kind": "ST",
   "diff": "MASTER",
@@ -4983,10 +5259,11 @@
   "rank100": 100,
   "avgPct": 97.877,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 5
  },
  {
-  "date": "2026/9/30 2:41:16",
+  "date": "2026/9/30 12:32:04",
   "name": "New York Back Raise",
   "kind": "DX",
   "diff": "MASTER",
@@ -5001,10 +5278,11 @@
   "rank100": 95,
   "avgPct": 97.872,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:50:48",
+  "date": "2026/9/30 12:40:13",
   "name": "Yakumo >>JOINT STRUGGLE (2019 Update)",
   "kind": "DX",
   "diff": "MASTER",
@@ -5019,10 +5297,11 @@
   "rank100": 94,
   "avgPct": 97.869,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:41:46",
+  "date": "2026/9/30 12:32:34",
   "name": "enchanted love",
   "kind": "DX",
   "diff": "MASTER",
@@ -5037,10 +5316,11 @@
   "rank100": 98,
   "avgPct": 97.864,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:50:30",
+  "date": "2026/9/30 12:40:00",
   "name": "アマノジャクリバース feat. ｙｔｒ",
   "kind": "ST",
   "diff": "MASTER",
@@ -5055,10 +5335,11 @@
   "rank100": 100,
   "avgPct": 97.858,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:52:01",
+  "date": "2026/9/30 12:41:26",
   "name": "廃墟にいますキャンペーン",
   "kind": "DX",
   "diff": "MASTER",
@@ -5073,10 +5354,11 @@
   "rank100": 94,
   "avgPct": 97.849,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:47:16",
+  "date": "2026/9/30 12:38:06",
   "name": "スリップフリップ",
   "kind": "ST",
   "diff": "MASTER",
@@ -5091,10 +5373,11 @@
   "rank100": 93,
   "avgPct": 97.846,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:42:22",
+  "date": "2026/9/30 12:33:10",
   "name": "空威張りビヘイビア",
   "kind": "ST",
   "diff": "MASTER",
@@ -5109,10 +5392,11 @@
   "rank100": 98,
   "avgPct": 97.84,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:44:32",
+  "date": "2026/9/30 12:35:21",
   "name": "HUMANBORG",
   "kind": "DX",
   "diff": "MASTER",
@@ -5127,10 +5411,11 @@
   "rank100": 100,
   "avgPct": 97.834,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:43:58",
+  "date": "2026/9/30 12:34:46",
   "name": "なるとなぎのパーフェクトロックンロール教室",
   "kind": "ST",
   "diff": "MASTER",
@@ -5145,10 +5430,11 @@
   "rank100": 98,
   "avgPct": 97.833,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:53:11",
+  "date": "2026/9/30 12:42:37",
   "name": "Supersonic Generation",
   "kind": "DX",
   "diff": "MASTER",
@@ -5163,10 +5449,11 @@
   "rank100": 93,
   "avgPct": 97.829,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:45:13",
+  "date": "2026/9/30 12:36:01",
   "name": "拝啓ドッペルゲンガー",
   "kind": "ST",
   "diff": "MASTER",
@@ -5181,10 +5468,11 @@
   "rank100": 99,
   "avgPct": 97.826,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:50:12",
+  "date": "2026/9/30 12:39:48",
   "name": "初音ミクの暴走",
   "kind": "DX",
   "diff": "MASTER",
@@ -5199,10 +5487,11 @@
   "rank100": 94,
   "avgPct": 97.825,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:51:21",
+  "date": "2026/9/30 12:40:45",
   "name": "Sound Chimera",
   "kind": "DX",
   "diff": "MASTER",
@@ -5217,10 +5506,11 @@
   "rank100": 100,
   "avgPct": 97.823,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 5
  },
  {
-  "date": "2026/9/30 2:42:26",
+  "date": "2026/9/30 12:33:14",
   "name": "星空パーティーチューン",
   "kind": "DX",
   "diff": "MASTER",
@@ -5235,10 +5525,11 @@
   "rank100": 94,
   "avgPct": 97.819,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:51:36",
+  "date": "2026/9/30 12:41:00",
   "name": "スーパーシンメトリー",
   "kind": "DX",
   "diff": "MASTER",
@@ -5253,10 +5544,11 @@
   "rank100": 97,
   "avgPct": 97.81,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:47:05",
+  "date": "2026/9/30 12:37:55",
   "name": "前衛的Landscape",
   "kind": "DX",
   "diff": "MASTER",
@@ -5271,10 +5563,11 @@
   "rank100": 100,
   "avgPct": 97.809,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:46:12",
+  "date": "2026/9/30 12:37:01",
   "name": "Lunar Mare",
   "kind": "DX",
   "diff": "MASTER",
@@ -5289,10 +5582,11 @@
   "rank100": 93,
   "avgPct": 97.808,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:49:53",
+  "date": "2026/9/30 12:39:28",
   "name": "My First Phone",
   "kind": "ST",
   "diff": "MASTER",
@@ -5307,10 +5601,30 @@
   "rank100": 85,
   "avgPct": 97.807,
   "avgStar": 5.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:42:35",
+  "date": "2026/9/30 12:41:45",
+  "name": "Magical Paradox",
+  "kind": "DX",
+  "diff": "MASTER",
+  "level": "13+",
+  "const": 13.9,
+  "max": 3156,
+  "count": 100,
+  "top1": 3134,
+  "row50": 3083,
+  "rank50": 47,
+  "row100": 3071,
+  "rank100": 96,
+  "avgPct": 97.802,
+  "avgStar": 5.4,
+  "maxCount": 0,
+  "star6Count": 3
+ },
+ {
+  "date": "2026/9/30 12:33:23",
   "name": "Beginning together!",
   "kind": "DX",
   "diff": "MASTER",
@@ -5325,28 +5639,11 @@
   "rank100": 96,
   "avgPct": 97.79,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:52:20",
-  "name": "Magical Paradox",
-  "kind": "DX",
-  "diff": "MASTER",
-  "level": "13+",
-  "const": 13.9,
-  "max": 3156,
-  "count": 100,
-  "top1": 3134,
-  "row50": 3083,
-  "rank50": 46,
-  "row100": 3071,
-  "rank100": 95,
-  "avgPct": 97.79,
-  "avgStar": 5.3,
-  "maxCount": 0
- },
- {
-  "date": "2026/9/30 2:40:23",
+  "date": "2026/9/30 12:31:10",
   "name": "ヒアソビ",
   "kind": "DX",
   "diff": "MASTER",
@@ -5361,10 +5658,11 @@
   "rank100": 100,
   "avgPct": 97.789,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:39:30",
+  "date": "2026/9/30 12:30:17",
   "name": "FEEL the BEATS",
   "kind": "ST",
   "diff": "MASTER",
@@ -5379,10 +5677,11 @@
   "rank100": 99,
   "avgPct": 97.787,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:42:54",
+  "date": "2026/9/30 12:33:42",
   "name": "夢花火",
   "kind": "ST",
   "diff": "MASTER",
@@ -5397,10 +5696,11 @@
   "rank100": 94,
   "avgPct": 97.786,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:45:17",
+  "date": "2026/9/30 12:36:06",
   "name": "リンカーネイション",
   "kind": "ST",
   "diff": "MASTER",
@@ -5415,10 +5715,11 @@
   "rank100": 97,
   "avgPct": 97.784,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:50:45",
+  "date": "2026/9/30 12:40:11",
   "name": "少女幻葬戦慄曲 ～ Necro Fantasia",
   "kind": "ST",
   "diff": "MASTER",
@@ -5433,10 +5734,11 @@
   "rank100": 100,
   "avgPct": 97.779,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:53:03",
+  "date": "2026/9/30 12:42:28",
   "name": "LANCE",
   "kind": "DX",
   "diff": "MASTER",
@@ -5451,10 +5753,11 @@
   "rank100": 98,
   "avgPct": 97.779,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:52:18",
+  "date": "2026/9/30 12:41:43",
   "name": "雲外蒼電 -Dreaming Voltage-",
   "kind": "DX",
   "diff": "MASTER",
@@ -5469,10 +5772,11 @@
   "rank100": 99,
   "avgPct": 97.778,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:46:23",
+  "date": "2026/9/30 12:37:11",
   "name": "c.s.q.n.",
   "kind": "DX",
   "diff": "MASTER",
@@ -5487,10 +5791,11 @@
   "rank100": 94,
   "avgPct": 97.775,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:40:21",
+  "date": "2026/9/30 12:31:08",
   "name": "腐れ外道とチョコレゐト",
   "kind": "ST",
   "diff": "MASTER",
@@ -5505,10 +5810,11 @@
   "rank100": 91,
   "avgPct": 97.765,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 6
  },
  {
-  "date": "2026/9/30 2:52:48",
+  "date": "2026/9/30 12:42:13",
   "name": "蒼穹舞楽",
   "kind": "DX",
   "diff": "MASTER",
@@ -5523,10 +5829,11 @@
   "rank100": 94,
   "avgPct": 97.759,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:45:19",
+  "date": "2026/9/30 12:36:08",
   "name": "トルコ行進曲 - オワタ＼(^o^)／",
   "kind": "ST",
   "diff": "MASTER",
@@ -5541,10 +5848,11 @@
   "rank100": 98,
   "avgPct": 97.757,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:38:26",
+  "date": "2026/9/30 12:29:13",
   "name": "ナンセンス文学",
   "kind": "ST",
   "diff": "MASTER",
@@ -5559,10 +5867,11 @@
   "rank100": 99,
   "avgPct": 97.754,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:42:48",
+  "date": "2026/9/30 12:33:36",
   "name": "BREAK YOU!!",
   "kind": "ST",
   "diff": "MASTER",
@@ -5577,10 +5886,11 @@
   "rank100": 88,
   "avgPct": 97.752,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:38:24",
+  "date": "2026/9/30 12:29:11",
   "name": "ドーナツホール",
   "kind": "ST",
   "diff": "MASTER",
@@ -5595,10 +5905,11 @@
   "rank100": 96,
   "avgPct": 97.743,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:41:44",
+  "date": "2026/9/30 12:32:32",
   "name": "カラッポ・ノンフィクション",
   "kind": "DX",
   "diff": "MASTER",
@@ -5613,10 +5924,11 @@
   "rank100": 95,
   "avgPct": 97.741,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:51:14",
+  "date": "2026/9/30 12:40:39",
   "name": "セイクリッド　ルイン",
   "kind": "ST",
   "diff": "MASTER",
@@ -5631,10 +5943,11 @@
   "rank100": 95,
   "avgPct": 97.739,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:50:39",
+  "date": "2026/9/30 12:40:07",
   "name": "Destiny Runner",
   "kind": "DX",
   "diff": "MASTER",
@@ -5649,10 +5962,11 @@
   "rank100": 99,
   "avgPct": 97.738,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:50:42",
+  "date": "2026/9/30 12:40:09",
   "name": "Cosmic Magic Shooter",
   "kind": "ST",
   "diff": "MASTER",
@@ -5667,10 +5981,11 @@
   "rank100": 100,
   "avgPct": 97.723,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:44:11",
+  "date": "2026/9/30 12:34:59",
   "name": "PinqPiq (xovevox Remix)",
   "kind": "DX",
   "diff": "MASTER",
@@ -5685,10 +6000,11 @@
   "rank100": 95,
   "avgPct": 97.722,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:47:08",
+  "date": "2026/9/30 12:37:57",
   "name": "VANTABLACK RAVER",
   "kind": "DX",
   "diff": "MASTER",
@@ -5703,10 +6019,11 @@
   "rank100": 92,
   "avgPct": 97.711,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:41:52",
+  "date": "2026/9/30 12:32:40",
   "name": "アトロポスと最果の探究者",
   "kind": "DX",
   "diff": "MASTER",
@@ -5721,10 +6038,11 @@
   "rank100": 98,
   "avgPct": 97.71,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:41:07",
+  "date": "2026/9/30 12:31:55",
   "name": "進め！イッスン軍団 -Rebellion of the Dwarfs-",
   "kind": "ST",
   "diff": "MASTER",
@@ -5739,10 +6057,11 @@
   "rank100": 94,
   "avgPct": 97.709,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:45:32",
+  "date": "2026/9/30 12:36:20",
   "name": "Doll Judgment",
   "kind": "ST",
   "diff": "MASTER",
@@ -5757,10 +6076,11 @@
   "rank100": 100,
   "avgPct": 97.709,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:50:18",
+  "date": "2026/9/30 12:39:52",
   "name": "裏表ラバーズ",
   "kind": "ST",
   "diff": "MASTER",
@@ -5775,10 +6095,11 @@
   "rank100": 99,
   "avgPct": 97.707,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:43:22",
+  "date": "2026/9/30 12:34:10",
   "name": "Beautiful Future",
   "kind": "DX",
   "diff": "MASTER",
@@ -5793,10 +6114,11 @@
   "rank100": 95,
   "avgPct": 97.697,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:39:07",
+  "date": "2026/9/30 12:29:54",
   "name": "Trust",
   "kind": "DX",
   "diff": "MASTER",
@@ -5811,10 +6133,11 @@
   "rank100": 100,
   "avgPct": 97.69,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:45:39",
+  "date": "2026/9/30 12:36:27",
   "name": "Cryogenic",
   "kind": "DX",
   "diff": "MASTER",
@@ -5829,10 +6152,11 @@
   "rank100": 97,
   "avgPct": 97.688,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:45:05",
+  "date": "2026/9/30 12:35:53",
   "name": "厨病激発ボーイ",
   "kind": "ST",
   "diff": "MASTER",
@@ -5847,10 +6171,11 @@
   "rank100": 94,
   "avgPct": 97.676,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:50:33",
+  "date": "2026/9/30 12:40:03",
   "name": "Scream out! -maimai SONIC WASHER Edit-",
   "kind": "ST",
   "diff": "MASTER",
@@ -5865,10 +6190,11 @@
   "rank100": 100,
   "avgPct": 97.675,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:50:57",
+  "date": "2026/9/30 12:40:22",
   "name": "NightTheater",
   "kind": "DX",
   "diff": "MASTER",
@@ -5883,10 +6209,11 @@
   "rank100": 93,
   "avgPct": 97.668,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:49:40",
+  "date": "2026/9/30 12:39:15",
   "name": "Tidal Wave",
   "kind": "DX",
   "diff": "MASTER",
@@ -5901,10 +6228,11 @@
   "rank100": 92,
   "avgPct": 97.661,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:43:39",
+  "date": "2026/9/30 12:34:27",
   "name": "モ°ルモ°ル (MZK Skippin' Remix)",
   "kind": "DX",
   "diff": "MASTER",
@@ -5919,10 +6247,11 @@
   "rank100": 98,
   "avgPct": 97.649,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:49:31",
+  "date": "2026/9/30 12:39:06",
   "name": "DETARAME ROCK&ROLL THEORY",
   "kind": "ST",
   "diff": "MASTER",
@@ -5937,10 +6266,11 @@
   "rank100": 94,
   "avgPct": 97.641,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:54:41",
+  "date": "2026/9/30 12:44:07",
   "name": "Southern Cross",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -5955,10 +6285,11 @@
   "rank100": 99,
   "avgPct": 97.634,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:43:48",
+  "date": "2026/9/30 12:34:35",
   "name": "BOUNCE & DANCE",
   "kind": "DX",
   "diff": "MASTER",
@@ -5973,10 +6304,11 @@
   "rank100": 96,
   "avgPct": 97.631,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:49:34",
+  "date": "2026/9/30 12:39:09",
   "name": "奏者はただ背中と提琴で語るのみ",
   "kind": "ST",
   "diff": "MASTER",
@@ -5991,10 +6323,11 @@
   "rank100": 98,
   "avgPct": 97.63,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:46:31",
+  "date": "2026/9/30 12:37:20",
   "name": "ココロスキャンのうた",
   "kind": "ST",
   "diff": "MASTER",
@@ -6009,10 +6342,11 @@
   "rank100": 88,
   "avgPct": 97.627,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:44:52",
+  "date": "2026/9/30 12:35:40",
   "name": "頓珍漢の宴",
   "kind": "ST",
   "diff": "MASTER",
@@ -6027,10 +6361,11 @@
   "rank100": 94,
   "avgPct": 97.626,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:49:17",
+  "date": "2026/9/30 12:38:51",
   "name": "Revive The Rave",
   "kind": "ST",
   "diff": "MASTER",
@@ -6045,10 +6380,11 @@
   "rank100": 97,
   "avgPct": 97.621,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:46:34",
+  "date": "2026/9/30 12:37:23",
   "name": "電車で電車でOPA!OPA!OPA! -GMT mashup-",
   "kind": "ST",
   "diff": "MASTER",
@@ -6063,10 +6399,11 @@
   "rank100": 93,
   "avgPct": 97.608,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:52:26",
+  "date": "2026/9/30 12:41:52",
   "name": "天蓋",
   "kind": "DX",
   "diff": "MASTER",
@@ -6081,10 +6418,11 @@
   "rank100": 97,
   "avgPct": 97.606,
   "avgStar": 5.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:40:51",
+  "date": "2026/9/30 12:31:38",
   "name": "疾走あんさんぶる",
   "kind": "ST",
   "diff": "MASTER",
@@ -6099,10 +6437,11 @@
   "rank100": 98,
   "avgPct": 97.596,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:41:29",
+  "date": "2026/9/30 12:32:17",
   "name": "Entrance",
   "kind": "DX",
   "diff": "MASTER",
@@ -6117,10 +6456,11 @@
   "rank100": 99,
   "avgPct": 97.59,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:51:17",
+  "date": "2026/9/30 12:40:41",
   "name": "ENERGY SYNERGY MATRIX",
   "kind": "ST",
   "diff": "MASTER",
@@ -6135,10 +6475,11 @@
   "rank100": 95,
   "avgPct": 97.589,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:54:30",
+  "date": "2026/9/30 12:43:56",
   "name": "超常マイマイン",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -6153,10 +6494,11 @@
   "rank100": 100,
   "avgPct": 97.584,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:42:03",
+  "date": "2026/9/30 12:32:51",
   "name": "JACKY [Remix]",
   "kind": "ST",
   "diff": "MASTER",
@@ -6171,10 +6513,11 @@
   "rank100": 91,
   "avgPct": 97.582,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 4
  },
  {
-  "date": "2026/9/30 2:45:36",
+  "date": "2026/9/30 12:36:25",
   "name": "Imperishable Night 2006 (2016 Refine)",
   "kind": "ST",
   "diff": "MASTER",
@@ -6189,10 +6532,11 @@
   "rank100": 95,
   "avgPct": 97.574,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:42:28",
+  "date": "2026/9/30 12:33:16",
   "name": "ふらふらふら、",
   "kind": "DX",
   "diff": "MASTER",
@@ -6207,10 +6551,11 @@
   "rank100": 95,
   "avgPct": 97.571,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:45:11",
+  "date": "2026/9/30 12:35:59",
   "name": "六兆年と一夜物語",
   "kind": "ST",
   "diff": "MASTER",
@@ -6225,10 +6570,11 @@
   "rank100": 98,
   "avgPct": 97.557,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:39:34",
+  "date": "2026/9/30 12:30:21",
   "name": "Jörqer",
   "kind": "DX",
   "diff": "MASTER",
@@ -6243,10 +6589,11 @@
   "rank100": 99,
   "avgPct": 97.555,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:50:36",
+  "date": "2026/9/30 12:40:05",
   "name": "Armageddon",
   "kind": "DX",
   "diff": "MASTER",
@@ -6261,10 +6608,11 @@
   "rank100": 94,
   "avgPct": 97.555,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:54:26",
+  "date": "2026/9/30 12:43:51",
   "name": "Secret Sleuth",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -6279,10 +6627,11 @@
   "rank100": 100,
   "avgPct": 97.553,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:51:10",
+  "date": "2026/9/30 12:40:35",
   "name": "Ether Strike",
   "kind": "DX",
   "diff": "MASTER",
@@ -6297,10 +6646,11 @@
   "rank100": 93,
   "avgPct": 97.549,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:51:27",
+  "date": "2026/9/30 12:40:52",
   "name": "First Dance",
   "kind": "DX",
   "diff": "MASTER",
@@ -6315,10 +6665,11 @@
   "rank100": 98,
   "avgPct": 97.548,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:46:10",
+  "date": "2026/9/30 12:36:59",
   "name": "はげしこの夜 -Psylent Crazy Night-",
   "kind": "DX",
   "diff": "MASTER",
@@ -6333,10 +6684,11 @@
   "rank100": 96,
   "avgPct": 97.546,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:54:16",
+  "date": "2026/9/30 12:43:41",
   "name": "インビジブル",
   "kind": "ST",
   "diff": "Re:MASTER",
@@ -6351,10 +6703,11 @@
   "rank100": 98,
   "avgPct": 97.545,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:41:50",
+  "date": "2026/9/30 12:32:38",
   "name": "emomomo",
   "kind": "DX",
   "diff": "MASTER",
@@ -6369,10 +6722,11 @@
   "rank100": 99,
   "avgPct": 97.54,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:46:36",
+  "date": "2026/9/30 12:37:25",
   "name": "DADDY MULK -Groove remix-",
   "kind": "ST",
   "diff": "MASTER",
@@ -6387,10 +6741,11 @@
   "rank100": 97,
   "avgPct": 97.538,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:42:39",
+  "date": "2026/9/30 12:33:27",
   "name": "ヨミビトシラズ",
   "kind": "DX",
   "diff": "MASTER",
@@ -6405,10 +6760,11 @@
   "rank100": 99,
   "avgPct": 97.527,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:42:01",
+  "date": "2026/9/30 12:32:49",
   "name": "After Burner",
   "kind": "ST",
   "diff": "MASTER",
@@ -6423,10 +6779,11 @@
   "rank100": 98,
   "avgPct": 97.526,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:53:22",
+  "date": "2026/9/30 12:42:47",
   "name": "玩具狂奏曲 -終焉-",
   "kind": "DX",
   "diff": "MASTER",
@@ -6441,10 +6798,11 @@
   "rank100": 100,
   "avgPct": 97.511,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:42:31",
+  "date": "2026/9/30 12:33:19",
   "name": "概して過誤",
   "kind": "DX",
   "diff": "MASTER",
@@ -6459,10 +6817,11 @@
   "rank100": 92,
   "avgPct": 97.503,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:44:20",
+  "date": "2026/9/30 12:35:08",
   "name": "群青声明",
   "kind": "DX",
   "diff": "MASTER",
@@ -6477,10 +6836,11 @@
   "rank100": 97,
   "avgPct": 97.502,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:53:48",
+  "date": "2026/9/30 12:43:13",
   "name": "Limit Break",
   "kind": "ST",
   "diff": "Re:MASTER",
@@ -6495,10 +6855,11 @@
   "rank100": 94,
   "avgPct": 97.493,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:45:07",
+  "date": "2026/9/30 12:35:55",
   "name": "夜咄ディセイブ",
   "kind": "ST",
   "diff": "MASTER",
@@ -6513,10 +6874,11 @@
   "rank100": 86,
   "avgPct": 97.49,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:48:53",
+  "date": "2026/9/30 12:38:28",
   "name": "星見草",
   "kind": "DX",
   "diff": "MASTER",
@@ -6531,10 +6893,11 @@
   "rank100": 93,
   "avgPct": 97.49,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:40:44",
+  "date": "2026/9/30 12:31:32",
   "name": "magician's operation",
   "kind": "ST",
   "diff": "MASTER",
@@ -6549,10 +6912,11 @@
   "rank100": 100,
   "avgPct": 97.48,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:38:32",
+  "date": "2026/9/30 12:29:20",
   "name": "ロストワンの号哭",
   "kind": "ST",
   "diff": "MASTER",
@@ -6567,10 +6931,11 @@
   "rank100": 89,
   "avgPct": 97.476,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:42:07",
+  "date": "2026/9/30 12:32:55",
   "name": "DO RORO DERODERO ON DO RORO",
   "kind": "ST",
   "diff": "MASTER",
@@ -6585,10 +6950,11 @@
   "rank100": 95,
   "avgPct": 97.47,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:43:15",
+  "date": "2026/9/30 12:34:04",
   "name": "oboro",
   "kind": "ST",
   "diff": "MASTER",
@@ -6603,10 +6969,11 @@
   "rank100": 97,
   "avgPct": 97.466,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:44:00",
+  "date": "2026/9/30 12:34:48",
   "name": "crazy (about you)",
   "kind": "DX",
   "diff": "MASTER",
@@ -6621,10 +6988,11 @@
   "rank100": 98,
   "avgPct": 97.465,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:39:47",
+  "date": "2026/9/30 12:30:34",
   "name": "私たちは、花になる",
   "kind": "DX",
   "diff": "MASTER",
@@ -6639,10 +7007,11 @@
   "rank100": 99,
   "avgPct": 97.461,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:47:20",
+  "date": "2026/9/30 12:38:10",
   "name": "Feel The Luv",
   "kind": "DX",
   "diff": "MASTER",
@@ -6657,10 +7026,11 @@
   "rank100": 94,
   "avgPct": 97.46,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:41:01",
+  "date": "2026/9/30 12:31:49",
   "name": "Sweet Requiem",
   "kind": "DX",
   "diff": "MASTER",
@@ -6675,10 +7045,11 @@
   "rank100": 94,
   "avgPct": 97.455,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:43:24",
+  "date": "2026/9/30 12:34:12",
   "name": "Komplexe",
   "kind": "DX",
   "diff": "MASTER",
@@ -6693,10 +7064,11 @@
   "rank100": 97,
   "avgPct": 97.45,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:44:05",
+  "date": "2026/9/30 12:34:52",
   "name": "猛進ソリストライフ！",
   "kind": "ST",
   "diff": "MASTER",
@@ -6711,10 +7083,11 @@
   "rank100": 98,
   "avgPct": 97.444,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:41:54",
+  "date": "2026/9/30 12:32:42",
   "name": "Party 4U ”holy nite mix”",
   "kind": "ST",
   "diff": "MASTER",
@@ -6729,10 +7102,11 @@
   "rank100": 93,
   "avgPct": 97.443,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:51:23",
+  "date": "2026/9/30 12:40:48",
   "name": "Strange Bar",
   "kind": "DX",
   "diff": "MASTER",
@@ -6747,10 +7121,11 @@
   "rank100": 98,
   "avgPct": 97.438,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:51:31",
+  "date": "2026/9/30 12:40:56",
   "name": "Dreadnought",
   "kind": "DX",
   "diff": "MASTER",
@@ -6765,10 +7140,11 @@
   "rank100": 99,
   "avgPct": 97.438,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:49:12",
+  "date": "2026/9/30 12:38:47",
   "name": "Beat of getting entangled",
   "kind": "ST",
   "diff": "MASTER",
@@ -6783,10 +7159,11 @@
   "rank100": 100,
   "avgPct": 97.435,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:48:58",
+  "date": "2026/9/30 12:38:32",
   "name": "Technicians High",
   "kind": "ST",
   "diff": "MASTER",
@@ -6801,10 +7178,11 @@
   "rank100": 99,
   "avgPct": 97.431,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:53:20",
+  "date": "2026/9/30 12:42:45",
   "name": "We Gonna Journey",
   "kind": "ST",
   "diff": "MASTER",
@@ -6819,10 +7197,11 @@
   "rank100": 93,
   "avgPct": 97.43,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:38:35",
+  "date": "2026/9/30 12:29:22",
   "name": "ゆっくりしていってね！！！",
   "kind": "ST",
   "diff": "MASTER",
@@ -6837,10 +7216,11 @@
   "rank100": 98,
   "avgPct": 97.428,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:52:54",
+  "date": "2026/9/30 12:42:19",
   "name": "四月の雨",
   "kind": "ST",
   "diff": "MASTER",
@@ -6855,10 +7235,11 @@
   "rank100": 96,
   "avgPct": 97.426,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:50:53",
+  "date": "2026/9/30 12:40:18",
   "name": "Manifold Hypothesis",
   "kind": "DX",
   "diff": "MASTER",
@@ -6873,10 +7254,11 @@
   "rank100": 98,
   "avgPct": 97.425,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:52:12",
+  "date": "2026/9/30 12:41:37",
   "name": "デスパレイト",
   "kind": "ST",
   "diff": "MASTER",
@@ -6891,10 +7273,11 @@
   "rank100": 93,
   "avgPct": 97.421,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:41:42",
+  "date": "2026/9/30 12:32:30",
   "name": "Random",
   "kind": "DX",
   "diff": "MASTER",
@@ -6909,10 +7292,11 @@
   "rank100": 96,
   "avgPct": 97.402,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:51:48",
+  "date": "2026/9/30 12:41:13",
   "name": "ULTRA B+K",
   "kind": "ST",
   "diff": "MASTER",
@@ -6927,10 +7311,11 @@
   "rank100": 96,
   "avgPct": 97.401,
   "avgStar": 5.2,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:52:28",
+  "date": "2026/9/30 12:41:54",
   "name": "Edelweiss",
   "kind": "DX",
   "diff": "MASTER",
@@ -6945,10 +7330,11 @@
   "rank100": 97,
   "avgPct": 97.396,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:45:26",
+  "date": "2026/9/30 12:36:14",
   "name": "デッドレッドガールズ",
   "kind": "ST",
   "diff": "MASTER",
@@ -6963,10 +7349,11 @@
   "rank100": 91,
   "avgPct": 97.395,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:41:57",
+  "date": "2026/9/30 12:32:44",
   "name": "L9",
   "kind": "ST",
   "diff": "MASTER",
@@ -6981,10 +7368,11 @@
   "rank100": 97,
   "avgPct": 97.384,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:37:52",
+  "date": "2026/9/30 12:28:39",
   "name": "raputa",
   "kind": "DX",
   "diff": "EXPERT",
@@ -6999,10 +7387,11 @@
   "rank100": 93,
   "avgPct": 97.381,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:46:29",
+  "date": "2026/9/30 12:37:18",
   "name": "Last Brave ～ Go to zero",
   "kind": "ST",
   "diff": "MASTER",
@@ -7017,10 +7406,11 @@
   "rank100": 91,
   "avgPct": 97.377,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:47:35",
+  "date": "2026/9/30 12:38:26",
   "name": "Neon Kingdom",
   "kind": "DX",
   "diff": "MASTER",
@@ -7035,10 +7425,11 @@
   "rank100": 100,
   "avgPct": 97.377,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:42:52",
+  "date": "2026/9/30 12:33:40",
   "name": "FEEL ALIVE",
   "kind": "ST",
   "diff": "MASTER",
@@ -7053,10 +7444,11 @@
   "rank100": 92,
   "avgPct": 97.371,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:44:03",
+  "date": "2026/9/30 12:34:50",
   "name": "サウンドプレイヤー",
   "kind": "DX",
   "diff": "MASTER",
@@ -7071,10 +7463,11 @@
   "rank100": 100,
   "avgPct": 97.359,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:42:56",
+  "date": "2026/9/30 12:33:45",
   "name": "L'épilogue",
   "kind": "ST",
   "diff": "MASTER",
@@ -7089,10 +7482,11 @@
   "rank100": 93,
   "avgPct": 97.354,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:54:13",
+  "date": "2026/9/30 12:43:39",
   "name": "立ち入り禁止",
   "kind": "ST",
   "diff": "Re:MASTER",
@@ -7107,10 +7501,11 @@
   "rank100": 97,
   "avgPct": 97.342,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:52:56",
+  "date": "2026/9/30 12:42:21",
   "name": "Imitation:Loud Lounge",
   "kind": "DX",
   "diff": "MASTER",
@@ -7125,10 +7520,11 @@
   "rank100": 97,
   "avgPct": 97.339,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:51:50",
+  "date": "2026/9/30 12:41:15",
   "name": "GO BACK 2 YOUR RAVE",
   "kind": "ST",
   "diff": "MASTER",
@@ -7143,10 +7539,11 @@
   "rank100": 100,
   "avgPct": 97.336,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:50:10",
+  "date": "2026/9/30 12:39:46",
   "name": "初音ミクの消失",
   "kind": "ST",
   "diff": "MASTER",
@@ -7161,10 +7558,11 @@
   "rank100": 99,
   "avgPct": 97.334,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:49:48",
+  "date": "2026/9/30 12:39:24",
   "name": "ハジマリノピアノ",
   "kind": "DX",
   "diff": "MASTER",
@@ -7179,10 +7577,11 @@
   "rank100": 97,
   "avgPct": 97.325,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:37:54",
+  "date": "2026/9/30 12:28:41",
   "name": "sølips",
   "kind": "DX",
   "diff": "EXPERT",
@@ -7197,10 +7596,11 @@
   "rank100": 97,
   "avgPct": 97.32,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:47:12",
+  "date": "2026/9/30 12:38:02",
   "name": "Candy Tall Woman",
   "kind": "ST",
   "diff": "MASTER",
@@ -7215,10 +7615,11 @@
   "rank100": 99,
   "avgPct": 97.32,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:52:07",
+  "date": "2026/9/30 12:41:32",
   "name": "KING is BACK!!",
   "kind": "ST",
   "diff": "MASTER",
@@ -7233,10 +7634,11 @@
   "rank100": 99,
   "avgPct": 97.307,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:43:28",
+  "date": "2026/9/30 12:34:16",
   "name": "Turn around",
   "kind": "ST",
   "diff": "MASTER",
@@ -7251,10 +7653,11 @@
   "rank100": 99,
   "avgPct": 97.306,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 3
  },
  {
-  "date": "2026/9/30 2:52:46",
+  "date": "2026/9/30 12:42:11",
   "name": "華の集落、秋のお届け",
   "kind": "ST",
   "diff": "MASTER",
@@ -7269,10 +7672,11 @@
   "rank100": 100,
   "avgPct": 97.281,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:53:40",
+  "date": "2026/9/30 12:43:04",
   "name": "Crush On You",
   "kind": "ST",
   "diff": "Re:MASTER",
@@ -7287,10 +7691,11 @@
   "rank100": 93,
   "avgPct": 97.273,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:52:35",
+  "date": "2026/9/30 12:42:00",
   "name": "Redemption",
   "kind": "DX",
   "diff": "MASTER",
@@ -7305,10 +7710,11 @@
   "rank100": 100,
   "avgPct": 97.272,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:37:50",
+  "date": "2026/9/30 12:28:37",
   "name": "AMAZING MIGHTYYYY!!!!",
   "kind": "ST",
   "diff": "EXPERT",
@@ -7323,10 +7729,11 @@
   "rank100": 100,
   "avgPct": 97.269,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:54:28",
+  "date": "2026/9/30 12:43:53",
   "name": "ぼくたちいつでも　しゅわっしゅわ！",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -7341,10 +7748,11 @@
   "rank100": 99,
   "avgPct": 97.266,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:54:35",
+  "date": "2026/9/30 12:44:00",
   "name": "単一指向性オーバーブルーム",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -7359,10 +7767,11 @@
   "rank100": 99,
   "avgPct": 97.257,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:49:08",
+  "date": "2026/9/30 12:38:43",
   "name": "LANCE",
   "kind": "ST",
   "diff": "MASTER",
@@ -7377,10 +7786,11 @@
   "rank100": 100,
   "avgPct": 97.24,
   "avgStar": 5.1,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:52:41",
+  "date": "2026/9/30 12:42:07",
   "name": "Hyper Active",
   "kind": "ST",
   "diff": "MASTER",
@@ -7395,10 +7805,11 @@
   "rank100": 100,
   "avgPct": 97.199,
   "avgStar": 5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:46:00",
+  "date": "2026/9/30 12:36:48",
   "name": "Scars of FAUNA",
   "kind": "ST",
   "diff": "MASTER",
@@ -7413,10 +7824,11 @@
   "rank100": 100,
   "avgPct": 97.181,
   "avgStar": 5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:49:19",
+  "date": "2026/9/30 12:38:54",
   "name": "高気圧ねこロック",
   "kind": "ST",
   "diff": "MASTER",
@@ -7431,10 +7843,11 @@
   "rank100": 96,
   "avgPct": 97.174,
   "avgStar": 5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:53:56",
+  "date": "2026/9/30 12:43:21",
   "name": "LUCIA",
   "kind": "ST",
   "diff": "Re:MASTER",
@@ -7449,10 +7862,11 @@
   "rank100": 96,
   "avgPct": 97.174,
   "avgStar": 5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:39:15",
+  "date": "2026/9/30 12:30:02",
   "name": "Space Harrier Main Theme [Reborn]",
   "kind": "ST",
   "diff": "MASTER",
@@ -7467,10 +7881,11 @@
   "rank100": 98,
   "avgPct": 97.173,
   "avgStar": 5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:53:07",
+  "date": "2026/9/30 12:42:32",
   "name": "LiftOff",
   "kind": "DX",
   "diff": "MASTER",
@@ -7485,10 +7900,11 @@
   "rank100": 99,
   "avgPct": 97.169,
   "avgStar": 5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:53:50",
+  "date": "2026/9/30 12:43:15",
   "name": "planet dancer",
   "kind": "ST",
   "diff": "Re:MASTER",
@@ -7503,10 +7919,11 @@
   "rank100": 96,
   "avgPct": 97.16,
   "avgStar": 5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:50:51",
+  "date": "2026/9/30 12:40:15",
   "name": "浮世絵横丁",
   "kind": "DX",
   "diff": "MASTER",
@@ -7521,10 +7938,11 @@
   "rank100": 99,
   "avgPct": 97.159,
   "avgStar": 5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:52:58",
+  "date": "2026/9/30 12:42:24",
   "name": "keep hopping",
   "kind": "ST",
   "diff": "MASTER",
@@ -7539,10 +7957,11 @@
   "rank100": 96,
   "avgPct": 97.105,
   "avgStar": 5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:49:02",
+  "date": "2026/9/30 12:38:36",
   "name": "D✪N’T  ST✪P  R✪CKIN’",
   "kind": "ST",
   "diff": "MASTER",
@@ -7557,10 +7976,11 @@
   "rank100": 99,
   "avgPct": 97.094,
   "avgStar": 5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:54:01",
+  "date": "2026/9/30 12:43:25",
   "name": "Danza zandA",
   "kind": "ST",
   "diff": "Re:MASTER",
@@ -7575,10 +7995,11 @@
   "rank100": 100,
   "avgPct": 97.068,
   "avgStar": 5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:54:39",
+  "date": "2026/9/30 12:44:05",
   "name": "CYBER Sparks",
   "kind": "ST",
   "diff": "Re:MASTER",
@@ -7593,10 +8014,11 @@
   "rank100": 99,
   "avgPct": 97.06,
   "avgStar": 5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:38:01",
+  "date": "2026/9/30 12:28:48",
   "name": "PANDORA PARADOXXX",
   "kind": "ST",
   "diff": "EXPERT",
@@ -7611,10 +8033,11 @@
   "rank100": 100,
   "avgPct": 97.024,
   "avgStar": 5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:43:32",
+  "date": "2026/9/30 12:34:21",
   "name": "We Gonna Party",
   "kind": "ST",
   "diff": "MASTER",
@@ -7629,10 +8052,11 @@
   "rank100": 97,
   "avgPct": 97.005,
   "avgStar": 5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 2
  },
  {
-  "date": "2026/9/30 2:42:09",
+  "date": "2026/9/30 12:32:57",
   "name": "オパ! オパ! RACER -GMT mashup-",
   "kind": "ST",
   "diff": "MASTER",
@@ -7647,10 +8071,11 @@
   "rank100": 100,
   "avgPct": 96.989,
   "avgStar": 4.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:51:53",
+  "date": "2026/9/30 12:41:17",
   "name": "Sakura Fubuki",
   "kind": "ST",
   "diff": "MASTER",
@@ -7665,10 +8090,11 @@
   "rank100": 95,
   "avgPct": 96.975,
   "avgStar": 4.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:37:59",
+  "date": "2026/9/30 12:28:46",
   "name": "系ぎて",
   "kind": "DX",
   "diff": "EXPERT",
@@ -7683,10 +8109,11 @@
   "rank100": 97,
   "avgPct": 96.957,
   "avgStar": 4.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:53:16",
+  "date": "2026/9/30 12:42:41",
   "name": "閃鋼のブリューナク",
   "kind": "ST",
   "diff": "MASTER",
@@ -7701,10 +8128,11 @@
   "rank100": 98,
   "avgPct": 96.91,
   "avgStar": 4.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:51:29",
+  "date": "2026/9/30 12:40:54",
   "name": "エナドリおいしいソング",
   "kind": "DX",
   "diff": "MASTER",
@@ -7719,10 +8147,11 @@
   "rank100": 98,
   "avgPct": 96.859,
   "avgStar": 4.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:52:09",
+  "date": "2026/9/30 12:41:34",
   "name": "Selector",
   "kind": "DX",
   "diff": "MASTER",
@@ -7737,10 +8166,11 @@
   "rank100": 97,
   "avgPct": 96.839,
   "avgStar": 4.9,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:54:24",
+  "date": "2026/9/30 12:43:49",
   "name": "DADDY MULK -Groove remix-",
   "kind": "ST",
   "diff": "Re:MASTER",
@@ -7755,10 +8185,11 @@
   "rank100": 98,
   "avgPct": 96.754,
   "avgStar": 4.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:51:12",
+  "date": "2026/9/30 12:40:37",
   "name": "FLOWER",
   "kind": "ST",
   "diff": "MASTER",
@@ -7773,10 +8204,11 @@
   "rank100": 96,
   "avgPct": 96.743,
   "avgStar": 4.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:54:22",
+  "date": "2026/9/30 12:43:47",
   "name": "Burning Hearts ～炎のANGEL～",
   "kind": "ST",
   "diff": "Re:MASTER",
@@ -7791,10 +8223,11 @@
   "rank100": 99,
   "avgPct": 96.704,
   "avgStar": 4.8,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:54:43",
+  "date": "2026/9/30 12:44:09",
   "name": "FEEL the BEATS",
   "kind": "ST",
   "diff": "Re:MASTER",
@@ -7809,10 +8242,11 @@
   "rank100": 99,
   "avgPct": 96.558,
   "avgStar": 4.7,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:53:59",
+  "date": "2026/9/30 12:43:23",
   "name": "air's gravity",
   "kind": "ST",
   "diff": "Re:MASTER",
@@ -7827,10 +8261,11 @@
   "rank100": 95,
   "avgPct": 96.092,
   "avgStar": 4.5,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:54:46",
+  "date": "2026/9/30 12:44:11",
   "name": "We Gonna Party",
   "kind": "ST",
   "diff": "Re:MASTER",
@@ -7845,10 +8280,11 @@
   "rank100": 98,
   "avgPct": 95.858,
   "avgStar": 4.4,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  },
  {
-  "date": "2026/9/30 2:52:22",
+  "date": "2026/9/30 12:41:48",
   "name": "Amereistr",
   "kind": "DX",
   "diff": "MASTER",
@@ -7863,6 +8299,7 @@
   "rank100": 99,
   "avgPct": 95.749,
   "avgStar": 4.3,
-  "maxCount": 0
+  "maxCount": 0,
+  "star6Count": 1
  }
 ]
