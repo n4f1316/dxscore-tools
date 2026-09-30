@@ -27,7 +27,7 @@
     { id: 'cap5', label: '☆5まで', capStars: 5 },
   ];
 
-  // 単曲レート値 = 定数 × 定数 × ☆ ÷ RATE_DIVISOR
+  // 単曲レート値 = 定数 × 定数 × ☆（小数第一位まで）÷ RATE_DIVISOR
   const RATE_DIVISOR = 100;
 
   const TOP_N = 50;          // 平均を取る曲数
@@ -100,6 +100,17 @@
   // 表示用の小数つき☆（例: 6.4）。次の☆までの進み具合を 0.1 刻みで表す
   //   ☆6(99%)→☆7(100%) の間で 99.48% なら 6.4。切り捨てなので次の☆に届くまで繰り上がらない
   //   計算には使わず、表示のみ
+  // 計算に使う☆（0.1刻み。例：6.4）を「10倍した整数」で返す（小数の誤差を避けるため）
+  //   ☆1未満（取得率85%未満）は 0 とする
+  function starTenths(cur, max) {
+    const s = starsOf(cur, max);
+    if (s === 0) return 0;
+    const lo = STAR_THRESHOLDS.find((t) => t.stars === s).pct;
+    const hi = STAR_THRESHOLDS.find((t) => t.stars === s + 1)?.pct;
+    if (hi === undefined) return s * 10; // 最高の☆
+    return s * 10 + Math.floor(((cur * 100 - max * lo) * 10) / (max * (hi - lo)));
+  }
+
   function starDisplay(cur, max) {
     const s = starsOf(cur, max);
     const lo = STAR_THRESHOLDS.find((t) => t.stars === s)?.pct ?? 0;
@@ -176,7 +187,11 @@
     const stars = starsOf(s.cur, s.max);
     // レートの種類ごとに値を計算（☆は capStars を上限に切り詰める）
     const values = {};
-    for (const m of RATE_MODES) values[m.id] = (c * c * Math.min(stars, m.capStars)) / RATE_DIVISOR;
+    // ☆は小数第一位まで反映（6.4なら6.4で計算）。レートの種類ごとの上限（☆5まで等）で切り詰める
+    const tenths = starTenths(s.cur, s.max);
+    for (const m of RATE_MODES) {
+      values[m.id] = (c * c * Math.min(tenths, m.capStars * 10)) / 10 / RATE_DIVISOR;
+    }
     return { ...s, c, estimated: !inTable, stars, values };
   }
 
@@ -791,7 +806,7 @@
     ctx.fillStyle = IMG.sub;
     ctx.font = `700 17px ${IMG.font}`;
     ctx.fillText('楽曲のジャケット画像の著作権は、各権利者に帰属します。', pad, fy + 32);
-    ctx.fillText('2fRATE は非公式のファンメイドツールであり、株式会社セガおよびその関連会社とは一切関係ありません。', pad, fy + 60);
+    ctx.fillText('2fRATE は非公式のファンメイドツールであり、株式会社セガおよび関連会社とは一切関係ありません。', pad, fy + 60);
     ctx.textAlign = 'right';
     ctx.fillText(`作成日時 ${d.getFullYear()}/${p2(d.getMonth() + 1)}/${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`,
       W - pad, fy);
