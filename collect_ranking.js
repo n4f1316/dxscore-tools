@@ -240,6 +240,8 @@
     .const { background: #EFECF9; color: #2B2350; }
     .lv { background: transparent; color: #6E6892; padding-left: 2px; }
     .nw { white-space: nowrap; }
+    .date { font-size: 11px; color: #9A94B8; margin-top: 1px; }
+    .daterange { font-size: 12px; font-weight: 700; color: #6E6892; margin: 0 2px 6px; }
     .genre { font-size: 11px; font-weight: 700; color: #6E6892; margin-left: 2px; }
     .pct { font-weight: 800; }
     .avgstar { font-size: 12px; font-weight: 700; color: #6E6892; }
@@ -302,6 +304,16 @@
       return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
     };
     return '\uFEFF' + [head.join(','), ...rows.map((r) => keys.map((k) => esc(r[k])).join(','))].join('\n');
+  }
+
+  // 取得日時 → 「2026/09/30」形式の年月日（古い版の ISO 形式「2026-09-29T16:16:31Z」にも対応）
+  function dateOf(v) {
+    if (!v) return null;
+    const p = (x) => String(x).padStart(2, '0');
+    const m = String(v).match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+    if (m) return `${m[1]}/${p(m[2])}/${p(m[3])}`;
+    const d = new Date(v);
+    return isNaN(d) ? null : `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())}`;
   }
 
   // 平均取得率の高い順（取れなかった譜面は最後）
@@ -583,6 +595,9 @@
             meta.appendChild(el('span', 'nw', t));
           });
         main.appendChild(meta);
+        // 取得した年月日
+        const got = dateOf(r.date);
+        if (got) main.appendChild(el('div', 'date', `取得日 ${got}`));
         // ジャケット画像（見つからない・読み込めない場合は空の枠）
         let jacket;
         const file = song?.img;
@@ -615,6 +630,11 @@
         list.appendChild(row);
       });
       if (!items.length) list.appendChild(el('div', 'empty', 'この条件の譜面はありません。'));
+      // 表示中の譜面の取得日の範囲
+      const dates = items.map((r) => dateOf(r.date)).filter(Boolean).sort();
+      const range = dates.length
+        ? (dates[0] === dates[dates.length - 1] ? `取得日：${dates[0]}` : `取得日：${dates[0]} 〜 ${dates[dates.length - 1]}`)
+        : '';
       const tools = el('div', 'row');
       tools.style.margin = '0 0 8px';
       // 難易度の切り替え（集計済みの難易度だけ表示）
@@ -646,7 +666,7 @@
         one.onclick = () => downloadLevels([key]);
         tools.appendChild(one);
       }
-      listBox.replaceChildren(tools, list);
+      listBox.replaceChildren(tools, ...(range ? [el('div', 'daterange', `${range}（${items.length} 譜面）`)] : []), list);
     }
 
     resultCard.append(dl, tabs, listBox);
