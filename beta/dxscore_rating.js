@@ -714,7 +714,7 @@
       ctx.fillStyle = IMG.ink;
       ctx.textBaseline = 'alphabetic';
       ctx.textAlign = 'left';
-      ctx.fillText(fitText(ctx, `レート対象曲 上位${TOP_N}`, textMax), tx, iy + 84);
+      ctx.fillText(fitText(ctx, 'レート対象曲', textMax), tx, iy + 84);
     } else {
       if (profile.trophy) {
         ctx.font = `800 21px ${IMG.font}`;
@@ -926,7 +926,7 @@
     text.appendChild(el('div', 'dxr-player', profile.name || 'プレイヤー名を取得できませんでした'));
     player.appendChild(text);
 
-    // レートの札（押すとその上位50に切り替わる）
+    // レートの札（押すとそのレートのレート対象曲に切り替わる）
     const plates = el('div', 'dxr-plates');
     const lists = results.map(({ mode, top }) => buildList(top, mode, jackets));
     const buttons = results.map(({ mode, rating }, i) => {
@@ -935,7 +935,7 @@
       b.append(
         el('span', 'dxr-plate-label', mode.label),
         el('span', 'dxr-plate-value', rating.toFixed(3)),
-        el('span', 'dxr-plate-hint', `押すと上位${TOP_N}を表示`)
+        el('span', 'dxr-plate-hint', '押すとレート対象曲を表示')
       );
       b.onclick = () => select(i);
       plates.appendChild(b);
@@ -948,7 +948,7 @@
       selected = i;
       lists.forEach((l, j) => { l.style.display = i === j ? '' : 'none'; });
       buttons.forEach((b, j) => b.setAttribute('aria-pressed', String(i === j)));
-      shareBtn.textContent = `「${results[i].mode.label}」の上位${TOP_N}を画像にする`;
+      shareBtn.textContent = `「${results[i].mode.label}」のレート対象曲を画像にする`;
     }
     select(0);
     // 画像にプレイヤー名と称号を載せるかの切り替え（両方表示 / 両方非表示）
