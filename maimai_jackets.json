@@ -67,7 +67,44 @@
  "千本桜": "fa67a0cdb0ac0035.png",
  "御旗のもとに": "f364b690f9a0bff3.png",
  "FEEL ALIVE": "b6fcfb51e60145a0.png",
- "Link": null,
+ "Link": [
+  {
+   "img": "1e44516a8a3b5a51.png",
+   "genre": "maimai",
+   "st": [
+    "6",
+    "8",
+    "12+",
+    "12",
+    "13"
+   ],
+   "dx": [
+    "",
+    "",
+    "",
+    "",
+    ""
+   ]
+  },
+  {
+   "img": "e90f79d9dcff84df.png",
+   "genre": "niconico＆ボーカロイド",
+   "st": [
+    "6",
+    "8+",
+    "10+",
+    "12",
+    ""
+   ],
+   "dx": [
+    "",
+    "",
+    "",
+    "",
+    ""
+   ]
+  }
+ ],
  "Turn around": "1c7a37b61084b07c.png",
  "We Gonna Party": "a29a68c61ddd6e50.png",
  "Night Fly": "576d1cf555d8b20e.png",
