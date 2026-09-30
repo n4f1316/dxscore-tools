@@ -98,6 +98,10 @@
   async function fetchDoc(url) {
     const res = await fetch(url, { credentials: 'same-origin' });
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
+    // ログイン切れやメンテナンス中は、エラーページやトップページに転送される
+    if (res.redirected && !res.url.includes('/ranking/')) {
+      throw new Error('ランキングのページを開けませんでした（ログインが切れているか、メンテナンス中の可能性があります）');
+    }
     return new DOMParser().parseFromString(await res.text(), 'text/html');
   }
 
@@ -688,7 +692,11 @@
       const todo = refetchCb.checked
         ? charts
         : charts.filter((c) => rowsOfBase(baseOf(c)).length < dupCount[baseOf(c)]);
+      if (!charts.length && !stopped) {
+        throw new Error('一覧ページから譜面を1つも読み取れませんでした。ログイン状態を確認し、メンテナンス時間外に実行してください。');
+      }
       const done0 = charts.length - todo.length;
+      let failCount = 0;
       let newCount = 0;
       for (const [i, c] of todo.entries()) {
         if (stopped) break;
@@ -705,7 +713,10 @@
           newCount++;
           changedLevels.add(c.level);
         } catch (e) {
+          failCount++;
           console.warn('取得に失敗した譜面', c.name, e);
+          // 最初の数件が続けて失敗したら、ログイン切れなどとみなして止める
+          if (failCount >= 3 && newCount === 0) throw e;
         }
         await sleep(WAIT_MS);
       }
@@ -714,7 +725,7 @@
       setProgress(doneNow / Math.max(charts.length, 1));
       setStatus((stopped
         ? `中止しました（選んだ範囲の ${doneNow}/${charts.length} 譜面が集計済み、今回 ${newCount} 譜面を取得）。`
-        : `完了しました（今回 ${newCount} 譜面を取得）。`) +
+        : `完了しました（対象 ${charts.length} 譜面のうち、今回 ${newCount} 譜面を取得${failCount ? `、${failCount} 譜面は取得に失敗` : ''}）。`) +
         (changedLevels.size ? '「更新したレベルのJSONをダウンロード」で保存し、GitHubの ranking フォルダのファイルを置き換えてください。' : ''));
       renderResults(levelLabel(to));
     } catch (e) {
