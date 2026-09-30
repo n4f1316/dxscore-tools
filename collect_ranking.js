@@ -81,6 +81,20 @@
     return (s + tenths / 10).toFixed(1);
   }
 
+  // ジャケット対応表から曲を特定する
+  //   通常の曲：値は画像ファイル名（文字列）
+  //   同名の別曲：値は候補の配列 [{ img, genre, st: [BAS..ReMAS のレベル], dx: [...] }]
+  //   → 種別・難易度・レベルが一致する候補が1つだけなら、その曲と判断する
+  function resolveSong(map, name, kind, diffIdx, level) {
+    const v = map?.get(name);
+    if (!v) return null;
+    if (typeof v === 'string') return { img: v, genre: null };
+    if (!Array.isArray(v)) return null;
+    const k = kind === 'ST' ? 'st' : 'dx';
+    const hits = v.filter((c) => c[k]?.[diffIdx] === level);
+    return hits.length === 1 ? { img: hits[0].img, genre: hits[0].genre } : null;
+  }
+
   async function fetchDoc(url) {
     const res = await fetch(url, { credentials: 'same-origin' });
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
@@ -154,6 +168,8 @@
       avgPct: avgPct === null ? null : Math.round(avgPct * 1000) / 1000,
       avgStar: avgPct === null ? null : starOfPct(avgPct),
       maxCount: max ? scores.filter((s) => s === max).length : null,
+      // ☆6 の人数（99%以上・理論値未満）
+      star6Count: max ? scores.filter((s) => s < max && s * 100 >= max * 99).length : null,
     };
   }
 
@@ -191,7 +207,7 @@
     .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
     .tabs button[aria-pressed="true"] { background: #2B2350; border-color: #2B2350; color: #fff; }
     .list { background: #fff; border: 1.5px solid #E4DFF3; border-radius: 16px; overflow: hidden; }
-    .r { display: grid; grid-template-columns: 30px 44px 1fr 64px 44px 44px; gap: 8px; align-items: center;
+    .r { display: grid; grid-template-columns: 30px 44px 1fr 70px 40px 40px; gap: 8px; align-items: center;
       padding: 8px 12px; border-top: 1px solid #E4DFF3; font-variant-numeric: tabular-nums; }
     .r:nth-child(even) { background: #FBFAFE; }
     .r.head { border-top: 0; background: #2B2350 !important; color: #fff; font-size: 11px; font-weight: 700; padding-top: 7px; padding-bottom: 7px; }
@@ -220,10 +236,23 @@
     .const { background: #EFECF9; color: #2B2350; }
     .lv { background: transparent; color: #6E6892; padding-left: 2px; }
     .nw { white-space: nowrap; }
+    .genre { font-size: 11px; font-weight: 700; color: #6E6892; margin-left: 2px; }
     .pct { font-weight: 800; }
+    .avgstar { font-size: 12px; font-weight: 700; color: #6E6892; }
+    .r .c-num { text-align: right; }
+    .r.head .c-num { text-align: center; }
+    /* 難易度の切り替えボタン（選択中は難易度の色で塗る） */
+    .diffs button { padding: 4px 12px; font-size: 13px; }
+    .diffs button.dbtn[aria-pressed="true"] { color: #fff; border-color: transparent; }
+    .diffs button.db-BASIC[aria-pressed="true"] { background: #2E9E5B; }
+    .diffs button.db-ADVANCED[aria-pressed="true"] { background: #D98E04; }
+    .diffs button.db-EXPERT[aria-pressed="true"] { background: #E0434B; }
+    .diffs button.db-MASTER[aria-pressed="true"] { background: #8E44D6; }
+    .diffs button.db-REMASTER[aria-pressed="true"] { background: #fff; color: #8E44D6; box-shadow: inset 0 0 0 1.5px #B68BE0; }
+    .diffs button:not(.dbtn)[aria-pressed="true"] { background: #2B2350; border-color: #2B2350; color: #fff; }
     .empty { padding: 20px; text-align: center; color: #6E6892; }
     @media (max-width: 520px) {
-      .r { grid-template-columns: 22px 40px 1fr 58px 36px 36px; gap: 6px; padding: 8px 10px; }
+      .r { grid-template-columns: 22px 40px 1fr 58px 30px 30px; gap: 6px; padding: 8px 10px; }
       .jacket { width: 40px; height: 40px; }
     }
   `;
@@ -261,9 +290,9 @@
   function toCsv(rows) {
     const head = ['取得日時', '曲名', '種別', '難易度', 'レベル', '公式定数', '最大値', '掲載人数',
       '1位スコア', '50位スコア', '50位の同率順位', '100位スコア', '100位の同率順位',
-      '平均取得率(%)', '平均☆', 'MAX人数'];
+      '平均取得率(%)', '平均☆', '☆7人数(MAX)', '☆6人数'];
     const keys = ['date', 'name', 'kind', 'diff', 'level', 'const', 'max', 'count',
-      'top1', 'row50', 'rank50', 'row100', 'rank100', 'avgPct', 'avgStar', 'maxCount'];
+      'top1', 'row50', 'rank50', 'row100', 'rank100', 'avgPct', 'avgStar', 'maxCount', 'star6Count'];
     const esc = (v) => {
       const t = v === null || v === undefined ? '' : String(v);
       return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
@@ -287,10 +316,16 @@
   }
 
   // 集計結果は「譜面 → 1行」の表で持つ（キー：曲名|種別|難易度|レベル）
-  const keyOfRow = (r) => `${r.name}|${r.kind}|${r.diff}|${r.level}`;
+  // 同名の別曲（Link など）を区別するため、でらっくスコアの最大値もキーに含める
+  // （ランキングページの「あなたのスコア」には未プレーでも最大値が出るので必ず取れる）
+  const baseOfRow = (r) => `${r.name}|${r.kind}|${r.diff}|${r.level}`;
+  const keyOfRow = (r) => `${baseOfRow(r)}|${r.max}`;
+  // 読み込んだデータが集計結果の形をしているか（壊れたファイルや別のJSONを読み込まないため）
+  const isRow = (r) => r && typeof r === 'object' && typeof r.name === 'string' && typeof r.level === 'string';
+  const rowsOfBase = (base) => Object.values(results).filter((r) => baseOfRow(r) === base);
   let results = {};
   let loadedCount = 0;
-  let jackets = null; // 曲名 → ジャケット画像のファイル名
+  let jackets = null; // 曲名 → ジャケット画像のファイル名（同名の別曲は候補の一覧）
   const changedLevels = new Set(); // 今回の実行で内容が変わったレベル（ダウンロード対象）
   const rows = () => Object.values(results);
 
@@ -410,7 +445,7 @@
   perLevel.forEach((list, i) => {
     if (!list) return;
     const arr = Array.isArray(list) ? list : Object.values(list);
-    arr.forEach((r) => { results[keyOfRow(r)] = r; });
+    arr.filter(isRow).forEach((r) => { results[keyOfRow(r)] = r; });
     loadedLevels.push(`Lv${labels[i]}（${arr.length}）`);
   });
   loadedCount = rows().length;
@@ -420,7 +455,7 @@
   // （合流した譜面のレベルは「更新あり」にして、次のダウンロードでレベルごとのファイルに書き出す）
   let migrated = 0;
   const merge = (arr) => arr.forEach((r) => {
-    if (!r || results[keyOfRow(r)]) return;
+    if (!isRow(r) || results[keyOfRow(r)]) return;
     results[keyOfRow(r)] = r;
     changedLevels.add(r.level);
     migrated++;
@@ -479,10 +514,11 @@
     });
 
     // 並び替えの状態（見出しを押すと切り替わる。同じ見出しをもう一度押すと昇順/降順が逆になる）
-    const SORTS = { avgPct: '平均取得率', avgStar: '平均☆', maxCount: 'MAX' };
+    const SORTS = { avgPct: '平均', maxCount: '☆7', star6Count: '☆6' };
     let sortKey = 'avgPct';
     let sortDir = -1; // -1 = 高い順, 1 = 低い順
     let currentTab = null;
+    let currentDiff = '*'; // 表示する難易度（'*' = すべて）
     const sortFn = (a, b) => {
       const va = a[sortKey] ?? -Infinity;
       const vb = b[sortKey] ?? -Infinity;
@@ -508,13 +544,19 @@
         return b;
       };
       head.append(el('div', 'c-rank', '#'), el('div'), el('div', '', '曲名'),
-        sortHead('avgPct'), sortHead('avgStar'), sortHead('maxCount'));
+        sortHead('avgPct'), sortHead('maxCount'), sortHead('star6Count'));
       list.appendChild(head);
-      const items = all.filter((r) => key === '*' || r.level === key).sort(sortFn);
+      const items = all
+        .filter((r) => (key === '*' || r.level === key) && (currentDiff === '*' || r.diff === currentDiff))
+        .sort(sortFn);
       items.forEach((r, i) => {
         const row = el('div', 'r');
         const main = el('div');
-        main.appendChild(el('div', 'name', r.name));
+        const song = resolveSong(jackets, r.name, r.kind, DIFF_NAMES.indexOf(r.diff), r.level);
+        const nameEl = el('div', 'name', r.name);
+        // 同名の別曲は、判別できたときにジャンルを添える
+        if (song?.genre) nameEl.appendChild(el('span', 'genre', `（${song.genre}）`));
+        main.appendChild(nameEl);
         // 2fRATE と同じ表記：DX/ST、難易度、定数のラベル
         const chips = el('div', 'chips');
         chips.append(
@@ -539,7 +581,7 @@
         main.appendChild(meta);
         // ジャケット画像（見つからない・読み込めない場合は空の枠）
         let jacket;
-        const file = jackets?.get(r.name);
+        const file = song?.img;
         if (file) {
           jacket = el('img', 'jacket');
           jacket.src = JACKET_BASE + file;
@@ -554,14 +596,35 @@
           el('div', 'c-rank', String(i + 1)),
           jacket,
           main,
-          el('div', 'c-num pct', r.avgPct === null ? '-' : `${r.avgPct.toFixed(2)}%`),
-          el('div', 'c-num', r.avgStar === null ? '-' : r.avgStar.toFixed(1)),
-          el('div', 'c-num', r.maxCount ?? '-')
+          (() => {
+            // 平均取得率と平均☆を1つの列に（98.71% の下に ☆5.8）
+            const cell = el('div', 'c-num');
+            cell.append(
+              el('div', 'pct', r.avgPct === null ? '-' : `${r.avgPct.toFixed(2)}%`),
+              el('div', 'avgstar', r.avgStar === null || r.avgStar === undefined ? '' : `☆${Number(r.avgStar).toFixed(1)}`)
+            );
+            return cell;
+          })(),
+          el('div', 'c-num', r.maxCount ?? '-'),
+          el('div', 'c-num', r.star6Count ?? '-')
         );
         list.appendChild(row);
       });
+      if (!items.length) list.appendChild(el('div', 'empty', 'この条件の譜面はありません。'));
       const tools = el('div', 'row');
       tools.style.margin = '0 0 8px';
+      // 難易度の切り替え（集計済みの難易度だけ表示）
+      const diffsHere = DIFF_NAMES.filter((d) => all.some((r) => r.diff === d));
+      const diffBox = el('div', 'tabs diffs');
+      diffBox.style.margin = '0';
+      [['*', 'すべての難易度'], ...diffsHere.map((d) => [d, d])].forEach(([d, label]) => {
+        const b = el('button', d === '*' ? '' : `dbtn db-${d.replace(':', '').toUpperCase()}`, label);
+        b.type = 'button';
+        b.setAttribute('aria-pressed', String(currentDiff === d));
+        b.onclick = () => { currentDiff = d; select(currentTab); };
+        diffBox.appendChild(b);
+      });
+      tools.appendChild(diffBox);
       if (key !== '*') {
         const one = el('button', '', `Lv${key} のJSONをダウンロード`);
         one.onclick = () => downloadLevels([key]);
@@ -616,9 +679,15 @@
       }
 
       // 2. まだ集計していない譜面のランキングを順に取得
-      const keyOf = (c) => `${c.name}|${c.kind}|${DIFF_NAMES[c.diff]}|${c.level}`;
       // 集計済みの譜面は飛ばす（全件取得にチェックがあれば、すべて取り直す）
-      const todo = refetchCb.checked ? charts : charts.filter((c) => !results[keyOf(c)]);
+      // 一覧ページには最大値が出ないので、まず「曲名|種別|難易度|レベル」で数え、
+      // 同じ組み合わせが複数ある譜面（同名の別曲）は、その数だけ結果がそろっていなければ取り直す
+      const baseOf = (c) => `${c.name}|${c.kind}|${DIFF_NAMES[c.diff]}|${c.level}`;
+      const dupCount = {};
+      charts.forEach((c) => { dupCount[baseOf(c)] = (dupCount[baseOf(c)] ?? 0) + 1; });
+      const todo = refetchCb.checked
+        ? charts
+        : charts.filter((c) => rowsOfBase(baseOf(c)).length < dupCount[baseOf(c)]);
       const done0 = charts.length - todo.length;
       let newCount = 0;
       for (const [i, c] of todo.entries()) {
@@ -627,7 +696,12 @@
         setProgress((done0 + i) / Math.max(charts.length, 1));
         try {
           const detail = parseDetail(await fetchDoc(DETAIL_URL(c.idx, c.diff)));
-          results[keyOf(c)] = summarize(c, detail, consts);
+          const row = summarize(c, detail, consts);
+          // 同名の別曲でなければ、古い記録（最大値が変わった場合なども含む）を消してから入れる
+          if (dupCount[baseOf(c)] === 1) {
+            rowsOfBase(baseOf(c)).forEach((r) => delete results[keyOfRow(r)]);
+          }
+          results[keyOfRow(row)] = row;
           newCount++;
           changedLevels.add(c.level);
         } catch (e) {
@@ -636,7 +710,7 @@
         await sleep(WAIT_MS);
       }
 
-      const doneNow = charts.filter((c) => results[keyOf(c)]).length;
+      const doneNow = charts.filter((c) => rowsOfBase(baseOf(c)).length >= 1).length;
       setProgress(doneNow / Math.max(charts.length, 1));
       setStatus((stopped
         ? `中止しました（選んだ範囲の ${doneNow}/${charts.length} 譜面が集計済み、今回 ${newCount} 譜面を取得）。`
