@@ -252,7 +252,7 @@
     .diffs button.db-ADVANCED[aria-pressed="true"] { background: #D98E04; }
     .diffs button.db-EXPERT[aria-pressed="true"] { background: #E0434B; }
     .diffs button.db-MASTER[aria-pressed="true"] { background: #8E44D6; }
-    .diffs button.db-REMASTER[aria-pressed="true"] { background: #fff; color: #8E44D6; box-shadow: inset 0 0 0 1.5px #B68BE0; }
+    .diffs button.db-REMASTER[aria-pressed="true"] { background: #F1E6FD; color: #8E44D6; box-shadow: inset 0 0 0 2px #B68BE0; }
     .diffs button:not(.dbtn)[aria-pressed="true"] { background: #2B2350; border-color: #2B2350; color: #fff; }
     .empty { padding: 20px; text-align: center; color: #6E6892; }
     @media (max-width: 520px) {
@@ -522,7 +522,7 @@
     let sortKey = 'avgPct';
     let sortDir = -1; // -1 = 高い順, 1 = 低い順
     let currentTab = null;
-    let currentDiff = '*'; // 表示する難易度（'*' = すべて）
+    let currentDiffs = null; // 表示する難易度の集合（null = すべて）。複数選べる
     const sortFn = (a, b) => {
       const va = a[sortKey] ?? -Infinity;
       const vb = b[sortKey] ?? -Infinity;
@@ -551,7 +551,7 @@
         sortHead('avgPct'), sortHead('maxCount'), sortHead('star6Count'));
       list.appendChild(head);
       const items = all
-        .filter((r) => (key === '*' || r.level === key) && (currentDiff === '*' || r.diff === currentDiff))
+        .filter((r) => (key === '*' || r.level === key) && (currentDiffs === null || currentDiffs.has(r.diff)))
         .sort(sortFn);
       items.forEach((r, i) => {
         const row = el('div', 'r');
@@ -624,8 +624,20 @@
       [['*', 'すべての難易度'], ...diffsHere.map((d) => [d, d])].forEach(([d, label]) => {
         const b = el('button', d === '*' ? '' : `dbtn db-${d.replace(':', '').toUpperCase()}`, label);
         b.type = 'button';
-        b.setAttribute('aria-pressed', String(currentDiff === d));
-        b.onclick = () => { currentDiff = d; select(currentTab); };
+        b.setAttribute('aria-pressed', String(d === '*' ? currentDiffs === null : !!currentDiffs?.has(d)));
+        b.onclick = () => {
+          if (d === '*') {
+            currentDiffs = null; // すべて表示に戻す
+          } else if (currentDiffs === null) {
+            currentDiffs = new Set([d]); // 「すべて」から1つ選んだら、その難易度だけにする
+          } else if (currentDiffs.has(d)) {
+            currentDiffs.delete(d); // 選択中をもう一度押すと外す
+            if (!currentDiffs.size) currentDiffs = null; // 全部外したら「すべて」に戻す
+          } else {
+            currentDiffs.add(d); // 追加で押すと、その難易度も一緒に表示
+          }
+          select(currentTab);
+        };
         diffBox.appendChild(b);
       });
       tools.appendChild(diffBox);
