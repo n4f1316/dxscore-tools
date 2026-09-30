@@ -296,6 +296,11 @@
       width: 44px; height: 44px; border-radius: 8px; object-fit: cover; display: block;
       background: #EFECF9; box-shadow: 0 0 0 1px var(--line);
     }
+    .dxr-share {
+      display: block; width: 100%; margin: -6px 0 16px; padding: 10px 16px; border-radius: 999px;
+      font: inherit; font-weight: 800; color: #fff; background: var(--pink); border: 0; cursor: pointer;
+    }
+    .dxr-share:disabled { opacity: .6; cursor: default; }
     .dxr-note { margin-top: 14px; font-size: 12px; color: var(--sub); line-height: 1.7; }
 
     /* スマホ幅：MAX差を曲名の下へ回す */
@@ -544,6 +549,284 @@
     return out.join('\n');
   }
 
+  // ============================================================
+  //  レート対象曲の画像化（5列×10行）
+  // ============================================================
+
+  const IMG = {
+    cols: 5, rows: 10, pad: 32, gap: 12,
+    cellW: 216, jacket: 200, cellH: 284, headH: 168, footH: 44,
+    font: '"M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif',
+    ink: '#2B2350', sub: '#6E6892', line: '#E4DFF3', bg: '#F6F4FC', pink: '#E0348C',
+  };
+  const DIFF_COLOR = { BASIC: '#2E9E5B', ADVANCED: '#D98E04', EXPERT: '#E0434B', MASTER: '#8E44D6', 'Re:MASTER': '#8E44D6' };
+  const TROPHY_COLOR = {
+    Normal: ['#F1F1F4', '#4A4A57'], Bronze: ['#F4E3D3', '#7A4A1E'], Silver: ['#ECEFF3', '#4B5563'],
+    Gold: ['#FFF1C7', '#7A5600'], Rainbow: [null, '#2B2350'],
+  };
+  const RAINBOW = ['#FF5E7E', '#FFB347', '#FFE66D', '#7EE081', '#5CC8FF', '#A78BFA'];
+
+  // 画像を読み込む（失敗や時間切れなら null）。maimai DX NET 上で実行しているので同じサイトの画像は描ける
+  function loadImage(src, ms = 8000) {
+    return new Promise((resolve) => {
+      if (!src) return resolve(null);
+      const img = new Image();
+      const t = setTimeout(() => resolve(null), ms);
+      img.onload = () => { clearTimeout(t); resolve(img); };
+      img.onerror = () => { clearTimeout(t); resolve(null); };
+      img.src = src;
+    });
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function rainbow(ctx, x, w) {
+    const g = ctx.createLinearGradient(x, 0, x + w, 0);
+    RAINBOW.forEach((c, i) => g.addColorStop(i / (RAINBOW.length - 1), c));
+    return g;
+  }
+
+  // 文字がはみ出すときは末尾を「…」にする
+  function fitText(ctx, text, maxW) {
+    if (ctx.measureText(text).width <= maxW) return text;
+    let t = text;
+    while (t.length && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+    return t + '…';
+  }
+
+  // 角丸のラベル（塗り＋文字）。幅を返す
+  function pill(ctx, x, y, text, { bg, fg, h = 24, size = 13, padX = 9, border = null, align = 'left' }) {
+    ctx.font = `800 ${size}px ${IMG.font}`;
+    const w = Math.ceil(ctx.measureText(text).width) + padX * 2;
+    const left = align === 'right' ? x - w : x;
+    roundRect(ctx, left, y, w, h, h / 2 > 8 ? 8 : h / 2);
+    ctx.fillStyle = typeof bg === 'function' ? bg(left, w) : bg;
+    ctx.fill();
+    if (border) { ctx.lineWidth = 2; ctx.strokeStyle = border; ctx.stroke(); }
+    ctx.fillStyle = fg;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'left';
+    ctx.fillText(text, left + padX, y + h / 2 + 1);
+    return w;
+  }
+
+  function starPillColor(stars) {
+    if (stars >= 7) return (x, w) => null;
+    if (stars >= 5) return '#FFE066';
+    if (stars >= 3) return '#FF8C2E';
+    if (stars >= 1) return '#B5E05A';
+    return '#EFECF9';
+  }
+
+  async function buildShareImage(profile, result, jackets) {
+    const { cols, rows, pad, gap, cellW, jacket: J, cellH, headH, footH } = IMG;
+    const W = pad * 2 + cols * cellW + (cols - 1) * gap;
+    const H = pad * 2 + headH + rows * cellH + (rows - 1) * gap + footH;
+    const canvas = document.createElement('canvas');
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    // 丸ゴシックの読み込みを待つ（読めなければ端末のフォントで描く）
+    try {
+      await Promise.all([
+        document.fonts.load(`800 20px "M PLUS Rounded 1c"`),
+        document.fonts.load(`700 20px "M PLUS Rounded 1c"`),
+      ]);
+    } catch { /* そのまま */ }
+
+    // 画像をまとめて読み込む
+    const top = result.top.slice(0, cols * rows);
+    const files = top.map((s) => resolveSong(jackets, s.name, s.kind, s.diff, s.level, s.max)?.img);
+    const [iconImg, ...jacketImgs] = await Promise.all([
+      loadImage(profile.icon),
+      ...files.map((f) => loadImage(f ? JACKET_BASE + f : null)),
+    ]);
+
+    // 背景
+    ctx.fillStyle = IMG.bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // ---- 上部：アイコン・称号・名前・レート ----
+    const hx = pad, hy = pad;
+    roundRect(ctx, hx, hy, W - pad * 2, headH - 20, 22);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = IMG.line;
+    ctx.stroke();
+
+    const iconSize = 112;
+    const ix = hx + 18, iy = hy + (headH - 20 - iconSize) / 2;
+    ctx.save();
+    roundRect(ctx, ix, iy, iconSize, iconSize, 18);
+    ctx.clip();
+    if (iconImg) ctx.drawImage(iconImg, ix, iy, iconSize, iconSize);
+    else { ctx.fillStyle = '#EFECF9'; ctx.fillRect(ix, iy, iconSize, iconSize); }
+    ctx.restore();
+
+    const tx = ix + iconSize + 20;
+    const rateW = 330;
+    const textMax = W - pad * 2 - (tx - hx) - rateW - 20;
+    if (profile.trophy) {
+      ctx.font = `800 16px ${IMG.font}`;
+      const [tbg, tfg] = TROPHY_COLOR[profile.trophyRank] ?? TROPHY_COLOR.Normal;
+      pill(ctx, tx, iy + 6, fitText(ctx, profile.trophy, textMax - 28), {
+        bg: tbg ?? ((x, w) => rainbow(ctx, x, w)), fg: tfg, h: 32, size: 16, padX: 14,
+      });
+    }
+    ctx.font = `800 40px ${IMG.font}`;
+    ctx.fillStyle = IMG.ink;
+    ctx.textBaseline = 'alphabetic';
+    ctx.textAlign = 'left';
+    ctx.fillText(fitText(ctx, profile.name || 'プレイヤー', textMax), tx, iy + 92);
+
+    const rx = W - pad - 24;
+    ctx.textAlign = 'right';
+    ctx.fillStyle = IMG.sub;
+    ctx.font = `800 17px ${IMG.font}`;
+    ctx.fillText(`2fRATE（${result.mode.label}）`, rx, iy + 30);
+    ctx.fillStyle = IMG.pink;
+    ctx.font = `800 64px ${IMG.font}`;
+    ctx.fillText(result.rating.toFixed(3), rx, iy + 98);
+
+    // ---- 譜面の一覧（5列×10行） ----
+    const gy = pad + headH;
+    top.forEach((s, i) => {
+      const col = i % cols, row = Math.floor(i / cols);
+      const x = pad + col * (cellW + gap);
+      const y = gy + row * (cellH + gap);
+
+      roundRect(ctx, x, y, cellW, cellH, 16);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fill();
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = IMG.line;
+      ctx.stroke();
+
+      // ジャケット
+      const jx = x + 8, jy = y + 8;
+      ctx.save();
+      roundRect(ctx, jx, jy, J, J, 12);
+      ctx.clip();
+      if (jacketImgs[i]) ctx.drawImage(jacketImgs[i], jx, jy, J, J);
+      else { ctx.fillStyle = '#EFECF9'; ctx.fillRect(jx, jy, J, J); }
+      ctx.restore();
+
+      // 順位（ジャケット左上）
+      pill(ctx, jx + 6, jy + 6, `#${i + 1}`, { bg: 'rgba(43,35,80,.88)', fg: '#FFFFFF', h: 26, size: 14, padX: 9 });
+
+      // 1段目：DX/ST・難易度（左）、譜面定数（右）
+      const r1 = jy + J + 8;
+      let px = jx;
+      px += pill(ctx, px, r1, s.kind, {
+        bg: s.kind === 'ST' ? '#3B82C4' : (lx, w) => {
+          const g = ctx.createLinearGradient(lx, 0, lx + w, 0);
+          g.addColorStop(0, '#E0348C'); g.addColorStop(1, '#F29A2E');
+          return g;
+        },
+        fg: '#FFFFFF', h: 22, size: 12, padX: 7,
+      }) + 4;
+      const isRe = s.diff === 'Re:MASTER';
+      pill(ctx, px, r1, s.diff, {
+        bg: isRe ? '#FFFFFF' : DIFF_COLOR[s.diff] ?? '#999', fg: isRe ? '#8E44D6' : '#FFFFFF',
+        border: isRe ? '#B68BE0' : null, h: 22, size: 12, padX: 7,
+      });
+      ctx.font = `800 17px ${IMG.font}`;
+      ctx.fillStyle = IMG.ink;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`${s.c.toFixed(1)}${s.estimated ? '*' : ''}`, jx + J, r1 + 12);
+
+      // 2段目：☆（左）、単曲レート値（右）
+      const r2 = r1 + 30;
+      const sc = starPillColor(s.stars);
+      pill(ctx, jx, r2, `☆${starDisplay(s.cur, s.max)}`, {
+        bg: s.stars >= 7 ? (lx, w) => rainbow(ctx, lx, w) : sc, fg: IMG.ink, h: 26, size: 14, padX: 10,
+      });
+      ctx.font = `800 22px ${IMG.font}`;
+      ctx.fillStyle = IMG.ink;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(s.values[result.mode.id].toFixed(3), jx + J, r2 + 14);
+    });
+
+    // ---- 下部：作成日時 ----
+    const d = new Date();
+    const p2 = (v) => String(v).padStart(2, '0');
+    ctx.font = `700 15px ${IMG.font}`;
+    ctx.fillStyle = IMG.sub;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(`2fRATE　${d.getFullYear()}/${p2(d.getMonth() + 1)}/${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`,
+      W - pad, H - pad + 4);
+
+    return canvas;
+  }
+
+  // 別タブに画像を表示する（スマホは長押しで保存、PCはダウンロードボタン）
+  async function openShareImage(profile, result, jackets, button) {
+    // ポップアップがブロックされないよう、押した瞬間に先にタブを開いておく
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.title = '2fRATE 画像を作成中…';
+      win.document.body.style.cssText = 'font-family:sans-serif;padding:20px;color:#2B2350;';
+      win.document.body.textContent = '画像を作成しています…';
+    }
+    const label = button.textContent;
+    button.disabled = true;
+    button.textContent = '画像を作成中…';
+    try {
+      const canvas = await buildShareImage(profile, result, jackets);
+      const url = canvas.toDataURL('image/png');
+      const d = new Date();
+      const p2 = (v) => String(v).padStart(2, '0');
+      const fileName = `2fRATE_${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}.png`;
+      if (win && !win.closed) {
+        const doc = win.document;
+        doc.title = '2fRATE レート対象曲';
+        doc.head.innerHTML = '<meta name="viewport" content="width=device-width, initial-scale=1">';
+        doc.body.style.cssText = 'margin:0;padding:12px;background:#F6F4FC;color:#2B2350;font-family:sans-serif;text-align:center;';
+        doc.body.textContent = '';
+        const msg = doc.createElement('p');
+        msg.style.cssText = 'margin:4px 0 10px;font-size:14px;';
+        msg.textContent = 'スマホは画像を長押しして「写真に保存」、PCは下のボタンから保存できます。';
+        const a = doc.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.textContent = '画像をダウンロード';
+        a.style.cssText = 'display:inline-block;margin-bottom:12px;padding:8px 18px;border-radius:999px;background:#E0348C;color:#fff;font-weight:bold;text-decoration:none;';
+        const img = doc.createElement('img');
+        img.src = url;
+        img.alt = '2fRATE レート対象曲';
+        img.style.cssText = 'max-width:100%;height:auto;border-radius:12px;box-shadow:0 4px 20px rgba(43,35,80,.15);';
+        doc.body.append(msg, a, doc.createElement('br'), img);
+      } else {
+        // 別タブが開けなかった場合は、その場でダウンロード
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }
+    } catch (e) {
+      console.error(e);
+      if (win && !win.closed) win.document.body.textContent = '画像の作成に失敗しました：' + e.message;
+    } finally {
+      button.disabled = false;
+      button.textContent = label;
+    }
+  }
+
   // results: [{ mode, rating, top }, ...]
   function renderResult(ui, profile, results, info, jackets) {
     // プレイヤー情報：アイコン / 称号 / 名前
@@ -593,11 +876,17 @@
       plates.appendChild(b);
       return b;
     });
+    let selected = 0;
+    const shareBtn = el('button', 'dxr-share', '');
+    shareBtn.type = 'button';
     function select(i) {
+      selected = i;
       lists.forEach((l, j) => { l.style.display = i === j ? '' : 'none'; });
       buttons.forEach((b, j) => b.setAttribute('aria-pressed', String(i === j)));
+      shareBtn.textContent = `「${results[i].mode.label}」の上位${TOP_N}を画像にする`;
     }
     select(0);
+    shareBtn.onclick = () => openShareImage(profile, results[selected], jackets, shareBtn);
 
     const hasEst = results.some(({ top }) => top.some((s) => s.estimated));
     const note = el('p', 'dxr-note',
@@ -607,7 +896,7 @@
       '「☆6まで」は☆7を☆6として、「☆5まで」は☆6以上を☆5として計算しています。' +
       (jackets ? '' : 'ジャケット画像の対応表を読み込めなかったため、画像は表示していません。'));
 
-    ui.body.append(player, plates, ...lists, note);
+    ui.body.append(player, plates, shareBtn, ...lists, note);
   }
 
   // ============================================================
