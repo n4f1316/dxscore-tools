@@ -258,7 +258,7 @@
     .diffs button:not(.dbtn)[aria-pressed="true"] { background: #2B2350; border-color: #2B2350; color: #fff; }
     .empty { padding: 20px; text-align: center; color: #6E6892; }
     @media (max-width: 520px) {
-      .r { grid-template-columns: 22px 40px 1fr 58px 30px 30px; gap: 6px; padding: 8px 10px; }
+      .r { grid-template-columns: 22px 40px 1fr 58px 34px 34px; gap: 6px; padding: 8px 10px; }
       .jacket { width: 40px; height: 40px; }
     }
   `;
@@ -296,14 +296,15 @@
   function toCsv(rows) {
     const head = ['取得日時', '曲名', '種別', '難易度', 'レベル', '公式定数', '最大値', '掲載人数',
       '1位スコア', '50位スコア', '50位の同率順位', '100位スコア', '100位の同率順位',
-      '平均取得率(%)', '平均☆', '☆7人数(MAX)', '☆6人数'];
+      '平均取得率(%)', '平均☆', '☆7人数(MAX)', '☆6人数', '人数は下限値（100人目まで☆6以上）'];
     const keys = ['date', 'name', 'kind', 'diff', 'level', 'const', 'max', 'count',
-      'top1', 'row50', 'rank50', 'row100', 'rank100', 'avgPct', 'avgStar', 'maxCount', 'star6Count'];
+      'top1', 'row50', 'rank50', 'row100', 'rank100', 'avgPct', 'avgStar', 'maxCount', 'star6Count', 'lowerBound'];
     const esc = (v) => {
       const t = v === null || v === undefined ? '' : String(v);
       return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
     };
-    return '\uFEFF' + [head.join(','), ...rows.map((r) => keys.map((k) => esc(r[k])).join(','))].join('\n');
+    const withFlag = rows.map((r) => ({ ...r, lowerBound: sat6(r) ? 'はい' : '' }));
+    return '\uFEFF' + [head.join(','), ...withFlag.map((r) => keys.map((k) => esc(r[k])).join(','))].join('\n');
   }
 
   // 取得日時 → 「2026/09/30」形式の年月日（古い版の ISO 形式「2026-09-29T16:16:31Z」にも対応）
@@ -317,6 +318,20 @@
   }
 
   // 平均取得率の高い順（取れなかった譜面は最後）
+  // ランキングは上位100人までしか載らないため、100人目まで☆6以上（または☆7）の譜面は、
+  // 実際の人数がもっと多い可能性がある。その場合は「88+」のように下限値として表示する
+  const isFull = (r) => r.count >= 100 && r.max && r.row100 !== null && r.row100 !== undefined;
+  const sat7 = (r) => isFull(r) && r.row100 === r.max;             // 100人全員が☆7
+  const sat6 = (r) => isFull(r) && r.row100 * 100 >= r.max * 99;   // 100人目まで☆6以上
+  function countCell(r, key) {
+    const v = r[key];
+    if (key === 'star6Count' && sat7(r)) return { text: '?', sort: null }; // 全員☆7で☆6の人数は不明
+    if (v === null || v === undefined) return { text: '-', sort: null };
+    const lower = key === 'maxCount' ? sat7(r) : sat6(r);
+    return lower ? { text: `${v}+`, sort: v + 0.5 } : { text: String(v), sort: v };
+  }
+  const sortValue = (r, key) => (key === 'avgPct' ? r.avgPct : countCell(r, key).sort);
+
   const byAvgDesc = (a, b) => (b.avgPct ?? -1) - (a.avgPct ?? -1);
 
   // レベル表記 → 並べ替え用の数値（15 > 14+ > 14 …）
@@ -536,8 +551,8 @@
     let currentTab = null;
     let currentDiffs = null; // 表示する難易度の集合（null = すべて）。複数選べる
     const sortFn = (a, b) => {
-      const va = a[sortKey] ?? -Infinity;
-      const vb = b[sortKey] ?? -Infinity;
+      const va = sortValue(a, sortKey) ?? -Infinity;
+      const vb = sortValue(b, sortKey) ?? -Infinity;
       if (va !== vb) return (va - vb) * sortDir;
       return byAvgDesc(a, b); // 同じ値なら平均取得率の高い順
     };
@@ -624,8 +639,8 @@
             );
             return cell;
           })(),
-          el('div', 'c-num', r.maxCount ?? '-'),
-          el('div', 'c-num', r.star6Count ?? '-')
+          el('div', 'c-num', countCell(r, 'maxCount').text),
+          el('div', 'c-num', countCell(r, 'star6Count').text)
         );
         list.appendChild(row);
       });

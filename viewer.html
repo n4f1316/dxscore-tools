@@ -75,11 +75,17 @@
   .date { font-size: 11px; color: var(--faint); margin-top: 1px; }
   .pct { font-weight: 800; }
   .avgstar { font-size: 12px; font-weight: 700; color: var(--sub); }
+  .pager { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; margin: 10px 0; }
+  .pager:empty { display: none; }
+  .pager button { min-width: 40px; padding: 5px 10px; }
+  .pager button.current { background: var(--ink); border-color: var(--ink); color: #fff; cursor: default; }
+  .pager button:disabled { opacity: .4; cursor: default; }
+  .pager .gap { color: var(--sub); padding: 0 2px; }
   .empty { padding: 24px; text-align: center; color: var(--sub); }
   .foot { margin-top: 18px; font-size: 12px; color: var(--sub); line-height: 1.8; }
 
   @media (max-width: 520px) {
-    .r { grid-template-columns: 22px 40px 1fr 58px 30px 30px; gap: 6px; padding: 8px 10px; }
+    .r { grid-template-columns: 22px 40px 1fr 58px 34px 34px; gap: 6px; padding: 8px 10px; }
     .jacket { width: 40px; height: 40px; }
   }
 </style>
@@ -99,6 +105,7 @@
     <p class="foot">
       「平均」は上位100人のでらっくスコア取得率の平均と、その☆換算です。「☆7」は理論値の人数、「☆6」は取得率99%以上（理論値を除く）の人数です。
       見出しの「平均」「☆7」「☆6」を押すと並び替えられます。<br>
+      ランキングには上位100人までしか載らないため、100人目まで☆6以上の譜面は実際の人数がもっと多い可能性があり、「88+」のように「+」を付けて表示しています（全員が☆7の譜面は、☆6の人数を「?」と表示）。<br>
       ☆の基準：☆7 100%、☆6 99%以上、☆5 97%以上、☆4 95%以上、☆3 93%以上、☆2 90%以上、☆1 85%以上。<br>
       非公式のファンメイドツールです。株式会社セガとは一切関係ありません。プレーヤー名は集計・保存していません。
     </p>
@@ -117,6 +124,7 @@
     'https://maimaidx.jp/maimai-mobile/img/Music/',
     'https://maimai.sega.jp/storage/DX_jacket/',
   ];
+  const PAGE_SIZE = 100; // 1ページに表示する譜面数（多いとページが重くなる）
   const LEVEL_MIN = 7;
   const LEVEL_MAX = 23;
   const DIFF_NAMES = ['BASIC', 'ADVANCED', 'EXPERT', 'MASTER', 'Re:MASTER'];
@@ -179,14 +187,29 @@
   let currentLevel = null;
   let currentDiffs = null; // null = すべて
   let query = '';
+  let page = 1;
   let sortKey = 'avgPct';
   let sortDir = -1;
   const SORTS = { avgPct: '平均', maxCount: '☆7', star6Count: '☆6' };
 
+  // ランキングは上位100人までしか載らないため、100人目まで☆6以上（または☆7）の譜面は、
+  // 実際の人数がもっと多い可能性がある。その場合は「88+」のように下限値として表示する
+  const isFull = (r) => r.count >= 100 && r.max && r.row100 !== null && r.row100 !== undefined;
+  const sat7 = (r) => isFull(r) && r.row100 === r.max;             // 100人全員が☆7
+  const sat6 = (r) => isFull(r) && r.row100 * 100 >= r.max * 99;   // 100人目まで☆6以上
+  function countCell(r, key) {
+    const v = r[key];
+    if (key === 'star6Count' && sat7(r)) return { text: '?', sort: null }; // 全員☆7で☆6の人数は不明
+    if (v === null || v === undefined) return { text: '-', sort: null };
+    const lower = key === 'maxCount' ? sat7(r) : sat6(r);
+    return lower ? { text: `${v}+`, sort: v + 0.5 } : { text: String(v), sort: v };
+  }
+  const sortValue = (r, key) => (key === 'avgPct' ? r.avgPct : countCell(r, key).sort);
+
   const byAvgDesc = (a, b) => (b.avgPct ?? -1) - (a.avgPct ?? -1);
   const sortFn = (a, b) => {
-    const va = a[sortKey] ?? -Infinity;
-    const vb = b[sortKey] ?? -Infinity;
+    const va = sortValue(a, sortKey) ?? -Infinity;
+    const vb = sortValue(b, sortKey) ?? -Infinity;
     if (va !== vb) return (va - vb) * sortDir;
     return byAvgDesc(a, b);
   };
@@ -200,7 +223,7 @@
       const b = el('button', '', label);
       b.type = 'button';
       b.setAttribute('aria-pressed', String(currentLevel === key));
-      b.onclick = () => { currentLevel = key; renderTabs(); renderList(); };
+      b.onclick = () => { currentLevel = key; page = 1; renderTabs(); renderList(); };
       lt.appendChild(b);
     });
 
@@ -216,6 +239,7 @@
         else if (currentDiffs === null) currentDiffs = new Set([d]);
         else if (currentDiffs.has(d)) { currentDiffs.delete(d); if (!currentDiffs.size) currentDiffs = null; }
         else currentDiffs.add(d);
+        page = 1;
         renderTabs();
         renderList();
       };
@@ -239,6 +263,37 @@
     return img;
   }
 
+  // ページ切り替え：« 前へ  1 … 4 5 [6] 7 8 … 20  次へ »
+  function pager(totalPages, where) {
+    const box = el('nav', 'pager');
+    box.setAttribute('aria-label', `ページ切り替え（${where}）`);
+    if (totalPages <= 1) return box;
+    const go = (n) => {
+      page = n;
+      renderList();
+      $('daterange').scrollIntoView({ block: 'start' });
+    };
+    const btn = (label, n, opts = {}) => {
+      const b = el('button', opts.current ? 'current' : '', label);
+      b.type = 'button';
+      if (opts.current) b.setAttribute('aria-current', 'page');
+      if (opts.disabled) b.disabled = true;
+      else if (!opts.current) b.onclick = () => go(n);
+      return b;
+    };
+    box.appendChild(btn('« 前へ', page - 1, { disabled: page === 1 }));
+    const nums = new Set([1, totalPages]);
+    for (let n = page - 2; n <= page + 2; n++) if (n >= 1 && n <= totalPages) nums.add(n);
+    let prev = 0;
+    [...nums].sort((a, b) => a - b).forEach((n) => {
+      if (n - prev > 1) box.appendChild(el('span', 'gap', '…'));
+      box.appendChild(btn(String(n), n, { current: n === page }));
+      prev = n;
+    });
+    box.appendChild(btn('次へ »', page + 1, { disabled: page === totalPages }));
+    return box;
+  }
+
   function renderList() {
     const q = query.trim().toLowerCase();
     const items = all
@@ -247,9 +302,17 @@
         && (!q || r.name.toLowerCase().includes(q)))
       .sort(sortFn);
 
+    const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+    page = Math.min(Math.max(page, 1), totalPages);
+    const start = (page - 1) * PAGE_SIZE;
+    const shown = items.slice(start, start + PAGE_SIZE);
+
     const dates = items.map((r) => dateOf(r.date)).filter(Boolean).sort();
+    const rangeText = items.length > PAGE_SIZE
+      ? `${items.length} 譜面中 ${start + 1}〜${start + shown.length} 件目`
+      : `${items.length} 譜面`;
     $('daterange').textContent = dates.length
-      ? `${dates[0] === dates[dates.length - 1] ? `取得日：${dates[0]}` : `取得日：${dates[0]} 〜 ${dates[dates.length - 1]}`}（${items.length} 譜面）`
+      ? `${dates[0] === dates[dates.length - 1] ? `取得日：${dates[0]}` : `取得日：${dates[0]} 〜 ${dates[dates.length - 1]}`}（${rangeText}）`
       : '';
 
     const list = el('div', 'list');
@@ -262,6 +325,7 @@
       b.onclick = () => {
         if (sortKey === k) sortDir = -sortDir;
         else { sortKey = k; sortDir = -1; }
+        page = 1;
         renderList();
       };
       return b;
@@ -272,7 +336,8 @@
 
     if (!items.length) list.appendChild(el('div', 'empty', 'この条件の譜面はありません。'));
 
-    items.forEach((r, i) => {
+    shown.forEach((r, j) => {
+      const i = start + j; // 通し番号（2ページ目なら101から）
       const row = el('div', 'r');
       const song = resolveSong(jackets, r.name, r.kind, DIFF_NAMES.indexOf(r.diff), r.level);
       const main = el('div');
@@ -315,13 +380,13 @@
         jacketEl(song?.img),
         main,
         avg,
-        el('div', 'c-num', r.maxCount ?? '-'),
-        el('div', 'c-num', r.star6Count ?? '-')
+        el('div', 'c-num', countCell(r, 'maxCount').text),
+        el('div', 'c-num', countCell(r, 'star6Count').text)
       );
       list.appendChild(row);
     });
 
-    $('listBox').replaceChildren(list);
+    $('listBox').replaceChildren(pager(totalPages, '上'), list, pager(totalPages, '下'));
   }
 
   // ===== 読み込み =====
@@ -347,7 +412,12 @@
     currentLevel = levels[0];
     $('status').textContent = `${all.length} 譜面のデータを読み込みました。`;
     $('app').hidden = false;
-    $('search').addEventListener('input', (e) => { query = e.target.value; renderList(); });
+    // 入力のたびに描き直すと重いので、入力が止まってから絞り込む
+    let timer = null;
+    $('search').addEventListener('input', (e) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => { query = e.target.value; page = 1; renderList(); }, 250);
+    });
     renderTabs();
     renderList();
   }
