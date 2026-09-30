@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2fRATE 譜面データビューア</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap">
+<style>
+  :root {
+    --ink: #2B2350; --sub: #6E6892; --faint: #9A94B8; --line: #E4DFF3; --bg: #F6F4FC; --card: #FFFFFF;
+    --pink: #E0348C; --cyan: #1FA9C9;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+  body {
+    font: 14px/1.6 "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
+    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 18px 14px 48px; }
+  h1 { font-size: 20px; font-weight: 800; margin: 0; }
+  .lead { color: var(--sub); font-size: 13px; margin: 4px 0 0; }
+  .status { margin-top: 12px; color: var(--sub); font-size: 13px; }
+  .status.error { color: #E0434B; font-weight: 700; }
+
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 0; }
+  button { font: inherit; font-weight: 700; padding: 6px 14px; border-radius: 999px; cursor: pointer;
+    border: 1.5px solid var(--line); background: var(--card); color: var(--ink); }
+  button:focus-visible, input:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+  .tabs button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .diffs button { padding: 4px 12px; font-size: 13px; }
+  .diffs button.dbtn[aria-pressed="true"] { color: #fff; border-color: transparent; }
+  .diffs button.db-BASIC[aria-pressed="true"] { background: #2E9E5B; }
+  .diffs button.db-ADVANCED[aria-pressed="true"] { background: #D98E04; }
+  .diffs button.db-EXPERT[aria-pressed="true"] { background: #E0434B; }
+  .diffs button.db-MASTER[aria-pressed="true"] { background: #8E44D6; }
+  .diffs button.db-REMASTER[aria-pressed="true"] { background: #F1E6FD; color: #8E44D6; box-shadow: inset 0 0 0 2px #B68BE0; }
+
+  .search { width: 100%; margin-top: 12px; font: inherit; padding: 8px 14px; border-radius: 999px;
+    border: 1.5px solid var(--line); background: var(--card); color: var(--ink); }
+  .daterange { font-size: 12px; font-weight: 700; color: var(--sub); margin: 12px 2px 6px; }
+
+  .list { background: var(--card); border: 1.5px solid var(--line); border-radius: 16px; overflow: hidden; }
+  .r { display: grid; grid-template-columns: 30px 44px 1fr 70px 40px 40px; gap: 8px; align-items: center;
+    padding: 8px 12px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  .r:nth-child(even) { background: #FBFAFE; }
+  .r.head { position: sticky; top: 0; z-index: 1; border-top: 0; background: var(--ink) !important; color: #fff;
+    font-size: 11px; font-weight: 700; padding-top: 7px; padding-bottom: 7px; }
+  .c-rank { text-align: center; font-weight: 800; color: var(--sub); }
+  .c-num { text-align: right; }
+  .r.head .c-num { text-align: center; }
+  .r.head button.sort { all: unset; cursor: pointer; text-align: center; color: rgba(255,255,255,.75);
+    font-size: 11px; font-weight: 700; white-space: nowrap; border-radius: 6px; padding: 2px 0; }
+  .r.head button.sort.on { color: #fff; }
+  .r.head button.sort:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
+
+  .jacket { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; display: block;
+    background: #EFECF9; box-shadow: 0 0 0 1px var(--line); }
+  .name { font-weight: 700; line-height: 1.35; word-break: break-word; }
+  .genre { font-size: 11px; font-weight: 700; color: var(--sub); margin-left: 2px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .chip { display: inline-block; font-size: 11px; font-weight: 700; line-height: 1; padding: 4px 7px;
+    border-radius: 6px; color: #fff; white-space: nowrap; }
+  .kind-DX { background: linear-gradient(90deg, #E0348C, #F29A2E); }
+  .kind-ST { background: #3B82C4; }
+  .kind-unknown { background: #999; }
+  .diff-BASIC { background: #2E9E5B; }
+  .diff-ADVANCED { background: #D98E04; }
+  .diff-EXPERT { background: #E0434B; }
+  .diff-MASTER { background: #8E44D6; }
+  .diff-REMASTER { background: #fff; color: #8E44D6; box-shadow: inset 0 0 0 1.5px #B68BE0; }
+  .const { background: #EFECF9; color: var(--ink); }
+  .lv { background: transparent; color: var(--sub); padding-left: 2px; }
+  .meta { font-size: 11px; color: var(--sub); margin-top: 3px; }
+  .nw { white-space: nowrap; }
+  .date { font-size: 11px; color: var(--faint); margin-top: 1px; }
+  .pct { font-weight: 800; }
+  .avgstar { font-size: 12px; font-weight: 700; color: var(--sub); }
+  .empty { padding: 24px; text-align: center; color: var(--sub); }
+  .foot { margin-top: 18px; font-size: 12px; color: var(--sub); line-height: 1.8; }
+
+  @media (max-width: 520px) {
+    .r { grid-template-columns: 22px 40px 1fr 58px 30px 30px; gap: 6px; padding: 8px 10px; }
+    .jacket { width: 40px; height: 40px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>2fRATE 譜面データビューア</h1>
+  <p class="lead">でらっくスコア全国ランキング（上位100人）から集計した、譜面ごとの取りやすさの目安です。</p>
+  <div class="status" id="status">データを読み込み中…</div>
+
+  <div id="app" hidden>
+    <div class="tabs" id="levelTabs" role="group" aria-label="レベル"></div>
+    <div class="tabs diffs" id="diffTabs" role="group" aria-label="難易度"></div>
+    <input class="search" id="search" type="search" placeholder="曲名で絞り込み" aria-label="曲名で絞り込み">
+    <div class="daterange" id="daterange"></div>
+    <div id="listBox"></div>
+    <p class="foot">
+      「平均」は上位100人のでらっくスコア取得率の平均と、その☆換算です。「☆7」は理論値の人数、「☆6」は取得率99%以上（理論値を除く）の人数です。
+      見出しの「平均」「☆7」「☆6」を押すと並び替えられます。<br>
+      ☆の基準：☆7 100%、☆6 99%以上、☆5 97%以上、☆4 95%以上、☆3 93%以上、☆2 90%以上、☆1 85%以上。<br>
+      非公式のファンメイドツールです。株式会社セガとは一切関係ありません。プレーヤー名は集計・保存していません。
+    </p>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ===== 設定 =====
+  const RESULTS_DIR = 'ranking/';                 // このページと同じ場所の ranking フォルダ
+  const JACKETS_URL = 'maimai_jackets.json';      // ジャケット対応表
+  // ジャケット画像の置き場所（上から順に試す）
+  const JACKET_BASES = [
+    'https://maimaidx.jp/maimai-mobile/img/Music/',
+    'https://maimai.sega.jp/storage/DX_jacket/',
+  ];
+  const LEVEL_MIN = 7;
+  const LEVEL_MAX = 23;
+  const DIFF_NAMES = ['BASIC', 'ADVANCED', 'EXPERT', 'MASTER', 'Re:MASTER'];
+  const STAR_THRESHOLDS = [
+    { stars: 7, pct: 100 }, { stars: 6, pct: 99 }, { stars: 5, pct: 97 }, { stars: 4, pct: 95 },
+    { stars: 3, pct: 93 }, { stars: 2, pct: 90 }, { stars: 1, pct: 85 },
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function levelLabel(n) {
+    if (n <= 6) return String(n);
+    const base = 7 + Math.floor((n - 7) / 2);
+    return (n - 7) % 2 === 1 ? `${base}+` : String(base);
+  }
+  const fileOfLevel = (label) => `lv${String(label).replace('+', 'p')}.json`;
+  const levelOrder = (label) => parseInt(label, 10) + (String(label).endsWith('+') ? 0.5 : 0);
+  const isRow = (r) => r && typeof r === 'object' && typeof r.name === 'string' && typeof r.level === 'string';
+
+  function starOfScore(cur, max) {
+    if (!max || cur === null || cur === undefined) return null;
+    let s = 0;
+    for (const t of STAR_THRESHOLDS) {
+      if (cur * 100 >= max * t.pct) { s = t.stars; break; }
+    }
+    const lo = STAR_THRESHOLDS.find((t) => t.stars === s)?.pct ?? 0;
+    const hi = STAR_THRESHOLDS.find((t) => t.stars === s + 1)?.pct;
+    if (hi === undefined) return s.toFixed(1);
+    return (s + Math.floor(((cur * 100 - max * lo) * 10) / (max * (hi - lo))) / 10).toFixed(1);
+  }
+  function dateOf(v) {
+    if (!v) return null;
+    const p = (x) => String(x).padStart(2, '0');
+    const m = String(v).match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+    if (m) return `${m[1]}/${p(m[2])}/${p(m[3])}`;
+    const d = new Date(v);
+    return isNaN(d) ? null : `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())}`;
+  }
+  // 同名の別曲は、種別・難易度・レベルが一致する候補が1つだけのときに特定する
+  function resolveSong(map, name, kind, diffIdx, level) {
+    const v = map?.get(name);
+    if (!v) return null;
+    if (typeof v === 'string') return { img: v, genre: null };
+    if (!Array.isArray(v)) return null;
+    const k = kind === 'ST' ? 'st' : 'dx';
+    const hits = v.filter((c) => c[k]?.[diffIdx] === level);
+    return hits.length === 1 ? { img: hits[0].img, genre: hits[0].genre } : null;
+  }
+  const fetchJson = (url) =>
+    fetch(url + '?' + Date.now()).then((res) => (res.ok ? res.json() : null)).catch(() => null);
+
+  // ===== 状態 =====
+  let all = [];
+  let jackets = null;
+  let currentLevel = null;
+  let currentDiffs = null; // null = すべて
+  let query = '';
+  let sortKey = 'avgPct';
+  let sortDir = -1;
+  const SORTS = { avgPct: '平均', maxCount: '☆7', star6Count: '☆6' };
+
+  const byAvgDesc = (a, b) => (b.avgPct ?? -1) - (a.avgPct ?? -1);
+  const sortFn = (a, b) => {
+    const va = a[sortKey] ?? -Infinity;
+    const vb = b[sortKey] ?? -Infinity;
+    if (va !== vb) return (va - vb) * sortDir;
+    return byAvgDesc(a, b);
+  };
+
+  // ===== 描画 =====
+  function renderTabs() {
+    const levels = [...new Set(all.map((r) => r.level))].sort((a, b) => levelOrder(b) - levelOrder(a));
+    const lt = $('levelTabs');
+    lt.replaceChildren();
+    [...levels.map((lv) => [lv, `Lv${lv}`]), ['*', 'すべて']].forEach(([key, label]) => {
+      const b = el('button', '', label);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(currentLevel === key));
+      b.onclick = () => { currentLevel = key; renderTabs(); renderList(); };
+      lt.appendChild(b);
+    });
+
+    const dt = $('diffTabs');
+    dt.replaceChildren();
+    const diffsHere = DIFF_NAMES.filter((d) => all.some((r) => r.diff === d));
+    [['*', 'すべての難易度'], ...diffsHere.map((d) => [d, d])].forEach(([d, label]) => {
+      const b = el('button', d === '*' ? '' : `dbtn db-${d.replace(':', '').toUpperCase()}`, label);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(d === '*' ? currentDiffs === null : !!currentDiffs?.has(d)));
+      b.onclick = () => {
+        if (d === '*') currentDiffs = null;
+        else if (currentDiffs === null) currentDiffs = new Set([d]);
+        else if (currentDiffs.has(d)) { currentDiffs.delete(d); if (!currentDiffs.size) currentDiffs = null; }
+        else currentDiffs.add(d);
+        renderTabs();
+        renderList();
+      };
+      dt.appendChild(b);
+    });
+  }
+
+  function jacketEl(file) {
+    if (!file) return el('div', 'jacket');
+    const img = el('img', 'jacket');
+    let i = 0;
+    img.alt = '';
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.src = JACKET_BASES[0] + file;
+    img.onerror = () => {
+      i++;
+      if (i < JACKET_BASES.length) img.src = JACKET_BASES[i] + file;
+      else img.replaceWith(el('div', 'jacket')); // どこからも読めなければ空の枠にする
+    };
+    return img;
+  }
+
+  function renderList() {
+    const q = query.trim().toLowerCase();
+    const items = all
+      .filter((r) => (currentLevel === '*' || r.level === currentLevel)
+        && (currentDiffs === null || currentDiffs.has(r.diff))
+        && (!q || r.name.toLowerCase().includes(q)))
+      .sort(sortFn);
+
+    const dates = items.map((r) => dateOf(r.date)).filter(Boolean).sort();
+    $('daterange').textContent = dates.length
+      ? `${dates[0] === dates[dates.length - 1] ? `取得日：${dates[0]}` : `取得日：${dates[0]} 〜 ${dates[dates.length - 1]}`}（${items.length} 譜面）`
+      : '';
+
+    const list = el('div', 'list');
+    const head = el('div', 'r head');
+    const sortHead = (k) => {
+      const b = el('button', 'c-num sort' + (sortKey === k ? ' on' : ''),
+        SORTS[k] + (sortKey === k ? (sortDir < 0 ? '▼' : '▲') : ''));
+      b.type = 'button';
+      b.title = '押すと並び替え';
+      b.onclick = () => {
+        if (sortKey === k) sortDir = -sortDir;
+        else { sortKey = k; sortDir = -1; }
+        renderList();
+      };
+      return b;
+    };
+    head.append(el('div', 'c-rank', '#'), el('div'), el('div', '', '曲名'),
+      sortHead('avgPct'), sortHead('maxCount'), sortHead('star6Count'));
+    list.appendChild(head);
+
+    if (!items.length) list.appendChild(el('div', 'empty', 'この条件の譜面はありません。'));
+
+    items.forEach((r, i) => {
+      const row = el('div', 'r');
+      const song = resolveSong(jackets, r.name, r.kind, DIFF_NAMES.indexOf(r.diff), r.level);
+      const main = el('div');
+      const nameEl = el('div', 'name', r.name);
+      if (song?.genre) nameEl.appendChild(el('span', 'genre', `（${song.genre}）`));
+      main.appendChild(nameEl);
+
+      const chips = el('div', 'chips');
+      chips.append(
+        el('span', `chip kind-${r.kind === '?' ? 'unknown' : r.kind}`, r.kind),
+        el('span', `chip diff-${String(r.diff).replace(':', '').toUpperCase()}`, r.diff)
+      );
+      if (r.const !== null && r.const !== undefined) chips.appendChild(el('span', 'chip const', Number(r.const).toFixed(1)));
+      if (currentLevel === '*') chips.appendChild(el('span', 'chip lv', `Lv${r.level}`));
+      main.appendChild(chips);
+
+      const withStar = (v) => {
+        if (v === null || v === undefined) return '-';
+        const st = starOfScore(v, r.max);
+        return st === null ? String(v) : `${v}(☆${st})`;
+      };
+      const meta = el('div', 'meta');
+      [`1位 ${withStar(r.top1)}`, `50位 ${withStar(r.row50)}`, `100位 ${withStar(r.row100)}`, `MAX ${r.max ?? '-'}`]
+        .forEach((t, k) => {
+          if (k) meta.appendChild(document.createTextNode(k === 3 ? '　' : ' / '));
+          meta.appendChild(el('span', 'nw', t));
+        });
+      main.appendChild(meta);
+      const got = dateOf(r.date);
+      if (got) main.appendChild(el('div', 'date', `取得日 ${got}`));
+
+      const avg = el('div', 'c-num');
+      avg.append(
+        el('div', 'pct', r.avgPct === null || r.avgPct === undefined ? '-' : `${Number(r.avgPct).toFixed(2)}%`),
+        el('div', 'avgstar', r.avgStar === null || r.avgStar === undefined ? '' : `☆${Number(r.avgStar).toFixed(1)}`)
+      );
+
+      row.append(
+        el('div', 'c-rank', String(i + 1)),
+        jacketEl(song?.img),
+        main,
+        avg,
+        el('div', 'c-num', r.maxCount ?? '-'),
+        el('div', 'c-num', r.star6Count ?? '-')
+      );
+      list.appendChild(row);
+    });
+
+    $('listBox').replaceChildren(list);
+  }
+
+  // ===== 読み込み =====
+  async function load() {
+    const labels = [];
+    for (let n = LEVEL_MAX; n >= LEVEL_MIN; n--) labels.push(levelLabel(n));
+    const [lists, jmap] = await Promise.all([
+      Promise.all(labels.map((lb) => fetchJson(RESULTS_DIR + fileOfLevel(lb)))),
+      fetchJson(JACKETS_URL),
+    ]);
+    jackets = jmap ? new Map(Object.entries(jmap)) : null;
+    lists.forEach((list) => {
+      if (!list) return;
+      (Array.isArray(list) ? list : Object.values(list)).filter(isRow).forEach((r) => all.push(r));
+    });
+
+    if (!all.length) {
+      $('status').textContent = '表示できるデータがまだありません。';
+      $('status').classList.add('error');
+      return;
+    }
+    const levels = [...new Set(all.map((r) => r.level))].sort((a, b) => levelOrder(b) - levelOrder(a));
+    currentLevel = levels[0];
+    $('status').textContent = `${all.length} 譜面のデータを読み込みました。`;
+    $('app').hidden = false;
+    $('search').addEventListener('input', (e) => { query = e.target.value; renderList(); });
+    renderTabs();
+    renderList();
+  }
+
+  load();
+})();
+</script>
+</body>
+</html>
