@@ -553,9 +553,12 @@
   //  レート対象曲の画像化（5列×10行）
   // ============================================================
 
+  // 画像の注意書きに載せるツールのURL
+  const TOOL_URL = 'https://github.com/n4f1316/dxscore-tools';
+
   const IMG = {
     cols: 5, rows: 10, pad: 32, gap: 12,
-    cellW: 216, jacket: 200, cellH: 284, headH: 168, footH: 44,
+    cellW: 240, jacket: 224, cellH: 320, headH: 204, footH: 110,
     font: '"M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif',
     ink: '#2B2350', sub: '#6E6892', line: '#E4DFF3', bg: '#F6F4FC', pink: '#E0348C',
   };
@@ -664,7 +667,7 @@
     ctx.strokeStyle = IMG.line;
     ctx.stroke();
 
-    const iconSize = 112;
+    const iconSize = 136;
     const ix = hx + 18, iy = hy + (headH - 20 - iconSize) / 2;
     ctx.save();
     roundRect(ctx, ix, iy, iconSize, iconSize, 18);
@@ -674,29 +677,29 @@
     ctx.restore();
 
     const tx = ix + iconSize + 20;
-    const rateW = 330;
+    const rateW = 400;
     const textMax = W - pad * 2 - (tx - hx) - rateW - 20;
     if (profile.trophy) {
-      ctx.font = `800 16px ${IMG.font}`;
+      ctx.font = `800 21px ${IMG.font}`;
       const [tbg, tfg] = TROPHY_COLOR[profile.trophyRank] ?? TROPHY_COLOR.Normal;
-      pill(ctx, tx, iy + 6, fitText(ctx, profile.trophy, textMax - 28), {
-        bg: tbg ?? ((x, w) => rainbow(ctx, x, w)), fg: tfg, h: 32, size: 16, padX: 14,
+      pill(ctx, tx, iy + 8, fitText(ctx, profile.trophy, textMax - 36), {
+        bg: tbg ?? ((x, w) => rainbow(ctx, x, w)), fg: tfg, h: 40, size: 21, padX: 18,
       });
     }
-    ctx.font = `800 40px ${IMG.font}`;
+    ctx.font = `800 50px ${IMG.font}`;
     ctx.fillStyle = IMG.ink;
     ctx.textBaseline = 'alphabetic';
     ctx.textAlign = 'left';
-    ctx.fillText(fitText(ctx, profile.name || 'プレイヤー', textMax), tx, iy + 92);
+    ctx.fillText(fitText(ctx, profile.name || 'プレイヤー', textMax), tx, iy + 114);
 
     const rx = W - pad - 24;
     ctx.textAlign = 'right';
     ctx.fillStyle = IMG.sub;
-    ctx.font = `800 17px ${IMG.font}`;
-    ctx.fillText(`2fRATE（${result.mode.label}）`, rx, iy + 30);
+    ctx.font = `800 23px ${IMG.font}`;
+    ctx.fillText(`2fRATE（${result.mode.label}）`, rx, iy + 36);
     ctx.fillStyle = IMG.pink;
-    ctx.font = `800 64px ${IMG.font}`;
-    ctx.fillText(result.rating.toFixed(3), rx, iy + 98);
+    ctx.font = `800 80px ${IMG.font}`;
+    ctx.fillText(result.rating.toFixed(3), rx, iy + 120);
 
     // ---- 譜面の一覧（5列×10行） ----
     const gy = pad + headH;
@@ -722,21 +725,21 @@
       ctx.restore();
 
       // 順位（ジャケット左上）
-      pill(ctx, jx + 6, jy + 6, `#${i + 1}`, { bg: 'rgba(43,35,80,.88)', fg: '#FFFFFF', h: 26, size: 14, padX: 9 });
+      pill(ctx, jx + 6, jy + 6, `#${i + 1}`, { bg: 'rgba(43,35,80,.88)', fg: '#FFFFFF', h: 32, size: 18, padX: 11 });
 
       // ジャケット下部：DX/ST・難易度（左）、譜面定数（右）
       // 文字が絵柄に埋もれないよう、下側を暗くしてからラベルを置く
       ctx.save();
       roundRect(ctx, jx, jy, J, J, 12);
       ctx.clip();
-      const shade = ctx.createLinearGradient(0, jy + J - 56, 0, jy + J);
+      const shade = ctx.createLinearGradient(0, jy + J - 68, 0, jy + J);
       shade.addColorStop(0, 'rgba(20,16,40,0)');
       shade.addColorStop(1, 'rgba(20,16,40,.72)');
       ctx.fillStyle = shade;
-      ctx.fillRect(jx, jy + J - 56, J, 56);
+      ctx.fillRect(jx, jy + J - 68, J, 68);
       ctx.restore();
 
-      const r1 = jy + J - 30;
+      const r1 = jy + J - 36;
       let px = jx + 6;
       px += pill(ctx, px, r1, s.kind, {
         bg: s.kind === 'ST' ? '#3B82C4' : (lx, w) => {
@@ -744,47 +747,54 @@
           g.addColorStop(0, '#E0348C'); g.addColorStop(1, '#F29A2E');
           return g;
         },
-        fg: '#FFFFFF', h: 24, size: 12, padX: 7,
+        fg: '#FFFFFF', h: 30, size: 15, padX: 8,
       }) + 4;
       const isRe = s.diff === 'Re:MASTER';
       pill(ctx, px, r1, s.diff, {
         bg: isRe ? '#FFFFFF' : DIFF_COLOR[s.diff] ?? '#999', fg: isRe ? '#8E44D6' : '#FFFFFF',
-        border: isRe ? '#B68BE0' : null, h: 24, size: 12, padX: 7,
+        border: isRe ? '#B68BE0' : null, h: 30, size: 15, padX: 8,
       });
       pill(ctx, jx + J - 6, r1, `${s.c.toFixed(1)}${s.estimated ? '*' : ''}`, {
-        bg: 'rgba(255,255,255,.95)', fg: IMG.ink, h: 24, size: 14, padX: 8, align: 'right',
+        bg: 'rgba(255,255,255,.95)', fg: IMG.ink, h: 30, size: 18, padX: 9, align: 'right',
       });
 
       // 1段目：楽曲名（長い場合は末尾を「…」で省略）
       const r0 = jy + J + 8;
-      ctx.font = `700 15px ${IMG.font}`;
+      ctx.font = `700 20px ${IMG.font}`;
       ctx.fillStyle = IMG.ink;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText(fitText(ctx, s.name, J), jx, r0 + 11);
+      ctx.fillText(fitText(ctx, s.name, J), jx, r0 + 14);
 
       // 2段目：☆（左）、単曲レート値（右）
-      const r2 = r0 + 30;
+      const r2 = r0 + 36;
       const sc = starPillColor(s.stars);
       pill(ctx, jx, r2, `☆${starDisplay(s.cur, s.max)}`, {
-        bg: s.stars >= 7 ? (lx, w) => rainbow(ctx, lx, w) : sc, fg: IMG.ink, h: 26, size: 14, padX: 10,
+        bg: s.stars >= 7 ? (lx, w) => rainbow(ctx, lx, w) : sc, fg: IMG.ink, h: 34, size: 19, padX: 12,
       });
-      ctx.font = `800 22px ${IMG.font}`;
+      ctx.font = `800 29px ${IMG.font}`;
       ctx.fillStyle = IMG.ink;
       ctx.textAlign = 'right';
       ctx.textBaseline = 'middle';
-      ctx.fillText(s.values[result.mode.id].toFixed(3), jx + J, r2 + 14);
+      ctx.fillText(s.values[result.mode.id].toFixed(3), jx + J, r2 + 18);
     });
 
-    // ---- 下部：作成日時 ----
+    // ---- 下部：注意書き ----
     const d = new Date();
     const p2 = (v) => String(v).padStart(2, '0');
-    ctx.font = `700 15px ${IMG.font}`;
-    ctx.fillStyle = IMG.sub;
-    ctx.textAlign = 'right';
+    const fy = H - pad - footH + 34;
+    ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
-    ctx.fillText(`2fRATE　${d.getFullYear()}/${p2(d.getMonth() + 1)}/${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`,
-      W - pad, H - pad + 4);
+    ctx.fillStyle = IMG.ink;
+    ctx.font = `800 20px ${IMG.font}`;
+    ctx.fillText(`Generated by 2fRATE（${TOOL_URL}）`, pad, fy);
+    ctx.fillStyle = IMG.sub;
+    ctx.font = `700 17px ${IMG.font}`;
+    ctx.fillText('楽曲のジャケット画像の著作権は、各権利者に帰属します。', pad, fy + 32);
+    ctx.fillText('2fRATE は非公式のファンメイドツールであり、株式会社セガおよびその関連会社とは一切関係ありません。', pad, fy + 60);
+    ctx.textAlign = 'right';
+    ctx.fillText(`作成日時 ${d.getFullYear()}/${p2(d.getMonth() + 1)}/${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`,
+      W - pad, fy);
 
     return canvas;
   }
