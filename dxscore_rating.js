@@ -38,6 +38,8 @@
   // ジャケット画像：「曲名 → 画像ファイル名」の対応表（collect_jackets.js で作成）を読み、
   // maimai DX NET 上の画像をそのまま表示する（画像そのものはコピーしない）
   const JACKETS_URL = 'https://n4f1316.github.io/dxscore-tools/maimai_jackets.json';
+  const OVERRIDES_URL = 'https://n4f1316.github.io/dxscore-tools/jacket_overrides.json'; // 同名曲の手動対応表
+  let jacketOverrides = {};
   const JACKET_BASE = 'https://maimaidx.jp/maimai-mobile/img/Music/';
   const LEVEL_URL = (n) => `/maimai-mobile/record/musicLevel/search/?level=${n}`;
 
@@ -248,13 +250,14 @@
     /* 譜面の一覧 */
     .dxr-list { background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; overflow: hidden; }
     .dxr-row {
-      display: grid; grid-template-columns: 2.2em 44px 1fr 4.2em 4.6em 4.4em; align-items: center; gap: 10px;
+      display: grid; grid-template-columns: 30px 44px 1fr 66px 72px 72px; align-items: center; gap: 10px;
       padding: 9px 14px; border-top: 1px solid var(--line);
     }
     .dxr-row:nth-child(even) { background: #FBFAFE; }
-    .dxr-head { border-top: 0; background: var(--ink) !important; color: #fff; font-size: 11px; font-weight: 700; padding: 7px 14px; }
-    .dxr-rank { font-weight: 800; color: var(--sub); text-align: right; font-variant-numeric: tabular-nums; }
+    .dxr-head { border-top: 0; background: var(--ink) !important; color: #fff; font-size: 11px; font-weight: 700; padding-top: 7px; padding-bottom: 7px; }
+    .dxr-rank { font-weight: 800; color: var(--sub); text-align: center; font-variant-numeric: tabular-nums; }
     .dxr-name { font-weight: 700; line-height: 1.35; word-break: break-word; }
+    .dxr-genre { font-size: 11px; font-weight: 700; color: var(--sub); margin-left: 2px; }
     .dxr-meta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
     .dxr-chip {
       display: inline-block; font-size: 11px; font-weight: 700; line-height: 1; padding: 4px 7px;
@@ -270,7 +273,10 @@
     .dxr-diff-REMASTER { background: #fff; color: var(--master); box-shadow: inset 0 0 0 1.5px var(--remaster); }
     .dxr-const { background: #EFECF9; color: var(--ink); }
     .dxr-const.is-est { color: var(--sub); }
-    .dxr-star, .dxr-diffmax, .dxr-val { text-align: right; font-variant-numeric: tabular-nums; }
+    .dxr-diffmax { text-align: right; font-variant-numeric: tabular-nums; }
+    .dxr-val { text-align: right; font-variant-numeric: tabular-nums; }
+    .dxr-head .dxr-val { text-align: center; }
+    .dxr-star { text-align: center; font-variant-numeric: tabular-nums; }
     /* ☆の色分け（Discordアイコンと共通）：☆1・2 黄緑 / ☆3・4 オレンジ / ☆5・6 黄色 / ☆7 虹色 */
     .dxr-star-pill {
       display: inline-block; min-width: 3.6em; padding: 3px 7px; border-radius: 999px; text-align: center;
@@ -301,7 +307,7 @@
       .dxr-icon { width: 56px; height: 56px; border-radius: 12px; }
       .dxr-player { font-size: 20px; }
       .dxr-star-pill { min-width: 0; padding: 3px 5px; font-size: 12px; }
-      .dxr-row { grid-template-columns: 1.6em 40px 1fr 3.6em 4em; gap: 7px; padding: 9px 10px; }
+      .dxr-row { grid-template-columns: 22px 40px 1fr 54px 60px; gap: 7px; padding: 9px 10px; }
       .dxr-jacket { width: 40px; height: 40px; }
       .dxr-row > .dxr-diffmax { display: none; }
       .dxr-meta .dxr-diffmax-inline { display: inline-block; }
@@ -372,6 +378,28 @@
   }
 
 
+  // ジャケット対応表から曲を特定する
+  //   通常の曲：値は画像ファイル名（文字列）
+  //   同名の別曲：値は候補の配列 [{ img, genre, st: [BAS..ReMAS のレベル], dx: [...] }]
+  //   → 種別・難易度・レベルが一致する候補が1つだけなら、その曲と判断する
+  const DIFF_ORDER = ['BASIC', 'ADVANCED', 'EXPERT', 'MASTER', 'Re:MASTER'];
+  function resolveSong(map, name, kind, diff, level, max) {
+    const v = map?.get(name);
+    if (!v) return null;
+    if (typeof v === 'string') return { img: v, genre: null };
+    if (!Array.isArray(v)) return null;
+    // 手動の対応表（同名の別曲で、レベルまで同じ譜面用）：「曲名|種別|難易度|最大値」→ ジャンル
+    const g = jacketOverrides?.[`${name}|${kind}|${diff}|${max}`];
+    if (g) {
+      const c = v.find((x) => x.genre === g);
+      if (c) return { img: c.img, genre: c.genre };
+    }
+    const k = kind === 'ST' ? 'st' : 'dx';
+    const i = DIFF_ORDER.indexOf(diff);
+    const hits = v.filter((c) => c[k]?.[i] === level);
+    return hits.length === 1 ? { img: hits[0].img, genre: hits[0].genre } : null;
+  }
+
   function buildList(top, mode, jackets) {
     const list = el('div', 'dxr-list');
 
@@ -386,19 +414,23 @@
       const isMax = s.cur === s.max;
 
       const main = el('div');
-      main.appendChild(el('div', 'dxr-name', s.name));
+      const song = resolveSong(jackets, s.name, s.kind, s.diff, s.level, s.max);
+      const nameEl = el('div', 'dxr-name', s.name);
+      // 同名の別曲は、判別できたときにジャンルを添える
+      if (song?.genre) nameEl.appendChild(el('span', 'dxr-genre', `（${song.genre}）`));
+      main.appendChild(nameEl);
       const meta = el('div', 'dxr-meta');
       meta.append(
         el('span', `dxr-chip dxr-kind-${s.kind === '?' ? 'unknown' : s.kind}`, s.kind),
-        el('span', `dxr-chip dxr-diff-${s.diff.replace(':', '').toUpperCase()}`, `${s.diff} ${s.level}`),
-        el('span', `dxr-chip dxr-const${s.estimated ? ' is-est' : ''}`, `定数 ${s.c.toFixed(1)}${s.estimated ? '*' : ''}`),
+        el('span', `dxr-chip dxr-diff-${s.diff.replace(':', '').toUpperCase()}`, s.diff),
+        el('span', `dxr-chip dxr-const${s.estimated ? ' is-est' : ''}`, `${s.c.toFixed(1)}${s.estimated ? '*' : ''}`),
         el('span', `dxr-chip dxr-diffmax-inline${isMax ? ' is-max' : ''}`, diffText)
       );
       main.appendChild(meta);
 
       // ジャケット画像（見つからない・読み込めない場合は空の枠）
       let jacket;
-      const file = jackets?.get(s.name);
+      const file = song?.img;
       if (file) {
         jacket = el('img', 'dxr-jacket');
         jacket.src = JACKET_BASE + file;
@@ -432,7 +464,10 @@
     try {
       const res = await fetch(JACKETS_URL + '?' + Date.now());
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return new Map(Object.entries(await res.json()));
+      const map = new Map(Object.entries(await res.json()));
+      jacketOverrides = await fetch(OVERRIDES_URL + '?' + Date.now())
+        .then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
+      return map;
     } catch (e) {
       console.warn('ジャケット画像の対応表を読み込めませんでした', e);
       return null;
