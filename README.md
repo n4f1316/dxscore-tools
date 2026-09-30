@@ -121,43 +121,9 @@ javascript:(()=>{const s=document.createElement('script');s.src='https://n4f1316
 
 ---
 
-## 管理者向け
+### ランキング集計した結果のビューア（viewer.html）
 
-### 譜面定数表の作成（collect_consts.js）
-
-レベル別のレコードページは「定数の低い順、同じ定数内はジャンル順」に並んでいるため、ジャンルの並びが後戻りした地点を定数の段の境目とみなして、定数を割り当てています。検出した段数が理論上の段数（例：13+ なら 13.6〜13.9 の4段）と一致したレベルのみ定数を確定します。
-
-```
-javascript:(()=>{const s=document.createElement('script');s.src='https://n4f1316.github.io/dxscore-tools/collect_consts.js?'+Date.now();document.body.appendChild(s);})();void(0);
-```
-
-バージョン更新時は、maimai DX NET で実行して各レベルが「確定」になっていることを確認し、定数表を `maimai_consts_<バージョン名>.json` としてアップロードし、`dxscore_rating.js` の `CONST_URL` を書き換えます。
-
-### ジャケット対応表の作成（collect_jackets.js）
-
-公式の楽曲リストから「曲名 → ジャケット画像のファイル名」の対応表を作ります。**maimai DX NET ではなく、公式サイト（https://maimai.sega.jp/）を開いた状態で**実行し、`maimai_jackets.json` をアップロードします。新曲が追加されたときに作り直してください。
-
-```
-javascript:(()=>{const s=document.createElement('script');s.src='https://n4f1316.github.io/dxscore-tools/collect_jackets.js?'+Date.now();document.body.appendChild(s);})();void(0);
-```
-
-同名の別曲（Link など）で、種別・難易度・レベルまで同じ譜面は自動で判別できないため、`jacket_overrides.json` に「曲名|種別|難易度|でらっくスコア最大値」とジャンルの対応を手動で書きます。
-
-```json
-{
- "Link|ST|MASTER|924": "maimai",
- "Link|ST|MASTER|1839": "niconico＆ボーカロイド"
-}
-```
-
-### ランキング集計（collect_ranking.js）とビューア（viewer.html）
-
-楽曲別のでらっくスコア全国ランキング（上位100人）から、譜面ごとに1位・50位・100位のスコア、平均取得率、☆7・☆6の人数を集計します。プレーヤー名は保存しません。結果はレベルごとのJSON（`ranking/lv13p.json` など）としてダウンロードし、`ranking` フォルダに置きます。
-
-```
-javascript:(()=>{const s=document.createElement('script');s.src='https://n4f1316.github.io/dxscore-tools/collect_ranking.js?'+Date.now();document.body.appendChild(s);})();void(0);
-```
-
+楽曲別のでらっくスコア全国ランキング（上位100人）から、譜面ごとに1位・50位・100位のスコア、平均取得率、☆7・☆6の人数を集計した結果を載せています。プレーヤー名は保存しません。
 集計結果は、閲覧専用のビューアで誰でも見られます（ログイン不要）。
 
 https://n4f1316.github.io/dxscore-tools/viewer.html
