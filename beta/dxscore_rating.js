@@ -27,9 +27,10 @@
     { id: 'cap5', label: '☆5まで', capStars: 5 },
   ];
 
-  // 単曲レート値 = 定数 × ☆ × ☆（☆は小数第一位まで）÷ RATE_DIVISOR
-  //   最大は 15.0 × 7.0 × 7.0 ÷ 10 = 73.5
-  const RATE_DIVISOR = 10;
+  // 単曲レート値 =（定数 × 定数 × ☆の整数部分 ＋ 定数 × 定数 × ☆の小数部分 × 0.5）÷ RATE_DIVISOR
+  //   ☆は小数第一位まで。最大は 15.0 × 15.0 × 7 ÷ 100 = 15.75
+  const RATE_DIVISOR = 100;
+  const FRACTION_WEIGHT = 0.5; // ☆の小数部分にかける係数
 
   const TOP_N = 50;          // 平均を取る曲数
   const WAIT_MS = 1500;      // ページ取得の間隔（サーバー負荷対策）
@@ -88,7 +89,7 @@
   }
 
   // そのレベルの譜面が取りうる値の上限（☆上限・定数最大のとき）
-  const upperBound = (n, capStars) => (levelInfo(n).max * capStars * capStars) / RATE_DIVISOR;
+  const upperBound = (n, capStars) => (levelInfo(n).max ** 2 * capStars) / RATE_DIVISOR;
 
   // 小数の誤差を避けるため整数同士で比較する（cur/max >= pct% と同じ意味）
   function starsOf(cur, max) {
@@ -191,8 +192,10 @@
     // ☆は小数第一位まで反映（6.4なら6.4で計算）。レートの種類ごとの上限（☆5まで等）で切り詰める
     const tenths = starTenths(s.cur, s.max);
     for (const m of RATE_MODES) {
-      const t = Math.min(tenths, m.capStars * 10); // ☆×10 の整数
-      values[m.id] = (c * t * t) / 100 / RATE_DIVISOR;  // 定数 × ☆ × ☆ ÷ RATE_DIVISOR
+      const t = Math.min(tenths, m.capStars * 10); // ☆×10 の整数（6.4 → 64）
+      const whole = Math.floor(t / 10);             // ☆の整数部分（6）
+      const frac = (t % 10) / 10;                   // ☆の小数部分（0.4）
+      values[m.id] = (c * c * whole + c * c * frac * FRACTION_WEIGHT) / RATE_DIVISOR;
     }
     return { ...s, c, estimated: !inTable, stars, values };
   }
