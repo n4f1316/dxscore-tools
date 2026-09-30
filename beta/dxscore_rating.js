@@ -38,6 +38,8 @@
   // ジャケット画像：「曲名 → 画像ファイル名」の対応表（collect_jackets.js で作成）を読み、
   // maimai DX NET 上の画像をそのまま表示する（画像そのものはコピーしない）
   const JACKETS_URL = 'https://n4f1316.github.io/dxscore-tools/maimai_jackets.json';
+  const OVERRIDES_URL = 'https://n4f1316.github.io/dxscore-tools/jacket_overrides.json'; // 同名曲の手動対応表
+  let jacketOverrides = {};
   const JACKET_BASE = 'https://maimaidx.jp/maimai-mobile/img/Music/';
   const LEVEL_URL = (n) => `/maimai-mobile/record/musicLevel/search/?level=${n}`;
 
@@ -381,11 +383,17 @@
   //   同名の別曲：値は候補の配列 [{ img, genre, st: [BAS..ReMAS のレベル], dx: [...] }]
   //   → 種別・難易度・レベルが一致する候補が1つだけなら、その曲と判断する
   const DIFF_ORDER = ['BASIC', 'ADVANCED', 'EXPERT', 'MASTER', 'Re:MASTER'];
-  function resolveSong(map, name, kind, diff, level) {
+  function resolveSong(map, name, kind, diff, level, max) {
     const v = map?.get(name);
     if (!v) return null;
     if (typeof v === 'string') return { img: v, genre: null };
     if (!Array.isArray(v)) return null;
+    // 手動の対応表（同名の別曲で、レベルまで同じ譜面用）：「曲名|種別|難易度|最大値」→ ジャンル
+    const g = jacketOverrides?.[`${name}|${kind}|${diff}|${max}`];
+    if (g) {
+      const c = v.find((x) => x.genre === g);
+      if (c) return { img: c.img, genre: c.genre };
+    }
     const k = kind === 'ST' ? 'st' : 'dx';
     const i = DIFF_ORDER.indexOf(diff);
     const hits = v.filter((c) => c[k]?.[i] === level);
@@ -406,7 +414,7 @@
       const isMax = s.cur === s.max;
 
       const main = el('div');
-      const song = resolveSong(jackets, s.name, s.kind, s.diff, s.level);
+      const song = resolveSong(jackets, s.name, s.kind, s.diff, s.level, s.max);
       const nameEl = el('div', 'dxr-name', s.name);
       // 同名の別曲は、判別できたときにジャンルを添える
       if (song?.genre) nameEl.appendChild(el('span', 'dxr-genre', `（${song.genre}）`));
@@ -456,7 +464,10 @@
     try {
       const res = await fetch(JACKETS_URL + '?' + Date.now());
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return new Map(Object.entries(await res.json()));
+      const map = new Map(Object.entries(await res.json()));
+      jacketOverrides = await fetch(OVERRIDES_URL + '?' + Date.now())
+        .then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
+      return map;
     } catch (e) {
       console.warn('ジャケット画像の対応表を読み込めませんでした', e);
       return null;
