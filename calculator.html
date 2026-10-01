@@ -55,6 +55,7 @@
   .res-label { font-size: 12px; font-weight: 700; color: var(--sub); }
   .res-value { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.2; }
   .res.main .res-value { color: var(--pink); }
+  .res .res-value.ranked, .res.main .res-value.ranked { color: transparent; -webkit-background-clip: text; background-clip: text; display: inline-block; }
   .quick { width: 100%; border-collapse: collapse; margin-top: 14px; font-variant-numeric: tabular-nums; font-size: 13px; }
   .quick th, .quick td { padding: 5px 8px; border-bottom: 1px solid var(--line); text-align: right; }
   .quick th:first-child, .quick td:first-child { text-align: left; }
@@ -163,6 +164,31 @@
     const whole = Math.floor(t / 10);
     const frac = (t % 10) / 10;
     return (c * c * whole + c * c * frac * FRACTION_WEIGHT) / RATE_DIVISOR + (t >= 70 ? MAX_BONUS : 0);
+  }
+
+  // ランク（2fRATE の「☆7まで」と同じ区切りと色）
+  const RANKS = [
+    { name: 'LEGEND',        min: 12,   colors: ['#6A1BD8', '#D6246E', '#F2A007'], glow: 'rgba(242,160,7,.55)' },
+    { name: 'RAINBOW PLUS',  min: 11.5, colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'], glow: 'rgba(255,196,0,.6)' },
+    { name: 'RAINBOW',       min: 11,   colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'] },
+    { name: 'PLATINUM PLUS', min: 10.5, colors: ['#4F8AA6', '#8FBED4', '#4F8AA6'], glow: 'rgba(120,190,225,.65)' },
+    { name: 'PLATINUM',      min: 10,   colors: ['#4F8AA6', '#8FBED4', '#4F8AA6'] },
+    { name: 'GOLD PLUS',     min: 9.5,  colors: ['#B8860B', '#E0B32E', '#B8860B'], glow: 'rgba(240,190,40,.6)' },
+    { name: 'GOLD',          min: 9,    colors: ['#B8860B', '#E0B32E', '#B8860B'] },
+    { name: 'SILVER PLUS',   min: 8.5,  colors: ['#6F7C8B', '#A7B2BE', '#6F7C8B'], glow: 'rgba(150,165,185,.7)' },
+    { name: 'SILVER',        min: 8,    colors: ['#6F7C8B', '#A7B2BE', '#6F7C8B'] },
+    { name: 'BRONZE PLUS',   min: 7.5,  colors: ['#8E4E22', '#C07A45', '#8E4E22'], glow: 'rgba(205,125,65,.55)' },
+    { name: 'BRONZE',        min: 7,    colors: ['#8E4E22', '#C07A45', '#8E4E22'] },
+    { name: 'WAKABA',        min: -Infinity, colors: ['#3E9B3A', '#7CBF3F'] },
+  ];
+  const rankOf = (v) => RANKS.find((r) => Math.round(v * 1000) / 1000 >= r.min);
+  // 文字をランクの色（グラデーション＋PLUS などの光）にする
+  function paintRank(node, v) {
+    const rank = rankOf(v);
+    node.classList.add('ranked');
+    node.style.backgroundImage = `linear-gradient(90deg, ${rank.colors.join(', ')})`;
+    node.style.filter = rank.glow ? `drop-shadow(0 0 3px ${rank.glow})` : '';
+    node.title = rank.name;
   }
 
   const $ = (id) => document.getElementById(id);
@@ -287,7 +313,10 @@
       }
       results.replaceChildren(...MODES.map((m, i) => {
         const card = el('div', 'res' + (i === 0 ? ' main' : ''));
-        card.append(el('div', 'res-label', m.label), el('div', 'res-value', rateOf(s.c, starTenths, m.cap).toFixed(3)));
+        const v = rateOf(s.c, starTenths, m.cap);
+        const val = el('div', 'res-value', v.toFixed(3));
+        if (m.id === 'full') paintRank(val, v); // 「☆7まで」はランクの色で表示
+        card.append(el('div', 'res-label', m.label), val);
         return card;
       }));
       // 早見表：☆5.0〜7.0 の主な値
