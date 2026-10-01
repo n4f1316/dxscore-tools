@@ -324,7 +324,7 @@
       const thead = quick.createTHead().insertRow();
       ['☆', ...MODES.map((m) => m.label)].forEach((t) => { const th = el('th', '', t); thead.appendChild(th); });
       const body = quick.createTBody();
-      [50, 55, 60, 63, 65, 67, 69, 70].forEach((t) => {
+      [50, 55, 60, 65, 70].forEach((t) => {
         const tr = body.insertRow();
         if (t === starTenths) tr.className = 'on';
         tr.insertCell().textContent = `☆${(t / 10).toFixed(1)}`;
