@@ -28,16 +28,20 @@
   ];
 
   // ランク（今は「☆7まで」のレートだけに適用）。min 以上でそのランク。上から順に判定する
-  //   colors: 文字色のグラデーション（1色なら単色）。glow: 文字のまわりの光（RAINBOW PLUS / LEGEND）
+  //   colors: 文字色のグラデーション（1色なら単色）。glow: 文字のまわりの光（PLUS のランクと LEGEND）
   const RANK_MODES = ['full'];
   const RANKS = [
     { name: 'LEGEND',       min: 12, colors: ['#6A1BD8', '#D6246E', '#F2A007'], glow: 'rgba(242,160,7,.55)' },
     { name: 'RAINBOW PLUS', min: 11, colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'], glow: 'rgba(255,196,0,.6)' },
     { name: 'RAINBOW',      min: 10, colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'] },
-    { name: 'PLATINUM',     min: 9,  colors: ['#4F8AA6', '#8FBED4', '#4F8AA6'] },
-    { name: 'GOLD',         min: 8,  colors: ['#B8860B', '#E0B32E', '#B8860B'] },
-    { name: 'SILVER',       min: 7,  colors: ['#6F7C8B', '#A7B2BE', '#6F7C8B'] },
-    { name: 'BRONZE',       min: 6,  colors: ['#8E4E22', '#C07A45', '#8E4E22'] },
+    { name: 'PLATINUM PLUS', min: 9.5, colors: ['#4F8AA6', '#8FBED4', '#4F8AA6'], glow: 'rgba(120,190,225,.65)' },
+    { name: 'PLATINUM',      min: 9,   colors: ['#4F8AA6', '#8FBED4', '#4F8AA6'] },
+    { name: 'GOLD PLUS',     min: 8.5, colors: ['#B8860B', '#E0B32E', '#B8860B'], glow: 'rgba(240,190,40,.6)' },
+    { name: 'GOLD',          min: 8,   colors: ['#B8860B', '#E0B32E', '#B8860B'] },
+    { name: 'SILVER PLUS',   min: 7.5, colors: ['#6F7C8B', '#A7B2BE', '#6F7C8B'], glow: 'rgba(150,165,185,.7)' },
+    { name: 'SILVER',        min: 7,   colors: ['#6F7C8B', '#A7B2BE', '#6F7C8B'] },
+    { name: 'BRONZE PLUS',   min: 6.5, colors: ['#8E4E22', '#C07A45', '#8E4E22'], glow: 'rgba(205,125,65,.55)' },
+    { name: 'BRONZE',        min: 6,   colors: ['#8E4E22', '#C07A45', '#8E4E22'] },
     { name: 'WAKABA',       min: -Infinity, colors: ['#3E9B3A', '#7CBF3F'] },
   ];
   // 表示している値（小数第3位で四捨五入）でランクを決める（表示と判定をそろえるため）
@@ -48,6 +52,73 @@
   const rankCss = (rank) =>
     `background-image: linear-gradient(90deg, ${rank.colors.join(', ')});` +
     (rank.glow ? ` filter: drop-shadow(0 0 3px ${rank.glow});` : '');
+
+  // ランクのアイコン（SVG）。デフォルメ調：太めの角丸の線、ベタ塗り（ツヤなし）
+  function rankIconSvg(rankName) {
+    const plus = rankName.endsWith(' PLUS');
+    const base = rankName.replace(' PLUS', '');
+    // ✧ の形（4方向にとがった星。辺は内側にくぼませる）
+    const sparkle = (cx, cy, r) => {
+      const q = r * 0.18;
+      return `M${cx} ${cy - r} Q${cx + q} ${cy - q} ${cx + r} ${cy} Q${cx + q} ${cy + q} ${cx} ${cy + r}` +
+        ` Q${cx - q} ${cy + q} ${cx - r} ${cy} Q${cx - q} ${cy - q} ${cx} ${cy - r} Z`;
+    };
+    const MEDAL = {            // [中央の✧, 本体, 縁取り]
+      BRONZE:   ['#F6D2B3', '#C9844F', '#8E4E22'],
+      SILVER:   ['#FFFFFF', '#BAC4CF', '#6F7C8B'],
+      GOLD:     ['#FFF2A8', '#F2C531', '#B07D0A'],
+      PLATINUM: ['#F4FCFF', '#A6D6EC', '#4F8AA6'],
+    };
+    let body = '';
+    let edge = '#2B2350'; // 「+」の縁取りの色（ランクの色）
+    if (base === 'WAKABA') {
+      // 初心者マーク（若葉マーク）
+      body = `
+        <path d="M14 10 L32 22 L32 57 L14 42 Z" fill="#FFD43B" stroke="#D99A00" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M50 10 L32 22 L32 57 L50 42 Z" fill="#4CBB4F" stroke="#2E8B3A" stroke-width="4" stroke-linejoin="round"/>`;
+      edge = '#2E8B3A';
+    } else if (MEDAL[base]) {
+      // 丸いメダル（色違い）。中央に ✧
+      const [light, mid, dark] = MEDAL[base];
+      body = `
+        <circle cx="32" cy="34" r="24" fill="${mid}" stroke="${dark}" stroke-width="4"/>
+        <path d="${sparkle(32, 34, 13)}" fill="${light}" stroke="${dark}" stroke-width="2.5" stroke-linejoin="round"/>`;
+      edge = dark;
+    } else if (base === 'RAINBOW') {
+      // 虹（四分円の形。6色の帯をすき間なく重ね、端はまっすぐ切る）
+      const bands = ['#F0384A', '#FF7A1A', '#FFC93C', '#2CC24A', '#1F6BFF', '#7D55B8'];
+      const cx = 51, cy = 51, R = 38, w = (R - 8) / bands.length; // 外側の半径38、内側の穴の半径8（全体が中央に来る位置）
+      body = bands.map((c, i) => {
+        const r = R - w / 2 - i * w;
+        return `<path d="M${cx - r} ${cy} A${r} ${r} 0 0 1 ${cx} ${cy - r}" fill="none" stroke="${c}" stroke-width="${(w + 0.4).toFixed(2)}" stroke-linecap="butt"/>`;
+      }).join('');
+      // 外側の縁取り（虹全体の輪郭）
+      const ri = R - w * bands.length; // 内側の穴の半径
+      const line = '#4A3B7A';
+      body += `<path d="M${cx - R} ${cy} A${R} ${R} 0 0 1 ${cx} ${cy - R} L${cx} ${cy - ri} A${ri} ${ri} 0 0 0 ${cx - ri} ${cy} Z"` +
+        ` fill="none" stroke="${line}" stroke-width="3.5" stroke-linejoin="round"/>`;
+      edge = line;
+    } else if (base === 'LEGEND') {
+      // 王冠
+      body = `
+        <path d="M10 25 L21 37 L32 18 L43 37 L54 25 L50 50 L14 50 Z" fill="#F2C531" stroke="#B07D0A" stroke-width="4" stroke-linejoin="round"/>
+        <rect x="13" y="45" width="38" height="9" rx="4.5" fill="#F2C531" stroke="#B07D0A" stroke-width="4"/>
+        <circle cx="10" cy="22" r="4.5" fill="#F2C531" stroke="#B07D0A" stroke-width="3"/>
+        <circle cx="32" cy="14" r="4.5" fill="#F2C531" stroke="#B07D0A" stroke-width="3"/>
+        <circle cx="54" cy="22" r="4.5" fill="#F2C531" stroke="#B07D0A" stroke-width="3"/>
+        <circle cx="32" cy="36" r="4.2" fill="#E0348C" stroke="#9C1D5E" stroke-width="2"/>`;
+      edge = '#B07D0A';
+    }
+    // PLUS は右上に「+」（白い + をランクの色で縁取り）
+    const badge = plus ? `
+        <path d="M50 6 V20 M43 13 H57" stroke="${edge}" stroke-width="10" stroke-linecap="round"/>
+        <path d="M50 6 V20 M43 13 H57" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round"/>` : '';
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">${body}${badge}</svg>`;
+  }
+
+
+
+
 
   // 単曲レート値 =（定数 × 定数 × ☆の整数部分 ＋ 定数 × 定数 × ☆の小数部分 × 0.5）÷ RATE_DIVISOR
   //   ☆は小数第一位まで。最大は 15.0 × 15.0 × 7 ÷ 100 = 15.75
@@ -295,7 +366,8 @@
       color: transparent; -webkit-background-clip: text; background-clip: text; display: inline-block;
     }
     .dxr-plate-rate { display: flex; align-items: center; gap: 6px; }
-    .dxr-rank-icon { display: none; } /* ランクのアイコン（後で実装。data-rank にランク名が入る） */
+    .dxr-rank-icon { display: inline-flex; flex: none; width: 38px; height: 38px; }
+    .dxr-rank-icon svg { width: 100%; height: 100%; }
     .dxr-plate-hint { display: block; font-size: 11px; color: var(--sub); }
 
     /* 譜面の一覧 */
@@ -364,6 +436,8 @@
       .dxr-plates { gap: 6px; }
       .dxr-plate { padding: 10px 10px; border-radius: 14px; }
       .dxr-plate-value { font-size: 22px; }
+      .dxr-rank-icon { width: 24px; height: 24px; }
+      .dxr-plate-rate { gap: 3px; }
       .dxr-plate-hint { display: none; }
       .dxr-icon { width: 56px; height: 56px; border-radius: 12px; }
       .dxr-player { font-size: 20px; }
@@ -686,6 +760,8 @@
   }
 
   // options.hideProfile が true なら、プレイヤー名と称号を載せない（アイコンとレートは載せる）
+  const rankIconUrl = (name) => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(rankIconSvg(name));
+
   async function buildShareImage(profile, result, jackets, options = {}) {
     const { cols, rows, pad, gap, cellW, jacket: J, cellH, headH, footH } = IMG;
     const W = pad * 2 + cols * cellW + (cols - 1) * gap;
@@ -706,6 +782,8 @@
     // 画像をまとめて読み込む
     const top = result.top.slice(0, cols * rows);
     const files = top.map((s) => resolveSong(jackets, s.name, s.kind, s.diff, s.level, s.max)?.img);
+    const ranked = RANK_MODES.includes(result.mode.id);
+    const rankImg = ranked ? await loadImage(rankIconUrl(rankOf(result.rating).name)) : null;
     const [iconImg, ...jacketImgs] = await Promise.all([
       loadImage(profile.icon),
       ...files.map((f) => loadImage(f ? JACKET_BASE + f : null)),
@@ -776,6 +854,11 @@
       ctx.fillStyle = g;
       ctx.fillText(rateText, rx, iy + 120);
       ctx.restore();
+      // ランクのアイコン（レート値の左）
+      if (rankImg) {
+        const size = 78;
+        ctx.drawImage(rankImg, rx - tw - 12 - size, iy + 120 - 66, size, size);
+      }
     } else {
       ctx.fillStyle = IMG.pink;
       ctx.fillText(rateText, rx, iy + 120);
@@ -987,6 +1070,7 @@
             value.title = rank.name;
             const icon = el('span', 'dxr-rank-icon');
             icon.dataset.rank = rank.name;
+            icon.innerHTML = rankIconSvg(rank.name); // ツール内で作った固定のSVGのみ
             rate.appendChild(icon);
           }
           rate.appendChild(value);
