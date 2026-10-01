@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2fRATE 単曲レート計算</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap">
+<style>
+  :root {
+    --ink: #2B2350; --sub: #6E6892; --faint: #9A94B8; --line: #E4DFF3; --bg: #F6F4FC; --card: #FFFFFF;
+    --pink: #E0348C; --cyan: #1FA9C9;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+  body {
+    font: 14px/1.6 "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
+    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 18px 14px 48px; }
+  h1 { font-size: 20px; font-weight: 800; margin: 0; }
+  .lead { color: var(--sub); font-size: 13px; margin: 4px 0 0; }
+  .status { margin-top: 12px; color: var(--sub); font-size: 13px; }
+  .status.error { color: #E0434B; font-weight: 700; }
+
+  button { font: inherit; font-weight: 700; padding: 6px 14px; border-radius: 999px; cursor: pointer;
+    border: 1.5px solid var(--line); background: var(--card); color: var(--ink); }
+  button:focus-visible, input:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; }
+  .tabs button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .diffs button { padding: 4px 12px; font-size: 13px; }
+  .diffs button.dbtn[aria-pressed="true"] { color: #fff; border-color: transparent; }
+  .diffs button.db-BASIC[aria-pressed="true"] { background: #2E9E5B; }
+  .diffs button.db-ADVANCED[aria-pressed="true"] { background: #D98E04; }
+  .diffs button.db-EXPERT[aria-pressed="true"] { background: #E0434B; }
+  .diffs button.db-MASTER[aria-pressed="true"] { background: #8E44D6; }
+  .diffs button.db-REMASTER[aria-pressed="true"] { background: #F1E6FD; color: #8E44D6; box-shadow: inset 0 0 0 2px #B68BE0; }
+  .search { width: 100%; margin-top: 12px; font: inherit; padding: 8px 14px; border-radius: 999px;
+    border: 1.5px solid var(--line); background: var(--card); color: var(--ink); }
+  .count { font-size: 12px; font-weight: 700; color: var(--sub); margin: 12px 2px 6px; }
+
+  /* 計算パネル */
+  .calc { margin-top: 16px; background: var(--card); border: 2px solid var(--pink); border-radius: 20px; padding: 16px; }
+  .calc[hidden] { display: none; }
+  .calc-head { display: flex; gap: 14px; align-items: center; }
+  .calc-head .jacket { width: 72px; height: 72px; border-radius: 12px; }
+  .calc-name { font-size: 18px; font-weight: 800; line-height: 1.35; word-break: break-word; }
+  .star-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+  .star-row label { font-weight: 800; }
+  .star-input { width: 110px; font: inherit; font-size: 22px; font-weight: 800; text-align: center; padding: 6px 10px;
+    border-radius: 12px; border: 2px solid var(--line); color: var(--ink); }
+  .star-range { flex: 1 1 200px; accent-color: var(--pink); }
+  .hint { font-size: 12px; color: var(--sub); margin-top: 6px; }
+  .results { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+  .res { background: var(--bg); border-radius: 14px; padding: 10px 12px; }
+  .res-label { font-size: 12px; font-weight: 700; color: var(--sub); }
+  .res-value { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.2; }
+  .res.main .res-value { color: var(--pink); }
+  .quick { width: 100%; border-collapse: collapse; margin-top: 14px; font-variant-numeric: tabular-nums; font-size: 13px; }
+  .quick th, .quick td { padding: 5px 8px; border-bottom: 1px solid var(--line); text-align: right; }
+  .quick th:first-child, .quick td:first-child { text-align: left; }
+  .quick th { color: var(--sub); font-size: 12px; }
+  .quick tr.on td { background: #FDEAF3; font-weight: 800; }
+  .close { margin-left: auto; align-self: flex-start; white-space: nowrap; flex: none; }
+
+  /* 楽曲一覧 */
+  .list { background: var(--card); border: 1.5px solid var(--line); border-radius: 16px; overflow: hidden; }
+  .r { display: grid; grid-template-columns: 44px 1fr auto; gap: 10px; align-items: center; width: 100%;
+    padding: 8px 12px; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent;
+    text-align: left; font-weight: 500; }
+  .r:first-child { border-top: 0; }
+  .r:nth-child(even) { background: #FBFAFE; }
+  .r:hover { background: #F3EEFC; }
+  .r.selected { background: #FDEAF3; }
+  .jacket { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; display: block;
+    background: #EFECF9; box-shadow: 0 0 0 1px var(--line); }
+  .name { font-weight: 700; line-height: 1.35; word-break: break-word; }
+  .genre { font-size: 11px; font-weight: 700; color: var(--sub); margin-left: 2px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .chip { display: inline-block; font-size: 11px; font-weight: 700; line-height: 1; padding: 4px 7px;
+    border-radius: 6px; color: #fff; white-space: nowrap; }
+  .kind-DX { background: linear-gradient(90deg, #E0348C, #F29A2E); }
+  .kind-ST { background: #3B82C4; }
+  .diff-BASIC { background: #2E9E5B; }
+  .diff-ADVANCED { background: #D98E04; }
+  .diff-EXPERT { background: #E0434B; }
+  .diff-MASTER { background: #8E44D6; }
+  .diff-REMASTER { background: #fff; color: #8E44D6; box-shadow: inset 0 0 0 1.5px #B68BE0; }
+  .const { background: #EFECF9; color: var(--ink); }
+  .lv { background: transparent; color: var(--sub); padding-left: 2px; }
+  .go { font-size: 12px; font-weight: 800; color: var(--pink); white-space: nowrap; }
+  .empty { padding: 24px; text-align: center; color: var(--sub); }
+  .pager { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; margin: 10px 0; }
+  .pager:empty { display: none; }
+  .pager button { min-width: 40px; padding: 5px 10px; }
+  .pager button.current { background: var(--ink); border-color: var(--ink); color: #fff; cursor: default; }
+  .pager button:disabled { opacity: .4; cursor: default; }
+  .pager .gap { color: var(--sub); padding: 0 2px; }
+  .foot { margin-top: 18px; font-size: 12px; color: var(--sub); line-height: 1.8; }
+
+  @media (max-width: 520px) {
+    .results { grid-template-columns: 1fr; }
+    .res { display: flex; align-items: baseline; justify-content: space-between; }
+    .res-value { font-size: 22px; }
+    .r { grid-template-columns: 40px 1fr; }
+    .go { display: none; }
+    .jacket { width: 40px; height: 40px; }
+    .calc-head .jacket { width: 56px; height: 56px; }
+    .close { padding: 5px 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>2fRATE 単曲レート計算</h1>
+  <p class="lead">楽曲を選んで☆の値を入れると、その譜面の単曲レート値がわかります。</p>
+  <div class="status" id="status">データを読み込み中…</div>
+
+  <section class="calc" id="calc" hidden aria-live="polite"></section>
+
+  <div id="app" hidden>
+    <input class="search" id="search" type="search" placeholder="曲名で絞り込み" aria-label="曲名で絞り込み">
+    <div class="tabs" id="levelTabs" role="group" aria-label="レベル"></div>
+    <div class="tabs diffs" id="diffTabs" role="group" aria-label="難易度"></div>
+    <div class="count" id="count"></div>
+    <div id="listBox"></div>
+    <p class="foot">
+      単曲レート値 =（譜面定数 × 譜面定数 × ☆の整数部分 ＋ 譜面定数 × 譜面定数 × ☆の小数部分 × 0.5）÷ 100（☆7のみ ＋0.1）。
+      「☆6まで」「☆5まで」は、上限を超える☆をその上限として計算します。☆1未満は0です。<br>
+      ☆の基準：☆7 100%、☆6 99%以上、☆5 97%以上、☆4 95%以上、☆3 93%以上、☆2 90%以上、☆1 85%以上。<br>
+      非公式のファンメイドツールです。株式会社セガとは一切関係ありません。楽曲のジャケット画像の著作権は、各権利者に帰属します。
+    </p>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ===== 設定 =====
+  const CONST_URL = 'maimai_consts_magical.json';  // 譜面定数表（このページと同じ場所）
+  const JACKETS_URL = 'maimai_jackets.json';
+  const OVERRIDES_URL = 'jacket_overrides.json';
+  const JACKET_BASES = [
+    'https://maimaidx.jp/maimai-mobile/img/Music/',
+    'https://maimai.sega.jp/storage/DX_jacket/',
+  ];
+  const PAGE_SIZE = 100;
+  const DIFF_NAMES = ['BASIC', 'ADVANCED', 'EXPERT', 'MASTER', 'Re:MASTER'];
+
+  // 2fRATE と同じ計算式
+  const RATE_DIVISOR = 100;
+  const FRACTION_WEIGHT = 0.5;
+  const MAX_BONUS = 0.1;
+  const MODES = [
+    { id: 'full', label: '☆7まで', cap: 7 },
+    { id: 'cap6', label: '☆6まで', cap: 6 },
+    { id: 'cap5', label: '☆5まで', cap: 5 },
+  ];
+  // ☆×10 の整数（例：6.4 → 64）から単曲レート値を出す
+  function rateOf(c, tenths, cap) {
+    if (tenths < 10) return 0; // ☆1未満は0
+    const t = Math.min(tenths, cap * 10);
+    const whole = Math.floor(t / 10);
+    const frac = (t % 10) / 10;
+    return (c * c * whole + c * c * frac * FRACTION_WEIGHT) / RATE_DIVISOR + (t >= 70 ? MAX_BONUS : 0);
+  }
+
+  const $ = (id) => document.getElementById(id);
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  const fetchJson = (url) =>
+    fetch(url + '?' + Date.now()).then((res) => (res.ok ? res.json() : null)).catch(() => null);
+
+  // 定数 → レベル表記（13.0〜13.5 は「13」、13.6〜13.9 は「13+」。6以下は整数）
+  function levelOfConst(c) {
+    const base = Math.floor(c + 1e-9);
+    if (base < 7) return String(base);
+    return c - base >= 0.6 - 1e-9 ? `${base}+` : String(base);
+  }
+  const levelOrder = (label) => parseInt(label, 10) + (String(label).endsWith('+') ? 0.5 : 0);
+
+  function resolveSong(map, overrides, name, kind, diffIdx, level, max) {
+    const v = map?.get(name);
+    if (!v) return null;
+    if (typeof v === 'string') return { img: v, genre: null };
+    if (!Array.isArray(v)) return null;
+    const g = max ? overrides?.[`${name}|${kind}|${DIFF_NAMES[diffIdx]}|${max}`] : null;
+    if (g) {
+      const c = v.find((x) => x.genre === g);
+      if (c) return { img: c.img, genre: c.genre };
+    }
+    const k = kind === 'ST' ? 'st' : 'dx';
+    const hits = v.filter((c) => c[k]?.[diffIdx] === level);
+    return hits.length === 1 ? { img: hits[0].img, genre: hits[0].genre } : null;
+  }
+
+  function jacketEl(file) {
+    if (!file) return el('div', 'jacket');
+    const img = el('img', 'jacket');
+    let i = 0;
+    img.alt = '';
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.src = JACKET_BASES[0] + file;
+    img.onerror = () => {
+      i++;
+      if (i < JACKET_BASES.length) img.src = JACKET_BASES[i] + file;
+      else img.replaceWith(el('div', 'jacket'));
+    };
+    return img;
+  }
+
+  function chipsOf(s, withLevel) {
+    const chips = el('div', 'chips');
+    chips.append(
+      el('span', `chip kind-${s.kind}`, s.kind),
+      el('span', `chip diff-${s.diff.replace(':', '').toUpperCase()}`, s.diff),
+      el('span', 'chip const', s.c.toFixed(1))
+    );
+    if (withLevel) chips.appendChild(el('span', 'chip lv', `Lv${s.level}`));
+    return chips;
+  }
+
+  // ===== 状態 =====
+  let all = [];
+  let currentLevel = null;
+  let currentDiffs = null;
+  let query = '';
+  let page = 1;
+  let selected = null;
+  let starTenths = 60; // 入力中の☆（×10）
+
+  // ===== 計算パネル =====
+  function renderCalc() {
+    const box = $('calc');
+    if (!selected) { box.hidden = true; return; }
+    box.hidden = false;
+    box.replaceChildren();
+    const s = selected;
+
+    const head = el('div', 'calc-head');
+    const nameBox = el('div');
+    const nm = el('div', 'calc-name', s.name);
+    if (s.genre) nm.appendChild(el('span', 'genre', `（${s.genre}）`));
+    nameBox.append(nm, chipsOf(s, true));
+    const close = el('button', 'close', '閉じる');
+    close.type = 'button';
+    close.onclick = () => { selected = null; renderCalc(); renderList(); };
+    head.append(jacketEl(s.img), nameBox, close);
+
+    const row = el('div', 'star-row');
+    const label = el('label', '', '☆');
+    label.htmlFor = 'starInput';
+    const input = el('input', 'star-input');
+    input.id = 'starInput';
+    input.type = 'number';
+    input.inputMode = 'decimal';
+    input.min = '0';
+    input.max = '7';
+    input.step = '0.1';
+    input.value = (starTenths / 10).toFixed(1);
+    const range = el('input', 'star-range');
+    range.type = 'range';
+    range.min = '0';
+    range.max = '70';
+    range.step = '1';
+    range.value = String(starTenths);
+    range.setAttribute('aria-label', '☆の値');
+    row.append(label, input, range);
+
+    const results = el('div', 'results');
+    const quick = el('table', 'quick');
+
+    function update(fromRange) {
+      if (fromRange) {
+        starTenths = Number(range.value);
+        input.value = (starTenths / 10).toFixed(1);
+      } else {
+        const v = Number(input.value);
+        if (!Number.isFinite(v)) return;
+        starTenths = Math.max(0, Math.min(70, Math.floor(v * 10 + 1e-9))); // 小数第2位以下は切り捨て
+        range.value = String(starTenths);
+      }
+      results.replaceChildren(...MODES.map((m, i) => {
+        const card = el('div', 'res' + (i === 0 ? ' main' : ''));
+        card.append(el('div', 'res-label', m.label), el('div', 'res-value', rateOf(s.c, starTenths, m.cap).toFixed(3)));
+        return card;
+      }));
+      // 早見表：☆5.0〜7.0 の主な値
+      quick.replaceChildren();
+      const thead = quick.createTHead().insertRow();
+      ['☆', ...MODES.map((m) => m.label)].forEach((t) => { const th = el('th', '', t); thead.appendChild(th); });
+      const body = quick.createTBody();
+      [50, 55, 60, 63, 65, 67, 69, 70].forEach((t) => {
+        const tr = body.insertRow();
+        if (t === starTenths) tr.className = 'on';
+        tr.insertCell().textContent = `☆${(t / 10).toFixed(1)}`;
+        MODES.forEach((m) => { tr.insertCell().textContent = rateOf(s.c, t, m.cap).toFixed(3); });
+      });
+    }
+    input.addEventListener('input', () => update(false));
+    range.addEventListener('input', () => update(true));
+
+    box.append(head, row,
+      el('div', 'hint', '☆は 0.0〜7.0 を小数第1位まで入力できます（スライダーでも変えられます）。'),
+      results, quick);
+    update(false);
+  }
+
+  // ===== 一覧 =====
+  function renderTabs() {
+    const levels = [...new Set(all.map((r) => r.level))].sort((a, b) => levelOrder(b) - levelOrder(a));
+    const lt = $('levelTabs');
+    lt.replaceChildren();
+    [['*', 'すべて'], ...levels.map((lv) => [lv, `Lv${lv}`])].forEach(([key, label]) => {
+      const b = el('button', '', label);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(currentLevel === key));
+      b.onclick = () => { currentLevel = key; page = 1; renderTabs(); renderList(); };
+      lt.appendChild(b);
+    });
+
+    const dt = $('diffTabs');
+    dt.replaceChildren();
+    [['*', 'すべての難易度'], ...DIFF_NAMES.map((d) => [d, d])].forEach(([d, label]) => {
+      const b = el('button', d === '*' ? '' : `dbtn db-${d.replace(':', '').toUpperCase()}`, label);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(d === '*' ? currentDiffs === null : !!currentDiffs?.has(d)));
+      b.onclick = () => {
+        if (d === '*') currentDiffs = null;
+        else if (currentDiffs === null) currentDiffs = new Set([d]);
+        else if (currentDiffs.has(d)) { currentDiffs.delete(d); if (!currentDiffs.size) currentDiffs = null; }
+        else currentDiffs.add(d);
+        page = 1;
+        renderTabs();
+        renderList();
+      };
+      dt.appendChild(b);
+    });
+  }
+
+  function pager(totalPages) {
+    const box = el('nav', 'pager');
+    box.setAttribute('aria-label', 'ページ切り替え');
+    if (totalPages <= 1) return box;
+    const go = (n) => { page = n; renderList(); $('count').scrollIntoView({ block: 'start' }); };
+    const btn = (label, n, opts = {}) => {
+      const b = el('button', opts.current ? 'current' : '', label);
+      b.type = 'button';
+      if (opts.current) b.setAttribute('aria-current', 'page');
+      if (opts.disabled) b.disabled = true;
+      else if (!opts.current) b.onclick = () => go(n);
+      return b;
+    };
+    box.appendChild(btn('« 前へ', page - 1, { disabled: page === 1 }));
+    const nums = new Set([1, totalPages]);
+    for (let n = page - 2; n <= page + 2; n++) if (n >= 1 && n <= totalPages) nums.add(n);
+    let prev = 0;
+    [...nums].sort((a, b) => a - b).forEach((n) => {
+      if (n - prev > 1) box.appendChild(el('span', 'gap', '…'));
+      box.appendChild(btn(String(n), n, { current: n === page }));
+      prev = n;
+    });
+    box.appendChild(btn('次へ »', page + 1, { disabled: page === totalPages }));
+    return box;
+  }
+
+  function renderList() {
+    const q = query.trim().toLowerCase();
+    const items = all.filter((s) => (currentLevel === '*' || s.level === currentLevel)
+      && (currentDiffs === null || currentDiffs.has(s.diff))
+      && (!q || s.name.toLowerCase().includes(q)));
+
+    const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+    page = Math.min(Math.max(page, 1), totalPages);
+    const start = (page - 1) * PAGE_SIZE;
+    const shown = items.slice(start, start + PAGE_SIZE);
+    $('count').textContent = items.length > PAGE_SIZE
+      ? `${items.length} 譜面中 ${start + 1}〜${start + shown.length} 件目（押すと計算します）`
+      : `${items.length} 譜面（押すと計算します）`;
+
+    const list = el('div', 'list');
+    if (!items.length) list.appendChild(el('div', 'empty', 'この条件の譜面はありません。'));
+    shown.forEach((s) => {
+      const row = el('button', 'r' + (selected === s ? ' selected' : ''));
+      row.type = 'button';
+      const main = el('div');
+      const nm = el('div', 'name', s.name);
+      if (s.genre) nm.appendChild(el('span', 'genre', `（${s.genre}）`));
+      main.append(nm, chipsOf(s, currentLevel === '*'));
+      row.append(jacketEl(s.img), main, el('span', 'go', '計算 ›'));
+      row.onclick = () => {
+        selected = s;
+        renderCalc();
+        renderList();
+        $('calc').scrollIntoView({ block: 'start', behavior: 'smooth' });
+      };
+      list.appendChild(row);
+    });
+    $('listBox').replaceChildren(pager(totalPages), list, pager(totalPages));
+  }
+
+  // ===== 読み込み =====
+  async function load() {
+    const [consts, jmap, overrides] = await Promise.all([
+      fetchJson(CONST_URL), fetchJson(JACKETS_URL), fetchJson(OVERRIDES_URL),
+    ]);
+    if (!consts) {
+      $('status').textContent = '譜面定数表を読み込めませんでした。';
+      $('status').classList.add('error');
+      return;
+    }
+    const jackets = jmap ? new Map(Object.entries(jmap)) : null;
+    const diffOrder = (d) => DIFF_NAMES.indexOf(d);
+    all = Object.entries(consts)
+      .map(([key, c]) => {
+        const p = key.split('|');
+        if (p.length < 3 || typeof c !== 'number') return null;
+        const [name, kind, diff, maxStr] = p;
+        const max = maxStr ? Number(maxStr) : null;
+        const level = levelOfConst(c);
+        const song = resolveSong(jackets, overrides, name, kind, diffOrder(diff), level, max);
+        return { name, kind, diff, c, level, max, img: song?.img ?? null, genre: song?.genre ?? null };
+      })
+      .filter(Boolean)
+      // 並び順：定数の高い順 → 曲名順
+      .sort((a, b) => b.c - a.c || a.name.localeCompare(b.name, 'ja'));
+
+    currentLevel = '*';
+    $('status').textContent = `${all.length} 譜面のデータを読み込みました。`;
+    $('app').hidden = false;
+    let timer = null;
+    $('search').addEventListener('input', (e) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => { query = e.target.value; page = 1; renderList(); }, 250);
+    });
+    renderTabs();
+    renderList();
+  }
+
+  load();
+})();
+</script>
+</body>
+</html>
