@@ -661,19 +661,22 @@
     return { name, icon, trophy, trophyRank, trophyEl };
   }
 
+  // ログインの確認を兼ねてプレイヤー情報を取得する
+  //   今のページにプレイヤー情報があればそれを使い、なければホーム画面を取得する。
+  //   ログインしていないと、ホーム画面の代わりにログイン画面やエラー画面に転送される。
   async function getPlayerProfile() {
     const here = readProfile(document);
-    if (here.name && here.icon) return here;
-    try {
-      const res = await fetch(PLAYER_URL, { credentials: 'same-origin' });
-      if (!res.ok) return here;
-      const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
-      const got = readProfile(doc);
-      return got.name ? got : here;
-    } catch {
-      return here;
+    if (here.name) return here;
+    const res = await fetch(PLAYER_URL, { credentials: 'same-origin' });
+    if (!res.ok) throw new Error(`maimai DX NET に接続できませんでした（HTTP ${res.status}）。`);
+    const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+    const got = readProfile(doc);
+    if ((res.redirected && !res.url.includes('/home')) || !got.name) {
+      throw new Error('maimai DX NET にログインしていないようです。ログインしてから、もう一度実行してください。');
     }
+    return got;
   }
+
 
 
   // 公式サイトの称号の見た目を再現するため、今のページに読み込まれている公式CSSから、
@@ -1167,7 +1170,7 @@
     function confirmView(form, check) {
       dlg.replaceChildren();
       dlg.append(el('h3', '', check.exists ? '記録を更新します' : '新しく登録します'),
-        el('p', '', 'ランキングには次の内容が公開されます（アイコンは匿名でも表示されます）。ユーザー名とPINは公開されません。'));
+        el('p', '', 'ランキングには次の内容が公開されます（アイコンは匿名でも表示されます）。あわせて「☆7まで」のレート対象曲50譜面も送信されます。ユーザー名とPINは公開されません。'));
 
       const pv = el('div', 'dxr-preview');
       if (form.showIcon && profile.icon) {
@@ -1215,6 +1218,19 @@
             rank: rankName,
             constVersion,
             formulaVersion: FORMULA_VERSION,
+            // ☆7までのレート対象曲（上位50譜面）
+            top50: full.top.map((t) => ({
+              name: t.name,
+              kind: t.kind,
+              diff: t.diff,
+              level: t.level,
+              const: t.c,
+              estimated: !!t.estimated,
+              score: t.cur,
+              max: t.max,
+              star: Math.round(starTenths(t.cur, t.max)) / 10,
+              value: round3(t.values.full),
+            })),
           });
           if (!r.ok) {
             err.textContent = r.error || '登録できませんでした。';
@@ -1365,6 +1381,10 @@
   const ui = createPanel();
 
   try {
+    // まずログインできているかを確認（プレイヤー情報の取得を兼ねる）
+    ui.status('ログイン状態を確認中…');
+    const profile = await getPlayerProfile();
+
     // 譜面定数表の読み込み（任意）
     let constTable = {};
     if (CONST_URL) {
@@ -1384,9 +1404,6 @@
       }
     }
 
-    // プレイヤー名
-    ui.status('プレイヤー情報を取得中…');
-    const profile = await getPlayerProfile();
     const jacketPromise = loadJacketMap(); // 別サーバーなので並行して読み込む
 
     // 高いレベルから順に取得し、下のレベルが上位に入り得なくなったら打ち切る
