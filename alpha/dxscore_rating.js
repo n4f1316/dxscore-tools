@@ -1125,13 +1125,8 @@
         dlg.appendChild(lab);
         return { lab, cb };
       };
-      const anon = check('匿名で掲載する（表示名とアイコンを出さず「匿名#記号」で表示）', prev.anonymous ?? false);
-      const icon = check('アイコンを表示する', prev.showIcon ?? true);
-      const sync = () => {
-        name.disabled = anon.cb.checked;
-        icon.cb.disabled = anon.cb.checked;
-        icon.lab.classList.toggle('off', anon.cb.checked);
-      };
+      const anon = check('匿名で掲載する（表示名の代わりに「匿名#記号」で表示）', prev.anonymous ?? false);
+      const sync = () => { name.disabled = anon.cb.checked; };
       anon.cb.onchange = sync;
       sync();
 
@@ -1150,7 +1145,7 @@
           pin: pin.value.trim(),
           displayName: name.value.trim(),
           anonymous: anon.cb.checked,
-          showIcon: !anon.cb.checked && icon.cb.checked && !!iconFile,
+          showIcon: !!iconFile, // アイコンは匿名かどうかに関わらず必ず表示する
         };
         if (!/^[a-z0-9_]{3,16}$/.test(form.username)) { err.textContent = 'ユーザー名は英数字とアンダーバーで3〜16文字にしてください。'; return; }
         if (!/^\d{4,8}$/.test(form.pin)) { err.textContent = 'PINは数字4〜8桁にしてください。'; return; }
@@ -1172,7 +1167,7 @@
     function confirmView(form, check) {
       dlg.replaceChildren();
       dlg.append(el('h3', '', check.exists ? '記録を更新します' : '新しく登録します'),
-        el('p', '', 'ランキングには次の内容が公開されます。ユーザー名とPINは公開されません。'));
+        el('p', '', 'ランキングには次の内容が公開されます（アイコンは匿名でも表示されます）。ユーザー名とPINは公開されません。'));
 
       const pv = el('div', 'dxr-preview');
       if (form.showIcon && profile.icon) {
