@@ -150,6 +150,10 @@
   const FORMULA_VERSION = 'v1'; // 計算式の版（計算式を変えたら上げる）
   const USER_KEY = 'dxr-ranking-user'; // このブラウザで最後に使ったユーザー名（PINは保存しない）
 
+  // おすすめ楽曲：ランキング集計のデータ（譜面ごとの取りやすさ）の置き場所
+  const RANKING_STATS_DIR = 'https://n4f1316.github.io/dxscore-tools/ranking/';
+  const RECOMMEND_COUNT = 30; // 表示するおすすめ楽曲の数
+
   // 公式サイトのHTML構造に合わせたセレクタ（2026年9月時点の構造で確認済み）
   const SEL = {
     block: 'div[class*="_score_back"]', // 1譜面分の枠（例: music_master_score_back）
@@ -439,6 +443,32 @@
     .dxr-rank-open {
       display: block; width: 100%; margin: -6px 0 16px; padding: 9px 16px; border-radius: 999px;
       font: inherit; font-weight: 800; color: var(--ink); background: var(--card); border: 2px solid var(--pink); cursor: pointer;
+    }
+    /* おすすめ楽曲 */
+    .dxr-rec { margin: -6px 0 18px; }
+    .dxr-rec-head { margin: 0 2px 8px; }
+    .dxr-rec-title { font-weight: 800; font-size: 16px; }
+    .dxr-rec-desc { font-size: 12px; color: var(--sub); }
+    .dxr-rec-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .dxr-rec-tabs button { font: inherit; font-weight: 700; font-size: 13px; padding: 4px 12px; border-radius: 999px; cursor: pointer;
+      border: 1.5px solid var(--line); background: var(--card); color: var(--ink); }
+    .dxr-rec-tabs button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .dxr-rec-row { display: grid; grid-template-columns: 30px 44px 1fr auto; gap: 10px; align-items: center;
+      padding: 9px 14px; border-top: 1px solid var(--line); }
+    .dxr-rec-row:first-child { border-top: 0; }
+    .dxr-rec-row:nth-child(even) { background: #FBFAFE; }
+    .dxr-rec-goal { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 4px; }
+    .dxr-rec-goal .dxr-star-pill { min-width: 0; }
+    .dxr-rec-arrow { color: var(--sub); font-weight: 800; }
+    .dxr-rec-rest { font-size: 12px; font-weight: 700; color: var(--ink); margin-left: 4px; }
+    .dxr-rec-ease { font-size: 11px; color: var(--sub); margin-top: 2px; }
+    .dxr-rec-gain { text-align: right; }
+    .dxr-rec-plus { font-weight: 800; font-size: 17px; color: var(--pink); font-variant-numeric: tabular-nums; }
+    .dxr-rec-sub { font-size: 11px; color: var(--sub); font-variant-numeric: tabular-nums; }
+    .dxr-rec-empty { padding: 20px; text-align: center; color: var(--sub); }
+    @media (max-width: 520px) {
+      .dxr-rec-row { grid-template-columns: 22px 40px 1fr auto; gap: 7px; padding: 9px 10px; }
+      .dxr-rec-plus { font-size: 15px; }
     }
     /* ランキング登録の画面 */
     .dxr-modal { position: fixed; inset: 0; background: rgba(43,35,80,.45); display: flex; align-items: flex-start;
@@ -1269,8 +1299,144 @@
     inputView();
   }
 
+  // ============================================================
+  //  おすすめ楽曲（☆7まで）
+  //   伸びしろ：その譜面の☆を次の段階（☆5.8 → ☆6.0 など）に上げたとき、レートが何点上がるか
+  //   取りやすさ：ランキング集計で、上位100人のうちその☆に届いている人の割合
+  //   おすすめ度 = 伸びしろ ×（0.5 ＋ 取りやすさ）。取りやすさのデータがない譜面は 0.5 として計算
+  // ============================================================
+
+  async function loadRankingStats(fromLevel, toLevel) {
+    const map = new Map(); // 「曲名|種別|難易度|最大値」→ 集計結果
+    const files = [];
+    for (let n = fromLevel; n >= toLevel; n--) files.push(`lv${levelInfo(n).label.replace('+', 'p')}.json`);
+    const lists = await Promise.all(files.map((f) =>
+      fetch(RANKING_STATS_DIR + f + '?' + Date.now()).then((r) => (r.ok ? r.json() : [])).catch(() => [])));
+    lists.flat().forEach((r) => {
+      if (r && r.name && r.max) map.set(`${r.name}|${r.kind}|${r.diff}|${r.max}`, r);
+    });
+    return map;
+  }
+
+  // 上位100人のうち、目標の☆に届いている人の割合（0〜1）。わからなければ null
+  function easeOf(st, targetTenths) {
+    if (!st || !st.max || !st.count) return null;
+    const need = (pct) => Math.ceil((st.max * pct) / 100);
+    const full = st.count >= 100;
+    if (targetTenths >= 70) return Math.min(1, (st.maxCount ?? 0) / st.count);
+    if (targetTenths >= 60) {
+      if (full && st.row100 >= need(99)) return 1; // 100人目まで☆6以上
+      if (st.star6Count === undefined || st.star6Count === null) return null;
+      return Math.min(1, ((st.star6Count ?? 0) + (st.maxCount ?? 0)) / st.count);
+    }
+    // ☆5以下：50位・100位のスコアから大まかに判断する
+    const pct = STAR_THRESHOLDS.find((t) => t.stars === targetTenths / 10)?.pct;
+    if (!pct) return null;
+    if (full && st.row100 >= need(pct)) return 1;
+    if (st.row50 >= need(pct)) return 0.6;
+    if (st.top1 >= need(pct)) return 0.25;
+    return 0;
+  }
+
+  function buildRecommendations(all, top, stats) {
+    const value50 = top.length >= TOP_N ? top[TOP_N - 1].values.full : 0; // 今のレート対象曲の50位
+    const inTop = new Set(top);
+    const list = [];
+    for (const s of all) {
+      const now = starTenths(s.cur, s.max);
+      if (now >= 70) continue; // すでに理論値
+      const targetStars = Math.floor(now / 10) + 1; // 次の☆（☆5.8 → ☆6、☆6.4 → ☆7）
+      if (targetStars < 1) continue;
+      const targetTenths = targetStars * 10;
+      const pct = STAR_THRESHOLDS.find((t) => t.stars === targetStars).pct;
+      const needScore = targetStars >= 7 ? s.max : Math.ceil((s.max * pct) / 100);
+      const newValue = (s.c * s.c * targetStars) / RATE_DIVISOR + (targetTenths >= 70 ? MAX_BONUS : 0);
+      const gain = inTop.has(s) ? (newValue - s.values.full) / TOP_N : Math.max(0, newValue - value50) / TOP_N;
+      if (gain <= 0) continue;
+      const st = stats.get(`${s.name}|${s.kind}|${s.diff}|${s.max}`);
+      const ease = easeOf(st, targetTenths);
+      list.push({
+        s, inTop: inTop.has(s), now, targetTenths, needScore, rest: needScore - s.cur,
+        newValue, gain, ease, score: gain * (0.5 + (ease ?? 0.5)),
+      });
+    }
+    return list;
+  }
+
+  function recommendEl(all, top, stats, jackets) {
+    const recs = buildRecommendations(all, top, stats);
+    const box = el('div', 'dxr-rec');
+    const head = el('div', 'dxr-rec-head');
+    head.append(el('div', 'dxr-rec-title', 'おすすめ楽曲（☆7まで）'),
+      el('div', 'dxr-rec-desc', '☆を次の段階に上げたときのレートの伸びと、上位100人の達成率（取りやすさ）から選んでいます。'));
+    box.appendChild(head);
+
+    const SORTS = [
+      ['score', 'おすすめ順'],
+      ['gain', '伸びしろ順'],
+      ['ease', '取りやすさ順'],
+    ];
+    let sortKey = 'score';
+    const tabs = el('div', 'dxr-rec-tabs');
+    const listBox = el('div');
+    box.append(tabs, listBox);
+
+    function render() {
+      tabs.replaceChildren(...SORTS.map(([k, label]) => {
+        const b = el('button', '', label);
+        b.type = 'button';
+        b.setAttribute('aria-pressed', String(k === sortKey));
+        b.onclick = () => { sortKey = k; render(); };
+        return b;
+      }));
+      const sorted = [...recs].sort((a, b) =>
+        sortKey === 'ease' ? (b.ease ?? -1) - (a.ease ?? -1) || b.gain - a.gain : b[sortKey] - a[sortKey]);
+      const shown = sorted.slice(0, RECOMMEND_COUNT);
+      const list = el('div', 'dxr-list');
+      if (!shown.length) list.appendChild(el('div', 'dxr-rec-empty', 'おすすめできる譜面が見つかりませんでした。'));
+      shown.forEach((r, i) => {
+        const s = r.s;
+        const row = el('div', 'dxr-rec-row');
+        const song = resolveSong(jackets, s.name, s.kind, s.diff, s.level, s.max);
+        let jacket;
+        if (song?.img) {
+          jacket = el('img', 'dxr-jacket');
+          jacket.src = JACKET_BASE + song.img;
+          jacket.alt = '';
+          jacket.loading = 'lazy';
+          jacket.onerror = () => jacket.removeAttribute('src');
+        } else {
+          jacket = el('div', 'dxr-jacket');
+        }
+        const main = el('div');
+        const nm = el('div', 'dxr-name', s.name);
+        if (song?.genre) nm.appendChild(el('span', 'dxr-genre', `（${song.genre}）`));
+        const meta = el('div', 'dxr-meta');
+        meta.append(
+          el('span', `dxr-chip dxr-kind-${s.kind === '?' ? 'unknown' : s.kind}`, s.kind),
+          el('span', `dxr-chip dxr-diff-${s.diff.replace(':', '').toUpperCase()}`, s.diff),
+          el('span', `dxr-chip dxr-const${s.estimated ? ' is-est' : ''}`, `${s.c.toFixed(1)}${s.estimated ? '*' : ''}`)
+        );
+        const goal = el('div', 'dxr-rec-goal');
+        const nowPill = el('span', `dxr-star-pill ${starClass(Math.floor(r.now / 10))}`, `☆${starDisplay(s.cur, s.max)}`);
+        const tgtPill = el('span', `dxr-star-pill ${starClass(r.targetTenths / 10)}`, `☆${(r.targetTenths / 10).toFixed(1)}`);
+        goal.append(nowPill, el('span', 'dxr-rec-arrow', '→'), tgtPill,
+          el('span', 'dxr-rec-rest', r.targetTenths >= 70 ? `理論値まであと ${r.rest}` : `あと ${r.rest}（MAX-${s.max - r.needScore} 以内）`));
+        const easeText = r.ease === null ? '取りやすさ：データなし' : `上位100人の ${Math.round(r.ease * 100)}% が達成`;
+        main.append(nm, meta, goal, el('div', 'dxr-rec-ease', (r.inTop ? 'レート対象曲　' : '対象外（入れ替わり）　') + easeText));
+        const right = el('div', 'dxr-rec-gain');
+        right.append(el('div', 'dxr-rec-plus', `+${r.gain.toFixed(3)}`), el('div', 'dxr-rec-sub', `単曲 ${r.newValue.toFixed(3)}`));
+        row.append(el('div', 'dxr-rank', String(i + 1)), jacket, main, right);
+        list.appendChild(row);
+      });
+      listBox.replaceChildren(list);
+    }
+    render();
+    return box;
+  }
+
   // results: [{ mode, rating, top }, ...]
-  function renderResult(ui, profile, results, info, jackets) {
+  function renderResult(ui, profile, results, info, jackets, extras = {}) {
     // プレイヤー情報：アイコン / 称号 / 名前
     const player = el('div', 'dxr-profile');
     if (profile.icon) {
@@ -1366,7 +1532,19 @@
     rankBtn.type = 'button';
     rankBtn.onclick = () => openRankingDialog(ui.body.getRootNode(), profile, results);
 
-    ui.body.append(player, plates, shareBtn, showLabel, rankBtn, ...lists, note);
+    // おすすめ楽曲（☆7まで）：ボタンで開閉
+    const recBtn = el('button', 'dxr-rank-open', 'おすすめ楽曲を見る');
+    recBtn.type = 'button';
+    let recBox = null;
+    recBtn.onclick = () => {
+      if (recBox) { recBox.remove(); recBox = null; recBtn.textContent = 'おすすめ楽曲を見る'; return; }
+      const full = results.find((r) => r.mode.id === 'full');
+      recBox = recommendEl(extras.all || [], full.top, extras.stats || new Map(), jackets);
+      recBtn.after(recBox);
+      recBtn.textContent = 'おすすめ楽曲を閉じる';
+    };
+
+    ui.body.append(player, plates, shareBtn, showLabel, rankBtn, recBtn, ...lists, note);
   }
 
   // ============================================================
@@ -1443,13 +1621,17 @@
     ui.status('');
     ui.status('ジャケット画像の対応表を確認中…');
     const jackets = await jacketPromise;
+    // おすすめ楽曲用に、取得したレベルのランキング集計（取りやすさ）を読み込む（GitHubから。失敗しても続行）
+    ui.status('おすすめ楽曲のデータを確認中…');
+    const stats = await loadRankingStats(LEVEL_MAX, lastLevel);
     ui.status('');
     renderResult(
       ui,
       profile,
       results,
       `Lv15〜Lv${levelInfo(lastLevel).label} の ${fetched} ページを取得し、${scored.length} 譜面から計算`,
-      jackets
+      jackets,
+      { all: scored, stats }
     );
   } catch (e) {
     ui.status('エラー: ' + e.message, true);
