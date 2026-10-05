@@ -1177,7 +1177,7 @@
         return { lab, cb };
       };
       const anon = check('匿名で掲載する（表示名の代わりに「匿名#記号」で表示）', prev.anonymous ?? false);
-      const pub = check('ベスト枠（☆7までのレート対象曲50譜面）をランキングで公開する', prev.publicTop50 ?? false);
+      const pub = check('ベスト枠（☆7までのレート対象曲50譜面）をランキングで公開する', prev.publicTop50 ?? true);
       const sync = () => { name.disabled = anon.cb.checked; };
       anon.cb.onchange = sync;
       sync();
