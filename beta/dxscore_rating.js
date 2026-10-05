@@ -152,7 +152,7 @@
 
   // おすすめ楽曲：ランキング集計のデータ（譜面ごとの取りやすさ）の置き場所
   const RANKING_STATS_DIR = 'https://n4f1316.github.io/dxscore-tools/ranking/';
-  const SHOW_RECOMMEND = true; // おすすめ楽曲のボタンを出すか（検証中の機能。β版・正式版では false）
+  const SHOW_RECOMMEND = true; // おすすめ楽曲のボタンを出すか（α版・β版は true。正式版に入れるまでは正式版で false）
   const RECOMMEND_COUNT = 30; // 表示するおすすめ楽曲の数
   const RECOMMEND_MAX_FROM = 11.5; // ☆7まで のレートがこれ以上の人にだけ、理論値（☆7）を目標にした譜面もおすすめする
   const RECOMMEND_LOW_BELOW = 10.0; // ☆7まで のレートがこれ未満の人は「初中級向け」のおすすめにする
