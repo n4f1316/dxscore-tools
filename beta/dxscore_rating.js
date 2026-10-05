@@ -152,6 +152,7 @@
 
   // おすすめ楽曲：ランキング集計のデータ（譜面ごとの取りやすさ）の置き場所
   const RANKING_STATS_DIR = 'https://n4f1316.github.io/dxscore-tools/ranking/';
+  const SHOW_RECOMMEND = true; // おすすめ楽曲のボタンを出すか（検証中の機能。β版・正式版では false）
   const RECOMMEND_COUNT = 30; // 表示するおすすめ楽曲の数
   const RECOMMEND_MAX_FROM = 11.5; // ☆7まで のレートがこれ以上の人にだけ、理論値（☆7）を目標にした譜面もおすすめする
   const RECOMMEND_LOW_BELOW = 10.0; // ☆7まで のレートがこれ未満の人は「初中級向け」のおすすめにする
@@ -1093,15 +1094,32 @@
   //  ランキング登録
   // ============================================================
 
-  async function callRanking(body) {
-    // text/plain で送ると、ブラウザの事前確認（CORS のプリフライト）なしで送れる
-    const res = await fetch(RANKING_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
+  // ランキングのサーバーに送る。混み合っている（busy）・応答が読めない場合は、数秒おいて1回だけ自動で送り直す
+  //   onRetry：送り直すときに呼ぶ（画面に「送り直しています…」を出すため）
+  async function callRanking(body, onRetry) {
+    const send = async () => {
+      // text/plain で送ると、ブラウザの事前確認（CORS のプリフライト）なしで送れる
+      const res = await fetch(RANKING_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) return { ok: false, busy: true, error: `HTTP ${res.status}` };
+      try {
+        return await res.json();
+      } catch {
+        // サーバー側のエラーで JSON 以外が返ってきた（混雑時など）
+        return { ok: false, busy: true, error: 'サーバーの応答を読み取れませんでした。' };
+      }
+    };
+    let r = await send();
+    if (!r.ok && r.busy) {
+      if (onRetry) onRetry();
+      await sleep(4000);
+      r = await send();
+      if (!r.ok && r.busy) r.error = '混み合っています。少し時間をおいて、もう一度お試しください。';
+    }
+    return r;
   }
 
   function openRankingDialog(root, profile, results) {
@@ -1186,7 +1204,8 @@
         next.disabled = true;
         err.textContent = '確認中…';
         try {
-          const r = await callRanking({ action: 'check', username: form.username, pin: form.pin });
+          const r = await callRanking({ action: 'check', username: form.username, pin: form.pin },
+            () => { err.textContent = '混み合っているため、送り直しています…'; });
           if (!r.ok) { err.textContent = r.error || '確認できませんでした。'; next.disabled = false; return; }
           confirmView(form, r);
         } catch (e) {
@@ -1261,7 +1280,7 @@
               star: Math.round(starTenths(t.cur, t.max)) / 10,
               value: round3(t.values.full),
             })),
-          });
+          }, () => { err.textContent = '混み合っているため、送り直しています…'; });
           if (!r.ok) {
             err.textContent = r.error || '登録できませんでした。';
             send.disabled = false;
@@ -1561,7 +1580,7 @@
       recBtn.textContent = 'おすすめ楽曲を閉じる';
     };
 
-    ui.body.append(player, plates, shareBtn, showLabel, rankBtn, recBtn, ...lists, note);
+    ui.body.append(player, plates, shareBtn, showLabel, rankBtn, ...(SHOW_RECOMMEND ? [recBtn] : []), ...lists, note);
   }
 
   // ============================================================
