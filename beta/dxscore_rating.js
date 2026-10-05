@@ -1191,6 +1191,23 @@
       actions.append(cancel, next);
       dlg.append(err, actions);
 
+      // ユーザー名とPINが入力し終わった時点で、裏側で先に確認を始めておく（「内容を確認」を押したときの待ち時間を減らす）
+      let pre = null; // { key, promise }
+      const prefetch = () => {
+        const u = user.value.trim().toLowerCase();
+        const p = pin.value.trim();
+        if (!/^[a-z0-9_]{3,16}$/.test(u) || !/^\d{4,8}$/.test(p)) return;
+        const key = u + '\n' + p;
+        if (pre && pre.key === key) return;
+        pre = { key, promise: callRanking({ action: 'check', username: u, pin: p }).catch(() => null) };
+      };
+      let preTimer = null;
+      [user, pin].forEach((input) => {
+        input.addEventListener('input', () => { clearTimeout(preTimer); preTimer = setTimeout(prefetch, 600); });
+        input.addEventListener('change', prefetch);
+      });
+      prefetch(); // 前回のユーザー名が入っていて、PINも入っている場合など
+
       next.onclick = async () => {
         const form = {
           username: user.value.trim().toLowerCase(),
@@ -1206,8 +1223,13 @@
         next.disabled = true;
         err.textContent = '確認中…';
         try {
-          const r = await callRanking({ action: 'check', username: form.username, pin: form.pin },
-            () => { err.textContent = '混み合っているため、送り直しています…'; });
+          // 先に始めておいた確認が使えればそれを使い、なければここで確認する
+          const key = form.username + '\n' + form.pin;
+          let r = pre && pre.key === key ? await pre.promise : null;
+          if (!r || (!r.ok && r.busy)) {
+            r = await callRanking({ action: 'check', username: form.username, pin: form.pin },
+              () => { err.textContent = '混み合っているため、送り直しています…'; });
+          }
           if (!r.ok) { err.textContent = r.error || '確認できませんでした。'; next.disabled = false; return; }
           confirmView(form, r);
         } catch (e) {
