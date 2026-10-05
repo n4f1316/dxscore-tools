@@ -153,6 +153,7 @@
   // おすすめ楽曲：ランキング集計のデータ（譜面ごとの取りやすさ）の置き場所
   const RANKING_STATS_DIR = 'https://n4f1316.github.io/dxscore-tools/ranking/';
   const RECOMMEND_COUNT = 30; // 表示するおすすめ楽曲の数
+  const RECOMMEND_MAX_FROM = 11.5; // ☆7まで のレートがこれ以上の人にだけ、理論値（☆7）を目標にした譜面もおすすめする
 
   // 公式サイトのHTML構造に合わせたセレクタ（2026年9月時点の構造で確認済み）
   const SEL = {
@@ -449,10 +450,6 @@
     .dxr-rec-head { margin: 0 2px 8px; }
     .dxr-rec-title { font-weight: 800; font-size: 16px; }
     .dxr-rec-desc { font-size: 12px; color: var(--sub); }
-    .dxr-rec-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-    .dxr-rec-tabs button { font: inherit; font-weight: 700; font-size: 13px; padding: 4px 12px; border-radius: 999px; cursor: pointer;
-      border: 1.5px solid var(--line); background: var(--card); color: var(--ink); }
-    .dxr-rec-tabs button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
     .dxr-rec-row { display: grid; grid-template-columns: 30px 44px 1fr auto; gap: 10px; align-items: center;
       padding: 9px 14px; border-top: 1px solid var(--line); }
     .dxr-rec-row:first-child { border-top: 0; }
@@ -1301,9 +1298,10 @@
 
   // ============================================================
   //  おすすめ楽曲（☆7まで）
-  //   伸びしろ：その譜面の☆を次の段階（☆5.8 → ☆6.0 など）に上げたとき、レートが何点上がるか
-  //   取りやすさ：ランキング集計で、上位100人のうちその☆に届いている人の割合
-  //   おすすめ度 = 伸びしろ ×（0.5 ＋ 取りやすさ）。取りやすさのデータがない譜面は 0.5 として計算
+  //   目標：☆6未満の譜面は ☆6.0。☆6台の譜面の ☆7（理論値）は、レートが RECOMMEND_MAX_FROM 以上の人にだけ出す
+  //   並び順：取りやすさ（上位100人のうち目標の☆に届いている人の割合）の高い順
+  //           → 同じなら定数の低い順 → 伸びしろ（レートの上がり幅）の大きい順
+  //   目標を達成してもレートが上がらない譜面は出さない
   // ============================================================
 
   async function loadRankingStats(fromLevel, toLevel) {
@@ -1338,15 +1336,18 @@
     return 0;
   }
 
-  function buildRecommendations(all, top, stats) {
+  function buildRecommendations(all, top, stats, rating) {
     const value50 = top.length >= TOP_N ? top[TOP_N - 1].values.full : 0; // 今のレート対象曲の50位
     const inTop = new Set(top);
+    const allowMax = rating >= RECOMMEND_MAX_FROM;
     const list = [];
     for (const s of all) {
       const now = starTenths(s.cur, s.max);
       if (now >= 70) continue; // すでに理論値
-      const targetStars = Math.floor(now / 10) + 1; // 次の☆（☆5.8 → ☆6、☆6.4 → ☆7）
-      if (targetStars < 1) continue;
+      let targetStars;
+      if (now < 60) targetStars = 6;     // ☆6未満 → ☆6.0 を目標にする
+      else if (allowMax) targetStars = 7; // ☆6台 → 理論値（LEGEND に近い人だけ）
+      else continue;
       const targetTenths = targetStars * 10;
       const pct = STAR_THRESHOLDS.find((t) => t.stars === targetStars).pct;
       const needScore = targetStars >= 7 ? s.max : Math.ceil((s.max * pct) / 100);
@@ -1354,44 +1355,32 @@
       const gain = inTop.has(s) ? (newValue - s.values.full) / TOP_N : Math.max(0, newValue - value50) / TOP_N;
       if (gain <= 0) continue;
       const st = stats.get(`${s.name}|${s.kind}|${s.diff}|${s.max}`);
-      const ease = easeOf(st, targetTenths);
       list.push({
         s, inTop: inTop.has(s), now, targetTenths, needScore, rest: needScore - s.cur,
-        newValue, gain, ease, score: gain * (0.5 + (ease ?? 0.5)),
+        newValue, gain, ease: easeOf(st, targetTenths),
       });
     }
-    return list;
+    // 取りやすさの高い順（データなしは最後）→ 定数の低い順 → 伸びしろの大きい順
+    return list.sort((a, b) =>
+      (b.ease ?? -1) - (a.ease ?? -1) || a.s.c - b.s.c || b.gain - a.gain);
   }
 
-  function recommendEl(all, top, stats, jackets) {
-    const recs = buildRecommendations(all, top, stats);
+
+  function recommendEl(all, top, stats, jackets, rating) {
+    const recs = buildRecommendations(all, top, stats, rating);
     const box = el('div', 'dxr-rec');
     const head = el('div', 'dxr-rec-head');
     head.append(el('div', 'dxr-rec-title', 'おすすめ楽曲（☆7まで）'),
-      el('div', 'dxr-rec-desc', '☆を次の段階に上げたときのレートの伸びと、上位100人の達成率（取りやすさ）から選んでいます。'));
+      el('div', 'dxr-rec-desc', rating >= RECOMMEND_MAX_FROM
+        ? '☆6（理論値を目指せる人は☆7）に届けるとレートが伸びる譜面を、上位100人の達成率（取りやすさ）が高い順に並べています。'
+        : '☆6に届けるとレートが伸びる譜面を、上位100人の達成率（取りやすさ）が高い順・定数の低い順に並べています。'));
     box.appendChild(head);
 
-    const SORTS = [
-      ['score', 'おすすめ順'],
-      ['gain', '伸びしろ順'],
-      ['ease', '取りやすさ順'],
-    ];
-    let sortKey = 'score';
-    const tabs = el('div', 'dxr-rec-tabs');
     const listBox = el('div');
-    box.append(tabs, listBox);
+    box.appendChild(listBox);
 
     function render() {
-      tabs.replaceChildren(...SORTS.map(([k, label]) => {
-        const b = el('button', '', label);
-        b.type = 'button';
-        b.setAttribute('aria-pressed', String(k === sortKey));
-        b.onclick = () => { sortKey = k; render(); };
-        return b;
-      }));
-      const sorted = [...recs].sort((a, b) =>
-        sortKey === 'ease' ? (b.ease ?? -1) - (a.ease ?? -1) || b.gain - a.gain : b[sortKey] - a[sortKey]);
-      const shown = sorted.slice(0, RECOMMEND_COUNT);
+      const shown = recs.slice(0, RECOMMEND_COUNT);
       const list = el('div', 'dxr-list');
       if (!shown.length) list.appendChild(el('div', 'dxr-rec-empty', 'おすすめできる譜面が見つかりませんでした。'));
       shown.forEach((r, i) => {
@@ -1539,7 +1528,7 @@
     recBtn.onclick = () => {
       if (recBox) { recBox.remove(); recBox = null; recBtn.textContent = 'おすすめ楽曲を見る'; return; }
       const full = results.find((r) => r.mode.id === 'full');
-      recBox = recommendEl(extras.all || [], full.top, extras.stats || new Map(), jackets);
+      recBox = recommendEl(extras.all || [], full.top, extras.stats || new Map(), jackets, full.rating);
       recBtn.after(recBox);
       recBtn.textContent = 'おすすめ楽曲を閉じる';
     };
