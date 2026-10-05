@@ -152,6 +152,7 @@
 
   // おすすめ楽曲：ランキング集計のデータ（譜面ごとの取りやすさ）の置き場所
   const RANKING_STATS_DIR = 'https://n4f1316.github.io/dxscore-tools/ranking/';
+  const SHOW_RECOMMEND = true; // おすすめ楽曲のボタンを出すか（検証中の機能。β版・正式版では false）
   const RECOMMEND_COUNT = 30; // 表示するおすすめ楽曲の数
   const RECOMMEND_MAX_FROM = 11.5; // ☆7まで のレートがこれ以上の人にだけ、理論値（☆7）を目標にした譜面もおすすめする
   const RECOMMEND_LOW_BELOW = 10.0; // ☆7まで のレートがこれ未満の人は「初中級向け」のおすすめにする
@@ -1093,15 +1094,32 @@
   //  ランキング登録
   // ============================================================
 
-  async function callRanking(body) {
-    // text/plain で送ると、ブラウザの事前確認（CORS のプリフライト）なしで送れる
-    const res = await fetch(RANKING_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
+  // ランキングのサーバーに送る。混み合っている（busy）・応答が読めない場合は、数秒おいて1回だけ自動で送り直す
+  //   onRetry：送り直すときに呼ぶ（画面に「送り直しています…」を出すため）
+  async function callRanking(body, onRetry) {
+    const send = async () => {
+      // text/plain で送ると、ブラウザの事前確認（CORS のプリフライト）なしで送れる
+      const res = await fetch(RANKING_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) return { ok: false, busy: true, error: `HTTP ${res.status}` };
+      try {
+        return await res.json();
+      } catch {
+        // サーバー側のエラーで JSON 以外が返ってきた（混雑時など）
+        return { ok: false, busy: true, error: 'サーバーの応答を読み取れませんでした。' };
+      }
+    };
+    let r = await send();
+    if (!r.ok && r.busy) {
+      if (onRetry) onRetry();
+      await sleep(4000);
+      r = await send();
+      if (!r.ok && r.busy) r.error = '混み合っています。少し時間をおいて、もう一度お試しください。';
+    }
+    return r;
   }
 
   function openRankingDialog(root, profile, results) {
@@ -1159,6 +1177,7 @@
         return { lab, cb };
       };
       const anon = check('匿名で掲載する（表示名の代わりに「匿名#記号」で表示）', prev.anonymous ?? false);
+      const pub = check('ベスト枠（☆7までのレート対象曲50譜面）をランキングで公開する', prev.publicTop50 ?? false);
       const sync = () => { name.disabled = anon.cb.checked; };
       anon.cb.onchange = sync;
       sync();
@@ -1179,6 +1198,7 @@
           displayName: name.value.trim(),
           anonymous: anon.cb.checked,
           showIcon: !!iconFile, // アイコンは匿名かどうかに関わらず必ず表示する
+          publicTop50: pub.cb.checked,
         };
         if (!/^[a-z0-9_]{3,16}$/.test(form.username)) { err.textContent = 'ユーザー名は英数字とアンダーバーで3〜16文字にしてください。'; return; }
         if (!/^\d{4,8}$/.test(form.pin)) { err.textContent = 'PINは数字4〜8桁にしてください。'; return; }
@@ -1186,7 +1206,8 @@
         next.disabled = true;
         err.textContent = '確認中…';
         try {
-          const r = await callRanking({ action: 'check', username: form.username, pin: form.pin });
+          const r = await callRanking({ action: 'check', username: form.username, pin: form.pin },
+            () => { err.textContent = '混み合っているため、送り直しています…'; });
           if (!r.ok) { err.textContent = r.error || '確認できませんでした。'; next.disabled = false; return; }
           confirmView(form, r);
         } catch (e) {
@@ -1200,7 +1221,9 @@
     function confirmView(form, check) {
       dlg.replaceChildren();
       dlg.append(el('h3', '', check.exists ? '記録を更新します' : '新しく登録します'),
-        el('p', '', 'ランキングには次の内容が公開されます（アイコンは匿名でも表示されます）。あわせて「☆7まで」のレート対象曲50譜面も送信されます。ユーザー名とPINは公開されません。'));
+        el('p', '', form.publicTop50
+          ? 'ランキングには次の内容と、ベスト枠（☆7までのレート対象曲50譜面）が公開されます（アイコンは匿名でも表示されます）。ユーザー名とPINは公開されません。'
+          : 'ランキングには次の内容が公開されます（アイコンは匿名でも表示されます）。ベスト枠は管理者の確認用に送信されますが、公開はされません。ユーザー名とPINは公開されません。'));
 
       const pv = el('div', 'dxr-preview');
       if (form.showIcon && profile.icon) {
@@ -1241,6 +1264,7 @@
             displayName: form.displayName,
             anonymous: form.anonymous,
             showIcon: form.showIcon,
+            publicTop50: form.publicTop50,
             icon: form.showIcon ? iconFile : '',
             rateFull: round3(full.rating),
             rateCap6: round3(cap6.rating),
@@ -1261,7 +1285,7 @@
               star: Math.round(starTenths(t.cur, t.max)) / 10,
               value: round3(t.values.full),
             })),
-          });
+          }, () => { err.textContent = '混み合っているため、送り直しています…'; });
           if (!r.ok) {
             err.textContent = r.error || '登録できませんでした。';
             send.disabled = false;
@@ -1561,7 +1585,7 @@
       recBtn.textContent = 'おすすめ楽曲を閉じる';
     };
 
-    ui.body.append(player, plates, shareBtn, showLabel, rankBtn, recBtn, ...lists, note);
+    ui.body.append(player, plates, shareBtn, showLabel, rankBtn, ...(SHOW_RECOMMEND ? [recBtn] : []), ...lists, note);
   }
 
   // ============================================================
