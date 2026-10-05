@@ -43,6 +43,53 @@
   .rank-icon svg { width: 100%; height: 100%; display: block; }
   .rank-name { font-size: 10px; font-weight: 800; color: var(--sub); text-align: right; letter-spacing: .02em; }
   .empty { padding: 24px; text-align: center; color: var(--sub); }
+  /* ベスト枠（2fRATE の画像化と同じ見た目） */
+  .bf-overlay { position: fixed; inset: 0; z-index: 50; background: rgba(43,35,80,.5); overflow: auto; padding: 16px 10px 40px; }
+  .bf-box { position: relative; max-width: 1180px; margin: 0 auto; background: var(--bg); border-radius: 22px; padding: 18px; }
+  .bf-close { position: absolute; top: 14px; right: 14px; }
+  .bf-head { display: flex; align-items: center; gap: 14px; background: #fff; border: 2px solid var(--line); border-radius: 18px;
+    padding: 14px 16px; margin: 36px 0 14px; flex-wrap: wrap; }
+  .bf-icon { width: 72px; height: 72px; border-radius: 14px; object-fit: cover; background: #EFECF9; flex: none; }
+  .bf-who { flex: 1 1 160px; min-width: 0; }
+  .bf-name { font-size: 24px; font-weight: 800; word-break: break-all; line-height: 1.3; }
+  .bf-label { font-size: 13px; font-weight: 700; color: var(--sub); }
+  .bf-rate { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  .bf-rank-icon { width: 46px; height: 46px; flex: none; }
+  .bf-rank-icon svg { width: 100%; height: 100%; display: block; }
+  .bf-rate-value { font-size: 44px; font-weight: 800; font-variant-numeric: tabular-nums; color: transparent;
+    -webkit-background-clip: text; background-clip: text; line-height: 1.1; }
+  .bf-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+  .bf-card { background: #fff; border: 1.5px solid var(--line); border-radius: 14px; padding: 7px; min-width: 0; }
+  .bf-jacket { position: relative; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: #EFECF9; }
+  .bf-jacket img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .bf-jacket::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 34%;
+    background: linear-gradient(rgba(20,16,40,0), rgba(20,16,40,.72)); }
+  .bf-no { position: absolute; top: 6px; left: 6px; z-index: 1; background: rgba(43,35,80,.88); color: #fff;
+    font-size: 13px; font-weight: 800; padding: 2px 8px; border-radius: 8px; }
+  .bf-chips { position: absolute; left: 5px; right: 5px; bottom: 5px; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: 3px; }
+  .bf-chips-left { display: flex; gap: 3px; min-width: 0; }
+  .bf-chip { font-size: 11px; font-weight: 800; line-height: 1; padding: 4px 6px; border-radius: 6px; color: #fff; white-space: nowrap; }
+  .bf-kind-DX { background: linear-gradient(90deg, #E0348C, #F29A2E); }
+  .bf-kind-ST { background: #3B82C4; }
+  .bf-diff.bf-remas { background: #fff; color: #8E44D6; box-shadow: inset 0 0 0 1.5px #B68BE0; }
+  .bf-const { background: rgba(255,255,255,.95); color: var(--ink); }
+  .bf-title { font-weight: 700; font-size: 13px; margin: 6px 1px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bf-foot { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
+  .bf-star { font-size: 12px; font-weight: 800; padding: 3px 8px; border-radius: 999px; color: var(--ink); background: #EFECF9; }
+  .bf-star.g12 { background: #B5E05A; } .bf-star.g34 { background: #FF8C2E; } .bf-star.g56 { background: #FFE066; }
+  .bf-star.g7 { background: linear-gradient(90deg, #FF5E7E, #FFB347, #FFE66D, #7EE081, #5CC8FF, #A78BFA); }
+  .bf-value { font-weight: 800; font-size: 17px; font-variant-numeric: tabular-nums; }
+  .bf-empty { grid-column: 1 / -1; padding: 30px; text-align: center; color: var(--sub); }
+  @media (max-width: 900px) { .bf-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  @media (max-width: 680px) { .bf-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .bf-rate-value { font-size: 34px; } }
+  @media (max-width: 460px) {
+    .bf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .bf-head { gap: 10px; } .bf-icon { width: 56px; height: 56px; } .bf-name { font-size: 19px; }
+    .bf-rate { margin-left: 0; } .bf-rate-value { font-size: 30px; } .bf-rank-icon { width: 36px; height: 36px; }
+    .bf-chip { font-size: 9.5px; padding: 3px 4px; } .bf-chips { left: 4px; right: 4px; bottom: 4px; gap: 2px; }
+    .bf-value { font-size: 15px; }
+  }
+  .tag.pub { background: #2E9E5B; } .tag.priv { background: #9A94B8; }
   .login { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
   .login input { flex: 1 1 220px; font: inherit; padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--line); }
   .login button.primary { background: var(--pink); border-color: var(--pink); color: #fff; }
@@ -85,7 +132,7 @@
 <body>
 <div class="wrap">
   <h1>2fRATE ランキング（管理者用）</h1>
-  <p class="lead">プレイヤーを選ぶと、その人の「☆7まで」のレート対象曲を表示します。非表示（hidden）の人も含めて表示します。</p>
+  <p class="lead">プレイヤーを選ぶと、その人のベスト枠（☆7までのレート対象曲）を表示します。公開・非公開や、非表示（hidden）に関わらず全員分を見られます。</p>
   <form class="login" id="login">
     <input id="key" type="password" placeholder="管理者用の鍵" aria-label="管理者用の鍵" autocomplete="current-password">
     <button class="primary" type="submit">表示する</button>
@@ -236,6 +283,109 @@
   }
   const starClass = (s) => (s >= 7 ? 'g7' : s >= 5 ? 'g56' : s >= 3 ? 'g34' : s >= 1 ? 'g12' : '');
 
+  // ============================================================
+  //  ベスト枠の表示（2fRATE の画像化と同じ見た目。5列のカード）
+  // ============================================================
+  const BF_DIFF_COLOR = { BASIC: '#2E9E5B', ADVANCED: '#D98E04', EXPERT: '#E0434B', MASTER: '#8E44D6' };
+  const bfStarClass = (s) => (s >= 7 ? 'g7' : s >= 5 ? 'g56' : s >= 3 ? 'g34' : s >= 1 ? 'g12' : '');
+
+  function bfResolveSong(map, overrides, name, kind, diff, level, max) {
+    const v = map?.get(name);
+    if (!v) return null;
+    if (typeof v === 'string') return { img: v, genre: null };
+    if (!Array.isArray(v)) return null;
+    const g = overrides?.[`${name}|${kind}|${diff}|${max}`];
+    if (g) { const c = v.find((x) => x.genre === g); if (c) return { img: c.img, genre: c.genre }; }
+    const k = kind === 'ST' ? 'st' : 'dx';
+    const i = ['BASIC', 'ADVANCED', 'EXPERT', 'MASTER', 'Re:MASTER'].indexOf(diff);
+    const hits = v.filter((c) => c[k]?.[i] === level);
+    return hits.length === 1 ? { img: hits[0].img, genre: hits[0].genre } : null;
+  }
+
+  // player: { name, icon, rateFull }、top50: 譜面の配列、jk: { map, overrides }
+  function openBestFrame(player, top50, jk) {
+    const ov = el('div', 'bf-overlay');
+    const box = el('div', 'bf-box');
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.setAttribute('aria-label', `${player.name} のベスト枠`);
+    ov.appendChild(box);
+    const close = () => { ov.remove(); document.removeEventListener('keydown', onKey); };
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', onKey);
+    ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+
+    // 上部：アイコン・名前・レート
+    const head = el('div', 'bf-head');
+    if (player.icon) {
+      const img = el('img', 'bf-icon');
+      img.src = ICON_BASE + player.icon;
+      img.alt = '';
+      img.onerror = () => img.replaceWith(el('div', 'bf-icon'));
+      head.appendChild(img);
+    } else {
+      head.appendChild(el('div', 'bf-icon'));
+    }
+    const who = el('div', 'bf-who');
+    who.append(el('div', 'bf-name', player.name), el('div', 'bf-label', '2fRATE（☆7まで）'));
+    head.appendChild(who);
+    const rate = el('div', 'bf-rate');
+    if (Number.isFinite(player.rateFull)) {
+      const rank = rankOf(player.rateFull);
+      const ic = el('span', 'bf-rank-icon');
+      ic.innerHTML = rankIconSvg(rank.name); // ページ内で作る固定のSVGのみ
+      const val = el('span', 'bf-rate-value', player.rateFull.toFixed(3));
+      val.style.backgroundImage = `linear-gradient(90deg, ${rank.colors.join(', ')})`;
+      if (rank.glow) val.style.filter = `drop-shadow(0 0 3px ${rank.glow})`;
+      val.title = rank.name;
+      rate.append(ic, val);
+    }
+    head.appendChild(rate);
+    const x = el('button', 'bf-close', '閉じる');
+    x.type = 'button';
+    x.onclick = close;
+    box.append(x, head);
+
+    // 譜面のカード
+    const grid = el('div', 'bf-grid');
+    if (!top50.length) grid.appendChild(el('div', 'bf-empty', 'ベスト枠のデータがありません。'));
+    top50.forEach((t, i) => {
+      const card = el('div', 'bf-card');
+      const jw = el('div', 'bf-jacket');
+      const song = bfResolveSong(jk.map, jk.overrides, t.name, t.kind, t.diff, t.level, t.max);
+      if (song?.img) {
+        const img = el('img');
+        let k = 0;
+        img.alt = '';
+        img.loading = 'lazy';
+        img.src = JACKET_BASES[0] + song.img;
+        img.onerror = () => { k++; if (k < JACKET_BASES.length) img.src = JACKET_BASES[k] + song.img; else img.remove(); };
+        jw.appendChild(img);
+      }
+      jw.appendChild(el('span', 'bf-no', `#${i + 1}`));
+      const chips = el('div', 'bf-chips');
+      const kind = el('span', `bf-chip bf-kind-${t.kind === 'ST' ? 'ST' : 'DX'}`, t.kind);
+      const diff = el('span', 'bf-chip bf-diff', t.diff);
+      if (t.diff === 'Re:MASTER') diff.classList.add('bf-remas');
+      else diff.style.background = BF_DIFF_COLOR[t.diff] || '#999';
+      const cst = el('span', 'bf-chip bf-const', `${Number(t.const).toFixed(1)}${t.estimated ? '*' : ''}`);
+      const left = el('span', 'bf-chips-left');
+      left.append(kind, diff);
+      chips.append(left, cst);
+      jw.appendChild(chips);
+      const nm = el('div', 'bf-title', t.name);
+      nm.title = t.name + (song?.genre ? `（${song.genre}）` : '');
+      const foot = el('div', 'bf-foot');
+      foot.append(el('span', `bf-star ${bfStarClass(Math.floor(Number(t.star)))}`, `☆${Number(t.star).toFixed(1)}`),
+        el('span', 'bf-value', Number(t.value).toFixed(3)));
+      card.append(jw, nm, foot);
+      grid.appendChild(card);
+    });
+    box.appendChild(grid);
+    document.body.appendChild(ov);
+    x.focus();
+  }
+
   let jackets = null;
   let overrides = {};
   let openUser = null; // レート対象曲を開いている人（username）
@@ -345,17 +495,17 @@
       const main = el('div');
       const nm = el('div', 'name' + (r.anonymous ? ' anon' : ''), r.name);
       if (r.hidden) nm.appendChild(el('span', 'tag', '非表示'));
+      nm.appendChild(el('span', r.publicTop50 ? 'tag pub' : 'tag priv', r.publicTop50 ? 'ベスト枠公開' : 'ベスト枠非公開'));
       main.append(nm, el('div', 'meta', `更新 ${dateOf(r.updatedAt)}`),
         el('div', 'admin-meta', `@${r.username}` + (r.anonymous && r.displayName ? `（表示名：${r.displayName}）` : '')));
       row.appendChild(main);
       row.classList.add('user');
       row.tabIndex = 0;
       row.setAttribute('role', 'button');
-      row.setAttribute('aria-expanded', String(openUser === r.username));
-      const toggle = () => { openUser = openUser === r.username ? null : r.username; renderList(); };
+      const toggle = () => openBestFrame({ name: r.name, icon: r.icon, rateFull: r.rateFull }, r.top50, { map: jackets, overrides });
       row.onclick = toggle;
       row.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } };
-      if (openUser === r.username) row.classList.add('open');
+
 
       const right = el('div');
       const rate = el('div', 'rate');
@@ -375,7 +525,6 @@
         right.appendChild(rate);
       }
       row.appendChild(right);
-      if (openUser === r.username) row.appendChild(detailEl(r));
       list.appendChild(row);
     });
     $('listBox').replaceChildren(list);
