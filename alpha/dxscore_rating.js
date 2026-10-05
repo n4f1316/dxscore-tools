@@ -154,6 +154,9 @@
   const RANKING_STATS_DIR = 'https://n4f1316.github.io/dxscore-tools/ranking/';
   const RECOMMEND_COUNT = 30; // 表示するおすすめ楽曲の数
   const RECOMMEND_MAX_FROM = 11.5; // ☆7まで のレートがこれ以上の人にだけ、理論値（☆7）を目標にした譜面もおすすめする
+  const RECOMMEND_LOW_BELOW = 10.0; // ☆7まで のレートがこれ未満の人は「初中級向け」のおすすめにする
+  const RECOMMEND_LOW_DIFFS = ['MASTER', 'Re:MASTER']; // 初中級向けで対象にする難易度
+  const RECOMMEND_LOW_RANGE = 1.0;  // 初中級向け：☆5を目指す譜面は「レート対象曲の定数の中央値 ＋ この値」まで
 
   // 公式サイトのHTML構造に合わせたセレクタ（2026年9月時点の構造で確認済み）
   const SEL = {
@@ -1299,6 +1302,9 @@
   // ============================================================
   //  おすすめ楽曲（☆7まで）
   //   目標：☆6未満の譜面は ☆6.0。☆6台の譜面の ☆7（理論値）は、レートが RECOMMEND_MAX_FROM 以上の人にだけ出す
+  //   初中級向け（レートが RECOMMEND_LOW_BELOW 未満）：MASTER 以上の譜面だけを対象にし、
+  //     レート対象曲の定数の中央値以下の譜面（低難度）は ☆6.0、
+  //     それより上の譜面（そこそこの難易度。中央値＋RECOMMEND_LOW_RANGE まで）は ☆5.0 を目標にする
   //   並び順：取りやすさ（上位100人のうち目標の☆に届いている人の割合）の高い順
   //           → 同じなら定数の低い順 → 伸びしろ（レートの上がり幅）の大きい順
   //   目標を達成してもレートが上がらない譜面は出さない
@@ -1340,14 +1346,34 @@
     const value50 = top.length >= TOP_N ? top[TOP_N - 1].values.full : 0; // 今のレート対象曲の50位
     const inTop = new Set(top);
     const allowMax = rating >= RECOMMEND_MAX_FROM;
+    const low = rating < RECOMMEND_LOW_BELOW;
+    // レート対象曲の定数の中央値（その人にとっての「ふだんの難易度」）
+    const consts = top.map((t) => t.c).sort((a, b) => a - b);
+    const median = consts.length ? consts[Math.floor((consts.length - 1) / 2)] : 0;
     const list = [];
     for (const s of all) {
       const now = starTenths(s.cur, s.max);
       if (now >= 70) continue; // すでに理論値
       let targetStars;
-      if (now < 60) targetStars = 6;     // ☆6未満 → ☆6.0 を目標にする
-      else if (allowMax) targetStars = 7; // ☆6台 → 理論値（LEGEND に近い人だけ）
-      else continue;
+      if (low) {
+        // 初中級向け：MASTER 以上だけ。低難度は ☆6、そこそこの難易度は ☆5
+        if (!RECOMMEND_LOW_DIFFS.includes(s.diff)) continue;
+        if (s.c <= median) {
+          if (now >= 60) continue;
+          targetStars = 6;
+        } else if (s.c <= median + RECOMMEND_LOW_RANGE) {
+          if (now >= 50) continue;
+          targetStars = 5;
+        } else {
+          continue; // 難しすぎる譜面は出さない
+        }
+      } else if (now < 60) {
+        targetStars = 6;                 // ☆6未満 → ☆6.0 を目標にする
+      } else if (allowMax) {
+        targetStars = 7;                 // ☆6台 → 理論値（LEGEND に近い人だけ）
+      } else {
+        continue;
+      }
       const targetTenths = targetStars * 10;
       const pct = STAR_THRESHOLDS.find((t) => t.stars === targetStars).pct;
       const needScore = targetStars >= 7 ? s.max : Math.ceil((s.max * pct) / 100);
@@ -1373,7 +1399,9 @@
     head.append(el('div', 'dxr-rec-title', 'おすすめ楽曲（☆7まで）'),
       el('div', 'dxr-rec-desc', rating >= RECOMMEND_MAX_FROM
         ? '☆6（理論値を目指せる人は☆7）に届けるとレートが伸びる譜面を、上位100人の達成率（取りやすさ）が高い順に並べています。'
-        : '☆6に届けるとレートが伸びる譜面を、上位100人の達成率（取りやすさ）が高い順・定数の低い順に並べています。'));
+        : rating < RECOMMEND_LOW_BELOW
+          ? 'MASTER以上の譜面から、ふだんの難易度以下は☆6、少し上の難易度は☆5を目標に、レートが伸びる譜面を取りやすい順に並べています。'
+          : '☆6に届けるとレートが伸びる譜面を、上位100人の達成率（取りやすさ）が高い順・定数の低い順に並べています。'));
     box.appendChild(head);
 
     const listBox = el('div');
