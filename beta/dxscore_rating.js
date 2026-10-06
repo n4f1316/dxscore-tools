@@ -145,7 +145,7 @@
   const CONST_URL = 'https://n4f1316.github.io/dxscore-tools/maimai_consts_magical.json';
 
   // ランキング（Google Apps Script の受け取り口と、ランキングのページ）
-  const RANKING_API = 'https://script.google.com/macros/s/AKfycbwqrv0xH7D4dhWA9M-76pGmjyT3I3SADQ-yAguIQXHJgCyBm5aGGjI33HWiUcYAVYpb/exec';
+  const RANKING_API = 'https://2frate.want131611.workers.dev/';
   const RANKING_PAGE = 'https://n4f1316.github.io/dxscore-tools/ranking.html';
   const FORMULA_VERSION = 'v1'; // 計算式の版（計算式を変えたら上げる）
   const USER_KEY = 'dxr-ranking-user'; // このブラウザで最後に使ったユーザー名（PINは保存しない）
