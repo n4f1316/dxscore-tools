@@ -43,8 +43,6 @@
   .rank-icon svg { width: 100%; height: 100%; display: block; }
   .rank-name { font-size: 10px; font-weight: 800; color: var(--sub); text-align: right; letter-spacing: .02em; }
   .empty { padding: 24px; text-align: center; color: var(--sub); }
-  .default-icon { overflow: hidden; }
-  .default-icon svg { display: block; }
   /* ベスト枠（2fRATE 実行時の表と同じ形式） */
   .bf-overlay { position: fixed; inset: 0; z-index: 50; background: rgba(43,35,80,.5); overflow: auto; padding: 16px 10px 40px; }
   .bf-box { position: relative; max-width: 780px; margin: 0 auto; background: var(--bg); border-radius: 22px; padding: 16px; }
@@ -162,7 +160,7 @@
 (() => {
   'use strict';
 
-  const RANKING_API = 'https://2frate.want131611.workers.dev/';
+  const RANKING_API = 'https://script.google.com/macros/s/AKfycbwqrv0xH7D4dhWA9M-76pGmjyT3I3SADQ-yAguIQXHJgCyBm5aGGjI33HWiUcYAVYpb/exec';
   const ICON_BASE = 'https://maimaidx.jp/maimai-mobile/img/Icon/';
   const JACKETS_URL = 'maimai_jackets.json';
   const OVERRIDES_URL = 'jacket_overrides.json';
@@ -261,20 +259,6 @@
     if (text !== undefined) e.textContent = text;
     return e;
   }
-  // 初期アイコン（アイコンが登録されていない人・読み込めなかったとき用）
-  //   2fRATE の配色で、丸い顔と肩だけのシンプルな人型。どこにも通信しない固定のSVG
-  const DEFAULT_ICON_SVG =
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true">' +
-    '<rect width="64" height="64" fill="#E9E4F7"/>' +
-    '<circle cx="32" cy="25" r="11" fill="#B9AEDD"/>' +
-    '<path d="M12 60c0-11 9-19 20-19s20 8 20 19z" fill="#B9AEDD"/>' +
-    '</svg>';
-  function defaultIcon(cls) {
-    const d = el('div', cls + ' default-icon');
-    d.innerHTML = DEFAULT_ICON_SVG;
-    return d;
-  }
-
   function dateOf(v) {
     const d = new Date(v);
     if (isNaN(d)) return '';
@@ -344,10 +328,10 @@
       const img = el('img', 'bf-icon');
       img.src = ICON_BASE + player.icon;
       img.alt = '';
-      img.onerror = () => img.replaceWith(defaultIcon('bf-icon'));
+      img.onerror = () => img.replaceWith(el('div', 'bf-icon'));
       head.appendChild(img);
     } else {
-      head.appendChild(defaultIcon('bf-icon'));
+      head.appendChild(el('div', 'bf-icon'));
     }
     const who = el('div', 'bf-who');
     who.append(el('div', 'bf-name', player.name), el('div', 'bf-label', '2fRATE（☆7まで）'));
@@ -467,7 +451,6 @@
   }
 
   let all = [];
-  let adminKey = '';
   let mode = MODES[0];
   let version = null;
   let query = '';
@@ -524,10 +507,10 @@
         img.src = ICON_BASE + r.icon;
         img.alt = '';
         img.loading = 'lazy';
-        img.onerror = () => img.replaceWith(defaultIcon('icon'));
+        img.onerror = () => img.replaceWith(el('div', 'icon'));
         row.appendChild(img);
       } else {
-        row.appendChild(defaultIcon('icon'));
+        row.appendChild(el('div', 'icon'));
       }
 
       const main = el('div');
@@ -540,24 +523,7 @@
       row.classList.add('user');
       row.tabIndex = 0;
       row.setAttribute('role', 'button');
-      const toggle = async () => {
-        if (!r.top50) {
-          row.style.opacity = '.6';
-          try {
-            const res = await fetch(RANKING_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify({ action: 'adminTop50', key: adminKey, username: r.username }) });
-            const d = await res.json();
-            if (!d.ok) throw new Error(d.error || '読み込めませんでした。');
-            r.top50 = Array.isArray(d.top50) ? d.top50 : [];
-          } catch (e) {
-            alert(e.message || 'ベスト枠を読み込めませんでした。');
-            return;
-          } finally {
-            row.style.opacity = '';
-          }
-        }
-        openBestFrame({ name: r.name, icon: r.icon, rateFull: r.rateFull }, r.top50, { map: jackets, overrides });
-      };
+      const toggle = () => openBestFrame({ name: r.name, icon: r.icon, rateFull: r.rateFull }, r.top50, { map: jackets, overrides });
       row.onclick = toggle;
       row.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } };
 
@@ -603,10 +569,8 @@
       }
       jackets = jmap ? new Map(Object.entries(jmap)) : null;
       overrides = ov || {};
-      adminKey = key;
-      // 一覧にベスト枠が含まれていない場合（Cloudflare 版）は、開いたときに1人ずつ取り出す
       all = (data.list || []).filter((r) => r && typeof r.name === 'string')
-        .map((r) => ({ ...r, top50: Array.isArray(r.top50) ? r.top50 : null }));
+        .map((r) => ({ ...r, top50: Array.isArray(r.top50) ? r.top50 : [] }));
     } catch (e) {
       $('status').textContent = '読み込めませんでした。時間をおいてもう一度お試しください。';
       $('status').classList.add('error');

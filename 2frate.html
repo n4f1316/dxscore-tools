@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2fRATE レート計算</title>
+<meta name="description" content="2fRATE レート計算（ブックマークレット）の登録方法と使い方です。">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap">
+<style>
+  :root { --ink: #2B2350; --sub: #6E6892; --line: #E4DFF3; --bg: #F6F4FC; --card: #FFFFFF; --pink: #E0348C; --cyan: #1FA9C9; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+  body { font: 15px/1.75 "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
+    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px); }
+  a { color: var(--pink); }
+  a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 0 16px 56px; }
+  .back { display: inline-block; margin-top: 18px; font-size: 13px; font-weight: 800; color: var(--sub); text-decoration: none; }
+  .back:hover { color: var(--pink); }
+  h1 { font-size: 28px; font-weight: 800; margin: 10px 0 0; line-height: 1.3; }
+  .tag-bm { display: inline-block; font-size: 12px; font-weight: 800; background: var(--pink); color: #fff; border-radius: 6px; padding: 1px 8px; vertical-align: 5px; margin-left: 6px; }
+  .lead { color: var(--sub); margin: 6px 0 0; }
+  h2 { font-size: 20px; font-weight: 800; margin: 38px 0 12px; display: flex; align-items: center; gap: 10px; }
+  h2 .num { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--ink); color: #fff; font-size: 15px; flex: none; }
+  h2.plain::before { content: ""; width: 6px; height: 20px; border-radius: 3px; background: linear-gradient(var(--pink), var(--cyan)); }
+  h3 { font-size: 16px; font-weight: 800; margin: 18px 0 6px; }
+  .card { background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; padding: 16px 20px; }
+  .card p { margin: 0; }
+  .card p + p { margin-top: 8px; }
+  .sub { color: var(--sub); font-size: 13px; }
+  ul.feat { margin: 0; padding-left: 1.2em; }
+  ul.feat li + li { margin-top: 4px; }
+
+  /* コード */
+  .code { position: relative; background: #2B2350; color: #F3F0FF; border-radius: 14px; padding: 14px 14px 14px 16px;
+    font: 12.5px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; word-break: break-all; }
+  .code-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+  button { font: inherit; font-weight: 800; padding: 8px 18px; border-radius: 999px; cursor: pointer;
+    border: 1.5px solid var(--line); background: var(--card); color: var(--ink); }
+  .copy { background: var(--pink); border-color: var(--pink); color: #fff; }
+  .copy.done { background: #2FA36B; border-color: #2FA36B; }
+  .drag { display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; border-radius: 999px; border: 2px dashed var(--pink);
+    color: var(--pink); font-weight: 800; text-decoration: none; cursor: grab; background: #FFF5FA; }
+  .warn { margin-top: 10px; background: #FFF6E5; border: 1.5px solid #F4D79A; color: #7A5300; border-radius: 12px; padding: 10px 14px; font-size: 13px; }
+
+  /* 端末タブ */
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .tabs button[aria-selected="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .panel[hidden] { display: none; }
+  ol.how { margin: 0; padding: 0; list-style: none; counter-reset: h; }
+  ol.how > li { position: relative; padding: 0 0 0 40px; counter-increment: h; }
+  ol.how > li + li { margin-top: 12px; }
+  ol.how > li::before { content: counter(h); position: absolute; left: 0; top: 0; width: 28px; height: 28px; border-radius: 50%;
+    background: #EFECF9; color: var(--ink); font-weight: 800; display: grid; place-items: center; font-size: 14px; }
+  kbd { font: 700 12px ui-monospace, Menlo, Consolas, monospace; background: #F1EEFA; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 6px; padding: 1px 6px; }
+  .ui { font-weight: 800; background: #F1EEFA; border-radius: 6px; padding: 0 6px; }
+  .tip { margin-top: 12px; font-size: 13px; color: var(--sub); }
+
+  /* 表 */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-top: 1px solid var(--line); vertical-align: top; }
+  tr:first-child th, tr:first-child td { border-top: 0; }
+  th { white-space: nowrap; font-weight: 800; width: 7.5em; }
+  .tbl { background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; overflow: hidden; padding: 4px 8px; }
+
+  details { background: var(--card); border: 1.5px solid var(--line); border-radius: 16px; padding: 0 18px; }
+  details + details { margin-top: 8px; }
+  summary { cursor: pointer; font-weight: 800; padding: 13px 0; list-style: none; display: flex; justify-content: space-between; gap: 10px; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "＋"; color: var(--sub); }
+  details[open] summary::after { content: "－"; }
+  details > div { padding: 0 0 14px; font-size: 14px; }
+  details > div p { margin: 0; }
+  details > div p + p { margin-top: 6px; }
+
+  footer { margin-top: 40px; text-align: center; font-size: 12px; color: var(--sub); }
+  footer a { color: var(--sub); }
+  @media (max-width: 640px) {
+    h1 { font-size: 24px; }
+    .drag-wrap { display: none; } /* スマホではドラッグ登録できないので隠す */
+    th { width: 6em; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="./">← 2fRATE トップへ</a>
+  <h1>2fRATE レート計算<span class="tag-bm">ブックマーク</span></h1>
+  <p class="lead">maimai DX NET にログインした状態でブックマークから実行すると、あなたのでらっくスコアから 2fRATE を計算します。</p>
+
+  <h2 class="plain">できること</h2>
+  <div class="card">
+    <ul class="feat">
+      <li>「☆7まで」「☆6まで」「☆5まで」の3種類の 2fRATE と、ランクを表示</li>
+      <li>レート対象曲（上位50譜面）を、ジャケット・譜面定数・☆・単曲レート値つきで一覧表示</li>
+      <li>レート対象曲50譜面を1枚の画像にして保存（名前・称号を隠すこともできます）</li>
+      <li>次に☆を伸ばすとよい譜面を「おすすめ楽曲」として表示</li>
+      <li><a href="ranking.html">ランキング</a>への登録・更新</li>
+    </ul>
+  </div>
+
+  <h2><span class="num">1</span>コードをコピーする</h2>
+  <div class="card">
+    <p>下のコードがブックマークの中身になります。1行まるごとコピーしてください。</p>
+    <div class="code" id="code" style="margin-top:10px"></div>
+    <div class="code-row">
+      <button class="copy" type="button" data-copy="code">コードをコピー</button>
+      <span class="drag-wrap sub">PCなら <a class="drag" id="drag" href="#" title="ブックマークバーへドラッグしてください">★ 2fRATE</a> をブックマークバーへドラッグしても登録できます</span>
+    </div>
+  </div>
+
+  <h2><span class="num">2</span>ブックマークに登録する</h2>
+  <div class="tabs" role="tablist" aria-label="端末を選ぶ">
+    <button type="button" role="tab" data-dev="pc">PC（Chrome / Edge）</button>
+    <button type="button" role="tab" data-dev="ios">iPhone（Safari）</button>
+    <button type="button" role="tab" data-dev="android">Android（Chrome）</button>
+  </div>
+  <div class="card">
+    <div class="panel" data-dev="pc" role="tabpanel">
+      <ol class="how">
+        <li><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd>（Macは <kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd>）でブックマークバーを表示します。</li>
+        <li>ブックマークバーの空いているところを右クリックし、<span class="ui">ページを追加</span>（Edgeは <span class="ui">お気に入りを追加</span>）を選びます。</li>
+        <li>「名前」に <b>2fRATE</b> など、わかりやすい名前を入力します。</li>
+        <li>「URL」に、コピーしたコードを貼り付けて保存します。</li>
+      </ol>
+      <p class="tip">上の「★ 2fRATE」ボタンをブックマークバーへドラッグ＆ドロップするだけでも登録できます。</p>
+    </div>
+    <div class="panel" data-dev="ios" role="tabpanel">
+      <ol class="how">
+        <li>Safariでこのページを開いたまま、共有ボタン（□に↑）をタップし、<span class="ui">ブックマークを追加</span>で保存します。</li>
+        <li>ブックマーク一覧（本のアイコン）を開き、右下の <span class="ui">編集</span> をタップして、今保存したブックマークを選びます。</li>
+        <li>名前を <b>2fRATE</b> に変更します。</li>
+        <li>URL欄の中身をすべて消し、コピーしたコードを貼り付けて <span class="ui">完了</span> をタップします。</li>
+      </ol>
+      <p class="tip">URL欄はとても長くなります。古いURLが残らないよう、全部消してから貼り付けてください。</p>
+    </div>
+    <div class="panel" data-dev="android" role="tabpanel">
+      <ol class="how">
+        <li>Chromeでこのページを開いたまま、右上の <span class="ui">⋮</span> から <span class="ui">☆</span>（ブックマークに追加）をタップします。</li>
+        <li>画面下に出る <span class="ui">編集</span>（または ⋮ → ブックマーク から、今追加したものの <span class="ui">⋮</span> → 編集）を開きます。</li>
+        <li>名前を <b>2fRATE</b> に変更します。</li>
+        <li>URL欄の中身をすべて消し、コピーしたコードを貼り付けて戻ります（自動で保存されます）。</li>
+      </ol>
+    </div>
+  </div>
+
+  <h2><span class="num">3</span>maimai DX NET で実行する</h2>
+  <div class="card">
+    <div class="panel" data-dev="pc" role="tabpanel">
+      <ol class="how">
+        <li><a href="https://maimaidx.jp/maimai-mobile/" target="_blank" rel="noopener">maimai DX NET</a> にログインします（どのページを開いていても構いません）。</li>
+        <li>ブックマークバーの <b>2fRATE</b> をクリックします。</li>
+        <li>数秒〜十数秒待つと、結果画面が表示されます。</li>
+      </ol>
+    </div>
+    <div class="panel" data-dev="ios" role="tabpanel">
+      <ol class="how">
+        <li>Safariで <a href="https://maimaidx.jp/maimai-mobile/" target="_blank" rel="noopener">maimai DX NET</a> にログインします（どのページを開いていても構いません）。</li>
+        <li>ブックマーク一覧（本のアイコン）を開き、<b>2fRATE</b> をタップします。</li>
+        <li>数秒〜十数秒待つと、結果画面が表示されます。</li>
+      </ol>
+    </div>
+    <div class="panel" data-dev="android" role="tabpanel">
+      <ol class="how">
+        <li>Chromeで <a href="https://maimaidx.jp/maimai-mobile/" target="_blank" rel="noopener">maimai DX NET</a> にログインします（どのページを開いていても構いません）。</li>
+        <li>アドレスバーをタップし、<b>2fRATE</b>（登録した名前）と入力します。</li>
+        <li>候補に出てくる、☆マークのついた <b>2fRATE</b> をタップします。</li>
+        <li>数秒〜十数秒待つと、結果画面が表示されます。</li>
+      </ol>
+      <div class="warn">Android の Chrome では、ブックマーク一覧からタップしても実行されません。必ずアドレスバーに名前を入力して、候補から選んでください。</div>
+    </div>
+    <div class="warn">コードをアドレスバーに直接貼り付けても動きません（貼り付けると先頭の <code>javascript:</code> が消えてしまうため）。必ずブックマークとして登録してから実行してください。</div>
+  </div>
+
+  <h2 class="plain">結果画面の見方</h2>
+  <div class="tbl">
+    <table>
+      <tr><th>レートの札</th><td>「☆7まで」「☆6まで」「☆5まで」の3種類の 2fRATE。札を押すと、そのレートのレート対象曲に切り替わります。計算方法は<a href="about.html">レートとランクのしくみ</a>へ。</td></tr>
+      <tr><th>DX / ST</th><td>でらっくす譜面 / スタンダード譜面</td></tr>
+      <tr><th>譜面定数</th><td><code>*</code> 付きは定数表にない譜面で、レベル表示から見積もった値です。</td></tr>
+      <tr><th>☆</th><td>でらっくスコアの☆。小数部分は次の☆までの進み具合です。</td></tr>
+      <tr><th>MAX差</th><td>でらっくスコア最大値（理論値）までの差。理論値なら <code>MAX</code>。</td></tr>
+      <tr><th>レート値</th><td>その譜面の単曲レート値。</td></tr>
+    </table>
+  </div>
+
+  <h2 class="plain">ランキングへの登録</h2>
+  <div class="card">
+    <p>結果画面の <span class="ui">ランキングに登録・更新する</span> から、<a href="ranking.html">ランキング</a>に自分の記録を載せられます。登録は任意です。</p>
+    <p><b>ユーザー名</b>と<b>PIN</b>は、2fRATE のランキング専用のものを自分で決めます（maimai DX NET や SEGA ID のパスワードは<b>絶対に入力しないでください</b>）。次回以降、同じユーザー名とPINで記録を更新できます。PINを忘れると更新できなくなるので、控えておいてください。</p>
+    <p>公開されるのは、表示名（または「匿名#記号」）、プレイヤーアイコン、3種類のレートとランク、ベスト枠（公開を選んだ場合のみ）です。ユーザー名とPINは公開されません。</p>
+  </div>
+
+  <h2 class="plain">うまくいかないとき</h2>
+  <details>
+    <summary>ブックマークを押しても何も起きない</summary>
+    <div>
+      <p>URL欄の先頭が <code>javascript:</code> で始まっているか確認してください。貼り付けたときに消えてしまうことがあります。</p>
+      <p>Android の Chrome は、ブックマーク一覧からではなくアドレスバーに名前を入力して実行してください。</p>
+    </div>
+  </details>
+  <details>
+    <summary>「ログインしていないようです」と表示される</summary>
+    <div>
+      <p>maimai DX NET にログインしていないか、ログインの有効期限が切れています。一度ログインし直してから、もう一度実行してください。</p>
+      <p>maimai DX NET 以外のページで実行した場合は「maimai DX NET にログインした状態で実行してください」と表示されます。</p>
+    </div>
+  </details>
+  <details>
+    <summary>途中で止まる・エラーが出る</summary>
+    <div>
+      <p>通信状況が悪いと、レコードの読み込みに失敗することがあります。少し時間をおいてから、もう一度実行してください。</p>
+      <p>公式サイトの機能の利用状況（コースの加入状況など）によっては、一部のページが見られず正しく計算できない場合があります。</p>
+    </div>
+  </details>
+  <details>
+    <summary>レートや譜面定数が古い気がする</summary>
+    <div><p>ブックマークは実行のたびに最新のプログラムを読み込みます。譜面定数は新バージョンの稼働後、順次更新します。</p></div>
+  </details>
+
+  <h2 class="plain">β版（テスト版）</h2>
+  <details>
+    <summary>新機能を先に試したい方へ</summary>
+    <div>
+      <p>正式版に入れる前の新機能を試せるβ版です。動作が不安定なことがあります。正式版とは別のブックマーク（名前を「2fRATE β」など）として登録してください。登録・実行の手順は正式版と同じです。</p>
+      <div class="code" id="code-beta" style="margin-top:10px"></div>
+      <div class="code-row"><button class="copy" type="button" data-copy="code-beta">β版のコードをコピー</button></div>
+    </div>
+  </details>
+
+  <h2 class="plain">注意事項</h2>
+  <div class="card sub">
+    <ul class="feat">
+      <li>非公式のファンメイドツールです。株式会社セガおよび関連会社とは一切関係ありません。</li>
+      <li>楽曲のジャケット画像の著作権は、各権利者に帰属します。</li>
+      <li>計算と画像の作成はすべてブラウザ内で行います。データが外部（2fRATE のサーバー）に送られるのは「ランキングに登録」したときだけです。</li>
+      <li>公式サイトへの負荷を抑えるため、ページの読み込みは間隔を空けて行っています。短時間に何度も連続で実行しないでください。</li>
+      <li>公式サイトの変更などにより、予告なく動作しなくなることがあります。</li>
+    </ul>
+  </div>
+
+  <footer>2fRATE（非公式）・<a href="./">トップ</a>・<a href="https://github.com/n4f1316/dxscore-tools">GitHub</a></footer>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const BASE = 'https://n4f1316.github.io/dxscore-tools/';
+  const bookmarklet = (path) =>
+    "javascript:(()=>{const s=document.createElement('script');s.src='" + BASE + path +
+    "?'+Date.now();document.body.appendChild(s);})();void(0);";
+  const CODES = {
+    'code': bookmarklet('dxscore_rating.js'),
+    'code-beta': bookmarklet('beta/dxscore_rating.js'),
+  };
+  for (const [id, text] of Object.entries(CODES)) document.getElementById(id).textContent = text;
+  document.getElementById('drag').href = CODES.code;
+  // ドラッグ用のリンクをクリックしたときは、このページで実行せずに案内だけ出す
+  document.getElementById('drag').addEventListener('click', (e) => {
+    e.preventDefault();
+    const s = e.currentTarget;
+    const old = s.textContent;
+    s.textContent = 'ブックマークバーへドラッグしてください';
+    setTimeout(() => { s.textContent = old; }, 2000);
+  });
+
+  // コピー
+  async function copyText(text) {
+    try { await navigator.clipboard.writeText(text); return true; } catch (_) {}
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, text.length);
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (_) {}
+    ta.remove();
+    return ok;
+  }
+  document.querySelectorAll('[data-copy]').forEach((btn) => {
+    const label = btn.textContent;
+    btn.addEventListener('click', async () => {
+      const ok = await copyText(CODES[btn.dataset.copy]);
+      btn.textContent = ok ? 'コピーしました' : 'コピーできませんでした（長押しで選択してください）';
+      btn.classList.toggle('done', ok);
+      setTimeout(() => { btn.textContent = label; btn.classList.remove('done'); }, 2200);
+    });
+  });
+
+  // 端末タブ（初期値は使っている端末から推測）
+  const ua = navigator.userAgent;
+  let dev = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) ? 'ios'
+    : /Android/.test(ua) ? 'android' : 'pc';
+  const tabs = document.querySelectorAll('.tabs button');
+  function show(d) {
+    dev = d;
+    tabs.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.dev === d)));
+    document.querySelectorAll('.panel').forEach((p) => { p.hidden = p.dataset.dev !== d; });
+  }
+  tabs.forEach((b) => b.addEventListener('click', () => show(b.dataset.dev)));
+  show(dev);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2fRATE</title>
+<meta name="description" content="maimai でらっくす のでらっくスコア☆から計算する非公式レート「2fRATE」のツール集です。">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap">
+<style>
+  :root { --ink: #2B2350; --sub: #6E6892; --line: #E4DFF3; --bg: #F6F4FC; --card: #FFFFFF; --pink: #E0348C; --cyan: #1FA9C9; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+  body { font: 15px/1.75 "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
+    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px); }
+  a { color: var(--pink); }
+  a:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; border-radius: 6px; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 16px 56px; }
+
+  /* ヒーロー */
+  .hero { display: flex; align-items: center; gap: 20px; padding: 36px 0 26px; flex-wrap: wrap; }
+  .logo { width: 88px; height: 88px; flex: none; }
+  .logo svg { display: block; width: 100%; height: 100%; }
+  .hero-text { flex: 1 1 280px; min-width: 0; }
+  .hero h1 { margin: 0; font-size: 40px; line-height: 1.15; font-weight: 800; letter-spacing: -.01em; }
+  .hero h1 .f { color: var(--pink); }
+  .hero p { margin: 6px 0 0; color: var(--sub); font-weight: 700; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 800; color: var(--sub); background: #EFECF9;
+    border-radius: 999px; padding: 2px 10px; margin-top: 8px; }
+
+  .about { background: var(--card); border: 1.5px solid var(--line); border-radius: 20px; padding: 18px 20px; }
+  .about p { margin: 0; }
+  .about p + p { margin-top: 8px; }
+  .about strong { color: var(--pink); }
+
+  h2 { font-size: 19px; font-weight: 800; margin: 34px 0 12px; display: flex; align-items: center; gap: 8px; }
+  h2::before { content: ""; width: 6px; height: 20px; border-radius: 3px; background: linear-gradient(var(--pink), var(--cyan)); }
+
+  /* ツールのカード */
+  .tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .tool { display: flex; gap: 14px; align-items: flex-start; text-decoration: none; color: var(--ink);
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; padding: 16px;
+    transition: border-color .15s, transform .15s, box-shadow .15s; }
+  .tool:hover { border-color: #CFC6EC; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(43,35,80,.08); }
+  .tool.main { grid-column: 1 / -1; border: 2px solid var(--pink); }
+  .tool-ic { width: 48px; height: 48px; border-radius: 14px; flex: none; display: grid; place-items: center; }
+  .tool-ic svg { width: 28px; height: 28px; display: block; }
+  .ic-pink { background: #FCE6F1; color: var(--pink); }
+  .ic-cyan { background: #E1F4F9; color: #1585A0; }
+  .ic-gold { background: #FFF4D6; color: #B07D0A; }
+  .ic-ink  { background: #EFECF9; color: var(--ink); }
+  .tool-body { min-width: 0; }
+  .tool-name { font-size: 17px; font-weight: 800; line-height: 1.4; }
+  .tool-desc { font-size: 13px; color: var(--sub); margin-top: 2px; line-height: 1.65; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 800; border-radius: 6px; padding: 1px 7px; margin-left: 6px; vertical-align: 2px; }
+  .tag-bm { background: var(--pink); color: #fff; }
+  .tag-web { background: #EFECF9; color: var(--sub); }
+  .go { font-size: 13px; font-weight: 800; color: var(--pink); margin-top: 6px; }
+
+  /* はじめかた */
+  .steps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; counter-reset: s; }
+  .steps li { background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; padding: 16px; counter-increment: s; }
+  .steps li::before { content: counter(s); display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%;
+    background: var(--ink); color: #fff; font-weight: 800; margin-bottom: 8px; }
+  .steps b { display: block; font-size: 15px; }
+  .steps span { font-size: 13px; color: var(--sub); }
+
+  .notes { background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; padding: 14px 20px; font-size: 13px; color: var(--sub); }
+  .notes ul { margin: 0; padding-left: 1.2em; }
+  .notes li + li { margin-top: 4px; }
+
+  footer { margin-top: 36px; text-align: center; font-size: 12px; color: var(--sub); }
+  footer a { color: var(--sub); }
+
+  @media (max-width: 640px) {
+    .hero { padding-top: 24px; gap: 14px; }
+    .logo { width: 68px; height: 68px; }
+    .hero h1 { font-size: 32px; }
+    .tools, .steps { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 64 64">
+        <rect width="64" height="64" rx="16" fill="#2B2350"/>
+        <path d="M32 12 L37.3 23.6 L50 25 L40.5 33.6 L43.2 46.2 L32 39.8 L20.8 46.2 L23.5 33.6 L14 25 L26.7 23.6 Z"
+          fill="#E0348C" stroke="#E0348C" stroke-width="5" stroke-linejoin="round"/>
+        <text x="32" y="38" text-anchor="middle" font-family="M PLUS Rounded 1c, sans-serif" font-weight="800" font-size="15" fill="#fff">2f</text>
+      </svg>
+    </div>
+    <div class="hero-text">
+      <h1>2<span class="f">f</span>RATE</h1>
+      <p>でらっくスコアの☆で競う、もうひとつのレート</p>
+      <span class="badge">非公式・ファンメイドツール</span>
+    </div>
+  </header>
+
+  <section class="about" aria-label="2fRATE について">
+    <p><strong>2fRATE</strong> は、maimai でらっくす の「でらっくスコア」の☆（☆1〜☆7）と譜面定数から計算する、非公式の独自レートです。</p>
+    <p>公式のレーティングとは別に、「どれだけでらっくスコアを詰めたか」を数値で確かめられます。公式サイト「maimai DX NET」にログインした状態で、ブックマークから実行して使います。</p>
+  </section>
+
+  <h2>ツール</h2>
+  <div class="tools">
+    <a class="tool main" href="2frate.html">
+      <div class="tool-ic ic-pink" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>
+      </div>
+      <div class="tool-body">
+        <div class="tool-name">2fRATE レート計算<span class="tag tag-bm">ブックマーク</span></div>
+        <div class="tool-desc">自分のでらっくスコアから 2fRATE を計算し、レート対象曲50譜面の一覧を表示します。画像の保存やランキングへの登録もここから行えます。</div>
+        <div class="go">登録のしかた・使い方を見る →</div>
+      </div>
+    </a>
+
+    <a class="tool" href="ranking.html">
+      <div class="tool-ic ic-gold" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V18h3v3H8v-3h3v-3.1A5 5 0 0 1 8.3 12H8a4 4 0 0 1-4-4V5h3V3zm0 4H6v1a2 2 0 0 0 1 1.7V7zm10 0v2.7A2 2 0 0 0 18 8V7h-1z"/></svg>
+      </div>
+      <div class="tool-body">
+        <div class="tool-name">ランキング<span class="tag tag-web">Web</span></div>
+        <div class="tool-desc">登録された 2fRATE のランキング。☆7まで・☆6まで・☆5までの3種類で見られます。</div>
+      </div>
+    </a>
+
+    <a class="tool" href="calculator.html">
+      <div class="tool-ic ic-cyan" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm1 3v4h10V5H7zm0 7v2h2v-2H7zm4 0v2h2v-2h-2zm4 0v6h2v-6h-2zm-8 4v2h2v-2H7zm4 0v2h2v-2h-2z"/></svg>
+      </div>
+      <div class="tool-body">
+        <div class="tool-name">単曲レート計算<span class="tag tag-web">Web</span></div>
+        <div class="tool-desc">楽曲と☆を選ぶと、その譜面の単曲レート値がわかります。目標づくりに。</div>
+      </div>
+    </a>
+
+    <a class="tool" href="viewer.html">
+      <div class="tool-ic ic-ink" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 19h16v2H4v-2zm1-2V10h3v7H5zm5 0V4h3v13h-3zm5 0v-9h3v9h-3z"/></svg>
+      </div>
+      <div class="tool-body">
+        <div class="tool-name">譜面データビューア<span class="tag tag-web">Web</span></div>
+        <div class="tool-desc">全国ランキング上位100人のでらっくスコアから集計した、譜面ごとの☆の取りやすさの目安。</div>
+      </div>
+    </a>
+
+    <a class="tool" href="about.html">
+      <div class="tool-ic ic-pink" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm-1 8v7h2v-7h-2zm0-4v2h2V6h-2z"/></svg>
+      </div>
+      <div class="tool-body">
+        <div class="tool-name">レートとランクのしくみ</div>
+        <div class="tool-desc">☆の決まり方、単曲レート値の計算式、ランク（WAKABA〜LEGEND）の一覧。</div>
+      </div>
+    </a>
+  </div>
+
+  <h2>はじめかた</h2>
+  <ol class="steps">
+    <li><b>ブックマークを登録</b><span>「2fRATE レート計算」のページにあるコードを、ブラウザのブックマークに登録します。</span></li>
+    <li><b>maimai DX NET にログイン</b><span>公式サイトにログインして、どのページでもよいので開きます。</span></li>
+    <li><b>ブックマークを実行</b><span>登録したブックマークを開くと、数秒〜十数秒で結果が表示されます。</span></li>
+  </ol>
+
+  <h2>注意事項</h2>
+  <div class="notes">
+    <ul>
+      <li>非公式のファンメイドツールです。株式会社セガおよび関連会社とは一切関係ありません。公式へのお問い合わせはご遠慮ください。</li>
+      <li>楽曲のジャケット画像の著作権は、各権利者に帰属します。</li>
+      <li>レートの計算はすべてお使いのブラウザ内で行います。プレイデータが外部に送られるのは、ご自身で「ランキングに登録」したときだけです。</li>
+      <li>公式サイトへの負荷を抑えるため、短時間に何度も連続で実行しないでください。</li>
+      <li>公式サイトの変更などにより、予告なく動作しなくなることがあります。</li>
+    </ul>
+  </div>
+
+  <footer>
+    2fRATE（非公式）・<a href="https://github.com/n4f1316/dxscore-tools">GitHub</a>
+  </footer>
+</div>
+</body>
+</html>
