@@ -162,7 +162,7 @@
 (() => {
   'use strict';
 
-  const RANKING_API = 'https://script.google.com/macros/s/AKfycbwqrv0xH7D4dhWA9M-76pGmjyT3I3SADQ-yAguIQXHJgCyBm5aGGjI33HWiUcYAVYpb/exec';
+  const RANKING_API = 'https://2frate.want131611.workers.dev/';
   const ICON_BASE = 'https://maimaidx.jp/maimai-mobile/img/Icon/';
   const JACKETS_URL = 'maimai_jackets.json';
   const OVERRIDES_URL = 'jacket_overrides.json';
@@ -467,6 +467,7 @@
   }
 
   let all = [];
+  let adminKey = '';
   let mode = MODES[0];
   let version = null;
   let query = '';
@@ -539,7 +540,24 @@
       row.classList.add('user');
       row.tabIndex = 0;
       row.setAttribute('role', 'button');
-      const toggle = () => openBestFrame({ name: r.name, icon: r.icon, rateFull: r.rateFull }, r.top50, { map: jackets, overrides });
+      const toggle = async () => {
+        if (!r.top50) {
+          row.style.opacity = '.6';
+          try {
+            const res = await fetch(RANKING_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify({ action: 'adminTop50', key: adminKey, username: r.username }) });
+            const d = await res.json();
+            if (!d.ok) throw new Error(d.error || '読み込めませんでした。');
+            r.top50 = Array.isArray(d.top50) ? d.top50 : [];
+          } catch (e) {
+            alert(e.message || 'ベスト枠を読み込めませんでした。');
+            return;
+          } finally {
+            row.style.opacity = '';
+          }
+        }
+        openBestFrame({ name: r.name, icon: r.icon, rateFull: r.rateFull }, r.top50, { map: jackets, overrides });
+      };
       row.onclick = toggle;
       row.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } };
 
@@ -585,8 +603,10 @@
       }
       jackets = jmap ? new Map(Object.entries(jmap)) : null;
       overrides = ov || {};
+      adminKey = key;
+      // 一覧にベスト枠が含まれていない場合（Cloudflare 版）は、開いたときに1人ずつ取り出す
       all = (data.list || []).filter((r) => r && typeof r.name === 'string')
-        .map((r) => ({ ...r, top50: Array.isArray(r.top50) ? r.top50 : [] }));
+        .map((r) => ({ ...r, top50: Array.isArray(r.top50) ? r.top50 : null }));
     } catch (e) {
       $('status').textContent = '読み込めませんでした。時間をおいてもう一度お試しください。';
       $('status').classList.add('error');
