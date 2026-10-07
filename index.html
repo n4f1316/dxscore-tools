@@ -22,7 +22,6 @@
   .logo svg { display: block; width: 100%; height: 100%; }
   .hero-text { flex: 1 1 280px; min-width: 0; }
   .hero h1 { margin: 0; font-size: 40px; line-height: 1.15; font-weight: 800; letter-spacing: -.01em; }
-  .hero h1 .f { color: var(--pink); }
   .hero p { margin: 6px 0 0; color: var(--sub); font-weight: 700; }
   .badge { display: inline-block; font-size: 11px; font-weight: 800; color: var(--sub); background: #EFECF9;
     border-radius: 999px; padding: 2px 10px; margin-top: 8px; }
@@ -84,15 +83,29 @@
 
   <header class="hero">
     <div class="logo" aria-hidden="true">
-      <svg viewBox="0 0 64 64">
-        <rect width="64" height="64" rx="16" fill="#2B2350"/>
-        <path d="M32 12 L37.3 23.6 L50 25 L40.5 33.6 L43.2 46.2 L32 39.8 L20.8 46.2 L23.5 33.6 L14 25 L26.7 23.6 Z"
-          fill="#E0348C" stroke="#E0348C" stroke-width="5" stroke-linejoin="round"/>
-        <text x="32" y="38" text-anchor="middle" font-family="M PLUS Rounded 1c, sans-serif" font-weight="800" font-size="15" fill="#fff">2f</text>
+      <svg viewBox="0 0 512 512">
+        <defs>
+          <linearGradient id="logo-rainbow" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" stop-color="#FF5E7E"/><stop offset=".2" stop-color="#FFB347"/><stop offset=".4" stop-color="#FFE66D"/>
+            <stop offset=".6" stop-color="#7EE081"/><stop offset=".8" stop-color="#5CC8FF"/><stop offset="1" stop-color="#A78BFA"/>
+          </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="112" fill="#2B2350"/>
+        <polygon points="392.0,104.0 404.9,132.2 435.7,135.8 412.9,156.8 419.0,187.2 392.0,172.0 365.0,187.2 371.1,156.8 348.3,135.8 379.1,132.2"
+          fill="#E3A812" stroke="#E3A812" stroke-width="12" stroke-linejoin="round"/>
+        <text x="256" y="196" text-anchor="middle" dominant-baseline="central" letter-spacing="-7"
+          font-family="'M PLUS Rounded 1c', 'Hiragino Maru Gothic ProN', sans-serif" font-weight="800" font-size="200" fill="#FFFFFF">2f</text>
+        <rect x="106" y="372" width="36" height="24" rx="12" fill="#B5E05A"/>
+        <rect x="150" y="372" width="36" height="24" rx="12" fill="#B5E05A"/>
+        <rect x="194" y="372" width="36" height="24" rx="12" fill="#FF8C2E"/>
+        <rect x="238" y="372" width="36" height="24" rx="12" fill="#FF8C2E"/>
+        <rect x="282" y="372" width="36" height="24" rx="12" fill="#FFE066"/>
+        <rect x="326" y="372" width="36" height="24" rx="12" fill="#FFE066"/>
+        <rect x="370" y="372" width="36" height="24" rx="12" fill="url(#logo-rainbow)"/>
       </svg>
     </div>
     <div class="hero-text">
-      <h1>2<span class="f">f</span>RATE</h1>
+      <h1>2fRATE</h1>
       <p>でらっくスコアを用いた新たなレートシステム</p>
       <span class="badge">非公式・ファンメイドツール</span>
     </div>
