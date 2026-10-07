@@ -67,6 +67,30 @@
   .notes ul { margin: 0; padding-left: 1.2em; }
   .notes li + li { margin-top: 4px; }
 
+  /* Discord */
+  .community { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; text-decoration: none; color: #fff;
+    background: #5865F2; border-radius: 18px; padding: 18px 20px;
+    transition: transform .15s, box-shadow .15s; }
+  .community:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(88,101,242,.3); }
+  .community-ic { width: 52px; height: 52px; border-radius: 16px; background: rgba(255,255,255,.14); display: grid; place-items: center; flex: none; }
+  .community-ic svg { width: 30px; height: 30px; display: block; }
+  .community-body { flex: 1 1 240px; min-width: 0; }
+  .community-name { font-size: 17px; font-weight: 800; line-height: 1.4; }
+  .community-desc { font-size: 13px; opacity: .92; line-height: 1.65; }
+  .community-go { flex: none; font-weight: 800; font-size: 14px; background: #fff; color: #5865F2; border-radius: 999px; padding: 8px 18px; }
+
+  /* 製作者 */
+  .author { display: flex; align-items: center; gap: 14px; margin-top: 10px; text-decoration: none; color: var(--ink);
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; padding: 14px 20px;
+    transition: border-color .15s, transform .15s, box-shadow .15s; }
+  .author:hover { border-color: #CFC6EC; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(43,35,80,.08); }
+  .author-ic { width: 44px; height: 44px; border-radius: 12px; background: #000; color: #fff; display: grid; place-items: center; flex: none; }
+  .author-ic svg { width: 20px; height: 20px; display: block; }
+  .author-body { flex: 1 1 auto; min-width: 0; }
+  .author-label { font-size: 12px; font-weight: 700; color: var(--sub); }
+  .author-name { font-size: 16px; font-weight: 800; line-height: 1.4; }
+  .author-go { flex: none; font-size: 13px; font-weight: 800; color: var(--sub); }
+
   footer { margin-top: 36px; text-align: center; font-size: 12px; color: var(--sub); }
   footer a { color: var(--sub); }
 
@@ -177,10 +201,32 @@
     <li><b>ブックマークを実行</b><span>登録したブックマークを開くと、数秒〜十数秒で結果が表示されます。</span></li>
   </ol>
 
+  <h2>コミュニティ・お問い合わせ</h2>
+  <a class="community" href="https://discord.gg/FtwW32pdaA" target="_blank" rel="noopener">
+    <div class="community-ic" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="Discord"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
+    </div>
+    <div class="community-body">
+      <div class="community-name">2fRATE Discord サーバー</div>
+      <div class="community-desc">お知らせ、不具合の報告、要望などはこちらへ。どなたでも参加できます。</div>
+    </div>
+    <span class="community-go">参加する →</span>
+  </a>
+  <a class="author" href="https://x.com/Porto_mint" target="_blank" rel="noopener">
+    <div class="author-ic" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>
+    </div>
+    <div class="author-body">
+      <div class="author-label">製作者</div>
+      <div class="author-name">@Porto_mint</div>
+    </div>
+    <span class="author-go">X（Twitter）→</span>
+  </a>
+
   <h2>注意事項</h2>
   <div class="notes">
     <ul>
-      <li>非公式のファンメイドツールです。株式会社セガおよび関連会社とは一切関係ありません。公式へのお問い合わせはご遠慮ください。</li>
+      <li>非公式のファンメイドツールです。株式会社セガおよび関連会社とは一切関係ありません。このツールに関するお問い合わせは、セガ（公式）ではなく、<a href="https://discord.gg/FtwW32pdaA" target="_blank" rel="noopener">2fRATE Discord サーバー</a>または製作者の X（<a href="https://x.com/Porto_mint" target="_blank" rel="noopener">@Porto_mint</a>）までお願いします。</li>
       <li>楽曲のジャケット画像の著作権は、各権利者に帰属します。</li>
       <li>レートの計算はすべてお使いのブラウザ内で行います。プレイデータが外部に送られるのは、ご自身で「ランキングに登録」したときだけです。</li>
       <li>公式サイトへの負荷を抑えるため、短時間に何度も連続で実行しないでください。</li>
@@ -189,7 +235,7 @@
   </div>
 
   <footer>
-    2fRATE（非公式）・<a href="https://github.com/n4f1316/dxscore-tools">GitHub</a>
+    2fRATE（非公式）・<a href="https://discord.gg/FtwW32pdaA" target="_blank" rel="noopener">Discord</a>・<a href="https://x.com/Porto_mint" target="_blank" rel="noopener">X（@Porto_mint）</a>・<a href="https://github.com/n4f1316/dxscore-tools">GitHub</a>
   </footer>
 </div>
 </body>
