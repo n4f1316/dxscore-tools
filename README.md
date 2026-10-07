@@ -1,8 +1,8 @@
 # 2fRATE
 
-maimaiでらっくす の公式サイト「maimai DX NET」上で動く、でらっくスコアを使った独自レート「2fRATE」の計算ツールです（非公式・ファンメイド）。
+maimaiでらっくす の公式サイト「maimaiでらっくすNET」上で動く、でらっくスコアを使った独自レート「2fRATE」の計算ツールです（非公式・ファンメイド）。
 
-ブックマークレットとして登録し、maimai DX NET にログインした状態で実行すると、自分のでらっくスコアから 2fRATE を計算して表示します。
+ブックマークレットとして登録し、maimaiでらっくすNET にログインした状態で実行すると、自分のでらっくスコアから 2fRATE を計算して表示します。
 
 ## できること
 
@@ -88,7 +88,7 @@ javascript:(()=>{const s=document.createElement('script');s.src='https://n4f1316
 
 ## 使い方
 
-1. [maimai DX NET](https://maimaidx.jp/maimai-mobile/) にログインします（どのページを開いていても構いません）。
+1. [maimaiでらっくすNET](https://maimaidx.jp/maimai-mobile/) にログインします（どのページを開いていても構いません）。
 2. 登録したブックマークを実行します。
 3. レコードのページを順番に読み込むため、数秒〜十数秒ほど待ちます。
 4. プレイヤー情報、3種類の 2fRATE、上位50譜面の一覧が表示されます。
@@ -114,16 +114,50 @@ javascript:(()=>{const s=document.createElement('script');s.src='https://n4f1316
 
 - 非公式のファンメイドツールです。株式会社セガおよび関連会社とは一切関係ありません。
 - 楽曲のジャケット画像の著作権は、各権利者に帰属します。
-- あなたのプレイデータを外部に送信することはありません。計算と画像の作成はすべてブラウザ内で行っています（譜面定数表などのデータを、このリポジトリから読み込むだけです）。
+- 計算と画像の作成はすべてブラウザ内で行っています（譜面定数表などのデータを、このリポジトリから読み込むだけです）。プレイデータが外部（2fRATE のランキング用サーバー）に送信されるのは、結果画面から「ランキングに登録」したときだけです。
 - 公式サイトへの負荷を抑えるため、ページの読み込みは間隔を空けて行っています。短時間に何度も連続で実行しないようにしてください。
 - 公式サイトの構成が変わると、動作しなくなることがあります。
 - 公式サイトの機能の利用状況（コースの加入状況など）によっては、一部のページが見られず正しく計算できない場合があります。
 
 ---
 
-### ランキング集計した結果のビューア（viewer.html）
+## 管理者向け
 
-楽曲別のでらっくスコア全国ランキング（上位100人）から、譜面ごとに1位・50位・100位のスコア、平均取得率、☆7・☆6の人数を集計した結果を載せています。プレーヤー名は保存しません。
+### 譜面定数表の作成（collect_consts.js）
+
+レベル別のレコードページは「定数の低い順、同じ定数内はジャンル順」に並んでいるため、ジャンルの並びが後戻りした地点を定数の段の境目とみなして、定数を割り当てています。検出した段数が理論上の段数（例：13+ なら 13.6〜13.9 の4段）と一致したレベルのみ定数を確定します。
+
+```
+javascript:(()=>{const s=document.createElement('script');s.src='https://n4f1316.github.io/dxscore-tools/collect_consts.js?'+Date.now();document.body.appendChild(s);})();void(0);
+```
+
+バージョン更新時は、maimaiでらっくすNET で実行して各レベルが「確定」になっていることを確認し、定数表を `maimai_consts_<バージョン名>.json` としてアップロードし、`dxscore_rating.js` の `CONST_URL` を書き換えます。
+
+### ジャケット対応表の作成（collect_jackets.js）
+
+公式の楽曲リストから「曲名 → ジャケット画像のファイル名」の対応表を作ります。**maimaiでらっくすNET ではなく、公式サイト（https://maimai.sega.jp/）を開いた状態で**実行し、`maimai_jackets.json` をアップロードします。新曲が追加されたときに作り直してください。
+
+```
+javascript:(()=>{const s=document.createElement('script');s.src='https://n4f1316.github.io/dxscore-tools/collect_jackets.js?'+Date.now();document.body.appendChild(s);})();void(0);
+```
+
+同名の別曲（Link など）で、種別・難易度・レベルまで同じ譜面は自動で判別できないため、`jacket_overrides.json` に「曲名|種別|難易度|でらっくスコア最大値」とジャンルの対応を手動で書きます。
+
+```json
+{
+ "Link|ST|MASTER|924": "maimai",
+ "Link|ST|MASTER|1839": "niconico＆ボーカロイド"
+}
+```
+
+### ランキング集計（collect_ranking.js）とビューア（viewer.html）
+
+楽曲別のでらっくスコア全国ランキング（上位100人）から、譜面ごとに1位・50位・100位のスコア、平均取得率、☆7・☆6の人数を集計します。プレーヤー名は保存しません。結果はレベルごとのJSON（`ranking/lv13p.json` など）としてダウンロードし、`ranking` フォルダに置きます。
+
+```
+javascript:(()=>{const s=document.createElement('script');s.src='https://n4f1316.github.io/dxscore-tools/collect_ranking.js?'+Date.now();document.body.appendChild(s);})();void(0);
+```
+
 集計結果は、閲覧専用のビューアで誰でも見られます（ログイン不要）。
 
 https://n4f1316.github.io/dxscore-tools/viewer.html

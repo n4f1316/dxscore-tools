@@ -157,7 +157,7 @@
   // ============================================================
 
   if (location.hostname !== 'maimaidx.jp') {
-    alert('maimai DX NET にログインした状態で実行してください。');
+    alert('maimaiでらっくすNET にログインした状態で実行してください。');
     return;
   }
 
