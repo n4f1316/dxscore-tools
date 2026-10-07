@@ -133,7 +133,7 @@
   const PLAYER_URL = '/maimai-mobile/home/';
 
   // ジャケット画像：「曲名 → 画像ファイル名」の対応表（collect_jackets.js で作成）を読み、
-  // maimai DX NET 上の画像をそのまま表示する（画像そのものはコピーしない）
+  // maimaiでらっくすNET 上の画像をそのまま表示する（画像そのものはコピーしない）
   const JACKETS_URL = 'https://n4f1316.github.io/dxscore-tools/maimai_jackets.json';
   const OVERRIDES_URL = 'https://n4f1316.github.io/dxscore-tools/jacket_overrides.json'; // 同名曲の手動対応表
   let jacketOverrides = {};
@@ -152,7 +152,7 @@
 
   // おすすめ楽曲：ランキング集計のデータ（譜面ごとの取りやすさ）の置き場所
   const RANKING_STATS_DIR = 'https://n4f1316.github.io/dxscore-tools/ranking/';
-  const SHOW_RECOMMEND = true; // おすすめ楽曲のボタンを出すか（α版・β版は true。正式版に入れるまでは正式版で false）
+  const SHOW_RECOMMEND = true; // おすすめ楽曲のボタンを出すか
   const RECOMMEND_COUNT = 30; // 表示するおすすめ楽曲の数
   const RECOMMEND_MAX_FROM = 11.5; // ☆7まで のレートがこれ以上の人にだけ、理論値（☆7）を目標にした譜面もおすすめする
   const RECOMMEND_LOW_BELOW = 10.0; // ☆7まで のレートがこれ未満の人は「初中級向け」のおすすめにする
@@ -699,11 +699,11 @@
     const here = readProfile(document);
     if (here.name) return here;
     const res = await fetch(PLAYER_URL, { credentials: 'same-origin' });
-    if (!res.ok) throw new Error(`maimai DX NET に接続できませんでした（HTTP ${res.status}）。`);
+    if (!res.ok) throw new Error(`maimaiでらっくすNET に接続できませんでした（HTTP ${res.status}）。`);
     const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
     const got = readProfile(doc);
     if ((res.redirected && !res.url.includes('/home')) || !got.name) {
-      throw new Error('maimai DX NET にログインしていないようです。ログインしてから、もう一度実行してください。');
+      throw new Error('maimaiでらっくすNET にログインしていないようです。ログインしてから、もう一度実行してください。');
     }
     return got;
   }
@@ -772,7 +772,7 @@
   };
   const RAINBOW = ['#FF5E7E', '#FFB347', '#FFE66D', '#7EE081', '#5CC8FF', '#A78BFA'];
 
-  // 画像を読み込む（失敗や時間切れなら null）。maimai DX NET 上で実行しているので同じサイトの画像は描ける
+  // 画像を読み込む（失敗や時間切れなら null）。maimaiでらっくすNET 上で実行しているので同じサイトの画像は描ける
   function loadImage(src, ms = 8000) {
     return new Promise((resolve) => {
       if (!src) return resolve(null);
@@ -1615,7 +1615,7 @@
   // ============================================================
 
   if (location.hostname !== 'maimaidx.jp') {
-    alert('maimai DX NET にログインした状態で実行してください。');
+    alert('maimaiでらっくすNET にログインした状態で実行してください。');
     return;
   }
 

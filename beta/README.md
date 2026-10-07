@@ -45,7 +45,7 @@ javascript:(()=>{const s=document.createElement('script');s.src='https://n4f1316
 
 ## 使い方
 
-1. [maimai DX NET](https://maimaidx.jp/maimai-mobile/) にログインします（どのページを開いていても構いません）。
+1. [maimaiでらっくすNET](https://maimaidx.jp/maimai-mobile/) にログインします（どのページを開いていても構いません）。
 2. 登録したブックマークを実行します。
 3. レコードのページを順番に読み込むため、数秒〜十数秒ほど待ちます。
 4. 結果画面が表示されます。左上に「2fRATE β版」と出ていれば、β版が動いています。
@@ -66,7 +66,7 @@ javascript:(()=>{const s=document.createElement('script');s.src='https://n4f1316
 
 ## 感想・不具合の連絡先
 
-感想や不具合等はDiscordサーバーにて連絡してください。
+（ここに連絡先を記入してください）
 
 ## 注意事項
 
