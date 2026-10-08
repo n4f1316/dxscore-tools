@@ -126,8 +126,8 @@
     <div class="count" id="count"></div>
     <div id="listBox"></div>
     <p class="foot">
-      単曲レート値 =（譜面定数 × 譜面定数 × ☆の整数部分 ＋ 譜面定数 × 譜面定数 × ☆の小数部分 × 0.5）÷ 100（☆7のみ ＋0.1）。
-      「☆6まで」「☆5まで」は、上限を超える☆をその上限として計算します。☆1未満は0です。<br>
+      単曲レート値 =（譜面定数 × 譜面定数 × ☆の整数部分 ＋ 譜面定数 × 譜面定数 × ☆の小数部分 × 0.5）÷ 100。
+      「☆6まで」「☆5まで」は、上限を超える☆をその上限として計算します。☆が上限（☆7まで は☆7、☆6まで は☆6、☆5まで は☆5）に達した譜面は ＋0.1 です。☆1未満は0です。<br>
       ☆の基準：☆7 100%、☆6 99%以上、☆5 97%以上、☆4 95%以上、☆3 93%以上、☆2 90%以上、☆1 85%以上。<br>
       非公式のファンメイドツールです。株式会社セガとは一切関係ありません。楽曲のジャケット画像の著作権は、各権利者に帰属します。
     </p>
@@ -154,9 +154,9 @@
   const FRACTION_WEIGHT = 0.5;
   const MAX_BONUS = 0.1;
   const MODES = [
-    { id: 'full', label: '☆7まで', cap: 7 },
-    { id: 'cap6', label: '☆6まで', cap: 6 },
-    { id: 'cap5', label: '☆5まで', cap: 5 },
+    { id: 'full', label: '☆7まで', cap: 7, shift: 0 },   // shift：ランクの区切りを「☆7まで」から下げる量
+    { id: 'cap6', label: '☆6まで', cap: 6, shift: 0.5 },
+    { id: 'cap5', label: '☆5まで', cap: 5, shift: 1.5 },
   ];
   // ☆×10 の整数（例：6.4 → 64）から単曲レート値を出す
   function rateOf(c, tenths, cap) {
@@ -164,10 +164,10 @@
     const t = Math.min(tenths, cap * 10);
     const whole = Math.floor(t / 10);
     const frac = (t % 10) / 10;
-    return (c * c * whole + c * c * frac * FRACTION_WEIGHT) / RATE_DIVISOR + (t >= 70 ? MAX_BONUS : 0);
+    return (c * c * whole + c * c * frac * FRACTION_WEIGHT) / RATE_DIVISOR + (t >= cap * 10 ? MAX_BONUS : 0); // ☆が上限に達したら +0.1
   }
 
-  // ランク（2fRATE の「☆7まで」と同じ区切りと色）
+  // ランク（2fRATE と同じ区切りと色）。min は「☆7まで」の区切り。☆6まで・☆5まで は MODES の shift だけ下げる
   const RANKS = [
     { name: 'LEGEND',        min: 12,   colors: ['#6A1BD8', '#D6246E', '#F2A007'], glow: 'rgba(242,160,7,.55)' },
     { name: 'RAINBOW PLUS',  min: 11.5, colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'], glow: 'rgba(255,196,0,.6)' },
@@ -182,10 +182,10 @@
     { name: 'BRONZE',        min: 7,    colors: ['#8E4E22', '#C07A45', '#8E4E22'] },
     { name: 'WAKABA',        min: -Infinity, colors: ['#3E9B3A', '#7CBF3F'] },
   ];
-  const rankOf = (v) => RANKS.find((r) => Math.round(v * 1000) / 1000 >= r.min);
+  const rankOf = (v, shift = 0) => RANKS.find((r) => Math.round(v * 1000) / 1000 >= r.min - shift);
   // 文字をランクの色（グラデーション＋PLUS などの光）にする
-  function paintRank(node, v) {
-    const rank = rankOf(v);
+  function paintRank(node, v, shift = 0) {
+    const rank = rankOf(v, shift);
     node.classList.add('ranked');
     node.style.backgroundImage = `linear-gradient(90deg, ${rank.colors.join(', ')})`;
     node.style.filter = rank.glow ? `drop-shadow(0 0 3px ${rank.glow})` : '';
@@ -316,7 +316,7 @@
         const card = el('div', 'res' + (i === 0 ? ' main' : ''));
         const v = rateOf(s.c, starTenths, m.cap);
         const val = el('div', 'res-value', v.toFixed(3));
-        if (m.id === 'full') paintRank(val, v); // 「☆7まで」はランクの色で表示
+        paintRank(val, v, m.shift); // ランクの色で表示（レートの種類ごとの区切り）
         card.append(el('div', 'res-label', m.label), val);
         return card;
       }));

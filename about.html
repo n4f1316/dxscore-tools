@@ -46,6 +46,10 @@
   .s7  { background: linear-gradient(90deg, #FF3B6B, #FF8A00, #E8B400, #1FB88E, #2F7BFF, #8A3FFC); color: #fff; }
 
   /* ランク */
+  .tbl-rank { background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; padding: 6px 10px; overflow-x: auto; }
+  .tbl-rank td:first-child { text-align: left; }
+  .rk-cell { display: flex; align-items: center; gap: 10px; }
+  .tbl-rank td:not(:first-child) { font-weight: 800; color: var(--sub); }
   .ranks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .rk { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1.5px solid var(--line); border-radius: 14px; padding: 8px 14px; }
   .rk-ic { width: 40px; height: 40px; flex: none; }
@@ -58,6 +62,11 @@
   @media (max-width: 640px) {
     h1 { font-size: 24px; }
     .ranks { grid-template-columns: 1fr; }
+    .tbl-rank { padding: 4px 6px; }
+    .tbl-rank th, .tbl-rank td { padding: 7px 4px; font-size: 12px; }
+    .tbl-rank .rk-ic { width: 26px; height: 26px; }
+    .tbl-rank .rk-cell { gap: 6px; }
+    .tbl-rank .rk-name { font-size: 12px; letter-spacing: 0; }
     .formula { font-size: 14px; padding: 12px 14px; }
   }
 </style>
@@ -94,9 +103,9 @@
     <div class="formula">
       （譜面定数 × 譜面定数 × <span class="v">☆の整数部分</span><br>
       　＋ 譜面定数 × 譜面定数 × <span class="v">☆の小数部分</span> × 0.5）÷ 100<br>
-      　＋ <span class="bonus">0.1（☆7のときだけ）</span>
+      　＋ <span class="bonus">0.1（☆がレートの上限に達したときだけ）</span>
     </div>
-    <p>☆の小数部分は半分の重みで加わり、理論値（☆7）の譜面にはさらに 0.1 のボーナスがつきます。</p>
+    <p>☆の小数部分は半分の重みで加わります。☆がそのレートの上限（☆7まで なら☆7、☆6まで なら☆6、☆5まで なら☆5）に達した譜面には、さらに 0.1 のボーナスがつきます。下の表は「☆7まで」の例です。</p>
     <div class="tblw">
       <table>
         <thead><tr><th>譜面定数</th><th>☆6.0</th><th>☆6.4</th><th>☆6.9</th><th>☆7.0</th></tr></thead>
@@ -113,16 +122,21 @@
   <div class="card">
     <p>単曲レート値の高い上位50譜面（レート対象曲）の平均が 2fRATE です。50譜面に満たない場合も50で割ります。</p>
     <ul style="margin-top:10px">
-      <li><b>☆7まで</b>：上の式そのままのレートです。ランクはこのレートで決まります。</li>
-      <li><b>☆6まで</b>：☆7の譜面を☆6.0として計算します（ボーナスの 0.1 はつきません）。</li>
-      <li><b>☆5まで</b>：☆5を超える譜面を☆5.0として計算します（ボーナスの 0.1 はつきません）。</li>
+      <li><b>☆7まで</b>：上の式そのままのレートです。☆7（理論値）の譜面に 0.1 のボーナスがつきます。</li>
+      <li><b>☆6まで</b>：☆7の譜面を☆6.0として計算します。☆6.0以上の譜面に 0.1 のボーナスがつきます。</li>
+      <li><b>☆5まで</b>：☆5を超える譜面を☆5.0として計算します。☆5.0以上の譜面に 0.1 のボーナスがつきます。</li>
     </ul>
     <p>レート対象曲は、レートの種類ごとに別々に選びます。</p>
   </div>
 
   <h2>ランク</h2>
-  <p class="sub" style="margin:-4px 0 10px">「☆7まで」の 2fRATE（小数第3位までの表示）で決まります。</p>
-  <div class="ranks" id="ranks"></div>
+  <p class="sub" style="margin:-4px 0 10px">3種類の 2fRATE それぞれにランクがあり、表示している値（小数第3位まで）で決まります。区切りは「☆7まで」が LEGEND 12.000 以上、「☆6まで」が 11.500 以上、「☆5まで」が 10.500 以上で、それより下はどれも 0.500 刻みです。</p>
+  <div class="tbl-rank">
+    <table>
+      <thead><tr><th>ランク</th><th>☆7まで</th><th>☆6まで</th><th>☆5まで</th></tr></thead>
+      <tbody id="ranks"></tbody>
+    </table>
+  </div>
 
   <footer>2fRATE（非公式）・<a href="./">トップ</a>・<a href="https://github.com/n4f1316/dxscore-tools">GitHub</a></footer>
 </div>
@@ -209,10 +223,14 @@
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">${body}${badge}</svg>`;
   }
 
+  // レートの種類ごとに区切りを下げる量（☆6まで は 0.5、☆5まで は 1.5）
+  const SHIFTS = [0, 0.5, 1.5];
   const box = document.getElementById('ranks');
-  RANKS.forEach((r) => {
-    const row = document.createElement('div');
-    row.className = 'rk';
+  RANKS.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    const cell = document.createElement('div');
+    cell.className = 'rk-cell';
     const ic = document.createElement('div');
     ic.className = 'rk-ic';
     ic.innerHTML = rankIconSvg(r.name); // ページ内で作る固定のSVGのみ
@@ -221,11 +239,17 @@
     nm.textContent = r.name;
     nm.style.backgroundImage = `linear-gradient(90deg, ${r.colors.join(', ')})`;
     if (r.glow) nm.style.filter = `drop-shadow(0 0 3px ${r.glow})`;
-    const mn = document.createElement('span');
-    mn.className = 'rk-min';
-    mn.textContent = Number.isFinite(r.min) ? `${r.min.toFixed(3)} 〜` : `〜 ${(RANKS[RANKS.length - 2].min - 0.001).toFixed(3)}`;
-    row.append(ic, nm, mn);
-    box.appendChild(row);
+    cell.append(ic, nm);
+    td.appendChild(cell);
+    tr.appendChild(td);
+    SHIFTS.forEach((sh) => {
+      const c = document.createElement('td');
+      c.textContent = Number.isFinite(r.min)
+        ? `${(r.min - sh).toFixed(3)}〜`
+        : `〜${(RANKS[i - 1].min - sh - 0.001).toFixed(3)}`;
+      tr.appendChild(c);
+    });
+    box.appendChild(tr);
   });
 })();
 </script>

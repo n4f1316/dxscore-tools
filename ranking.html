@@ -59,6 +59,8 @@
   .bf-rank-icon svg { width: 100%; height: 100%; display: block; }
   .bf-rate-value { font-size: 38px; font-weight: 800; font-variant-numeric: tabular-nums; color: transparent;
     -webkit-background-clip: text; background-clip: text; line-height: 1.1; }
+  .bf-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+  .bf-tabs button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
   .bf-list { background: #fff; border: 1.5px solid var(--line); border-radius: 16px; overflow: hidden; }
   .bf-row { display: grid; grid-template-columns: 30px 44px 1fr 66px 72px 72px; gap: 10px; align-items: center;
     padding: 9px 14px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
@@ -136,12 +138,12 @@
   const OVERRIDES_URL = 'jacket_overrides.json';
   const JACKET_BASES = ['https://maimaidx.jp/maimai-mobile/img/Music/', 'https://maimai.sega.jp/storage/DX_jacket/'];
   const MODES = [
-    { key: 'rateFull', label: '☆7まで', ranked: true },
-    { key: 'rateCap6', label: '☆6まで' },
-    { key: 'rateCap5', label: '☆5まで' },
+    { key: 'rateFull', id: 'full', label: '☆7まで', shift: 0 },   // LEGEND 12.000 以上
+    { key: 'rateCap6', id: 'cap6', label: '☆6まで', shift: 0.5 }, // LEGEND 11.500 以上
+    { key: 'rateCap5', id: 'cap5', label: '☆5まで', shift: 1.5 }, // LEGEND 10.500 以上
   ];
 
-  // ランク（2fRATE の「☆7まで」と同じ区切りと色）
+  // ランク（2fRATE と同じ区切りと色）。min は「☆7まで」の区切りで、☆6まで・☆5まで は MODES の shift だけ下げて判定する
   const RANKS = [
     { name: 'LEGEND',        min: 12,   colors: ['#6A1BD8', '#D6246E', '#F2A007'], glow: 'rgba(242,160,7,.55)' },
     { name: 'RAINBOW PLUS',  min: 11.5, colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'], glow: 'rgba(255,196,0,.6)' },
@@ -156,7 +158,9 @@
     { name: 'BRONZE',        min: 7,    colors: ['#8E4E22', '#C07A45', '#8E4E22'] },
     { name: 'WAKABA',        min: -Infinity, colors: ['#3E9B3A', '#7CBF3F'] },
   ];
-  const rankOf = (v) => RANKS.find((r) => Math.round(v * 1000) / 1000 >= r.min);
+  const rankOf = (v, shift = 0) => RANKS.find((r) => Math.round(v * 1000) / 1000 >= r.min - shift);
+  // ベスト枠のデータを { full, cap6, cap5 } の形にそろえる（古い記録は☆7までの配列だけ）
+  const framesOf = (t) => (Array.isArray(t) ? { full: t } : t && typeof t === 'object' ? t : {});
 
   // ランクのアイコン（SVG）。デフォルメ調：太めの角丸の線、ベタ塗り（ツヤなし）
   function rankIconSvg(rankName) {
@@ -268,8 +272,9 @@
     return hits.length === 1 ? { img: hits[0].img, genre: hits[0].genre } : null;
   }
 
-  // player: { name, icon, rateFull }、top50: 譜面の配列、jk: { map, overrides }
-  function openBestFrame(player, top50, jk) {
+  // player: { name, icon, rateFull, rateCap6, rateCap5 }、frames: { full, cap6, cap5 }（それぞれ譜面の配列）
+  // jk: { map, overrides }、startId: 最初に表示するレートの種類
+  function openBestFrame(player, frames, jk, startId = 'full') {
     const ov = el('div', 'bf-overlay');
     const box = el('div', 'bf-box');
     box.setAttribute('role', 'dialog');
@@ -293,75 +298,98 @@
       head.appendChild(defaultIcon('bf-icon'));
     }
     const who = el('div', 'bf-who');
-    who.append(el('div', 'bf-name', player.name), el('div', 'bf-label', '2fRATE（☆7まで）'));
+    const label = el('div', 'bf-label');
+    who.append(el('div', 'bf-name', player.name), label);
     head.appendChild(who);
     const rate = el('div', 'bf-rate');
-    if (Number.isFinite(player.rateFull)) {
-      const rank = rankOf(player.rateFull);
-      const ic = el('span', 'bf-rank-icon');
-      ic.innerHTML = rankIconSvg(rank.name); // ページ内で作る固定のSVGのみ
-      const val = el('span', 'bf-rate-value', player.rateFull.toFixed(3));
-      val.style.backgroundImage = `linear-gradient(90deg, ${rank.colors.join(', ')})`;
-      if (rank.glow) val.style.filter = `drop-shadow(0 0 3px ${rank.glow})`;
-      val.title = rank.name;
-      rate.append(ic, val);
-    }
     head.appendChild(rate);
     const x = el('button', 'bf-close', '閉じる');
     x.type = 'button';
     x.onclick = close;
-    box.append(x, head);
+    // レートの種類の切り替え
+    const tabs = el('div', 'bf-tabs');
+    box.append(x, head, tabs);
 
-    // 譜面の一覧（2fRATE 実行時の表と同じ形式）
-    const list = el('div', 'bf-list');
-    const hr = el('div', 'bf-row bf-hrow');
-    hr.append(el('div', 'bf-no', '#'), el('div'), el('div', '', '曲名'), el('div', 'bf-c', '☆'),
-      el('div', 'bf-r bf-maxcol', 'MAX差'), el('div', 'bf-c', 'レート値'));
-    list.appendChild(hr);
-    if (!top50.length) list.appendChild(el('div', 'bf-empty', 'ベスト枠のデータがありません。'));
-    top50.forEach((t, i) => {
-      const row = el('div', 'bf-row');
-      const song = bfResolveSong(jk.map, jk.overrides, t.name, t.kind, t.diff, t.level, t.max);
-      let jacket;
-      if (song?.img) {
-        jacket = el('img', 'bf-jk');
-        let k = 0;
-        jacket.alt = '';
-        jacket.loading = 'lazy';
-        jacket.src = JACKET_BASES[0] + song.img;
-        jacket.onerror = () => { k++; if (k < JACKET_BASES.length) jacket.src = JACKET_BASES[k] + song.img; else jacket.replaceWith(el('div', 'bf-jk')); };
-      } else {
-        jacket = el('div', 'bf-jk');
+    let list = null;
+    function show(id) {
+      const m = MODES.find((x) => x.id === id) || MODES[0];
+      const top50 = Array.isArray(frames[m.id]) ? frames[m.id] : null;
+      // タブ
+      tabs.replaceChildren(...MODES.map((x) => {
+        const b = el('button', '', x.label);
+        b.type = 'button';
+        b.setAttribute('aria-pressed', String(x === m));
+        b.onclick = () => show(x.id);
+        return b;
+      }));
+      // 上部のレート（ランクの色）
+      label.textContent = `2fRATE（${m.label}）`;
+      rate.replaceChildren();
+      const v = player[m.key];
+      if (Number.isFinite(v)) {
+        const rank = rankOf(v, m.shift);
+        const ic = el('span', 'bf-rank-icon');
+        ic.innerHTML = rankIconSvg(rank.name); // ページ内で作る固定のSVGのみ
+        const val = el('span', 'bf-rate-value', v.toFixed(3));
+        val.style.backgroundImage = `linear-gradient(90deg, ${rank.colors.join(', ')})`;
+        if (rank.glow) val.style.filter = `drop-shadow(0 0 3px ${rank.glow})`;
+        val.title = rank.name;
+        rate.append(ic, val);
       }
-      const main = el('div');
-      const nm = el('div', 'bf-title', t.name);
-      if (song?.genre) nm.appendChild(el('span', 'bf-genre', `（${song.genre}）`));
-      const chips = el('div', 'bf-chips');
-      const diff = el('span', 'bf-chip bf-diff', t.diff);
-      if (t.diff === 'Re:MASTER') diff.classList.add('bf-remas');
-      else diff.style.background = BF_DIFF_COLOR[t.diff] || '#999';
-      const isMax = t.score === t.max;
-      const maxText = isMax ? 'MAX' : `MAX-${(t.max - t.score).toLocaleString()}`;
-      chips.append(
-        el('span', `bf-chip bf-kind-${t.kind === 'ST' ? 'ST' : 'DX'}`, t.kind),
-        diff,
-        el('span', 'bf-chip bf-const', `${Number(t.const).toFixed(1)}${t.estimated ? '*' : ''}`),
-        el('span', 'bf-maxinline' + (isMax ? ' is-max' : ''), maxText)
-      );
-      main.append(nm, chips);
-      const star = el('div', 'bf-c');
-      star.appendChild(el('span', `bf-star ${bfStarClass(Math.floor(Number(t.star)))}`, `☆${Number(t.star).toFixed(1)}`));
-      row.append(
-        el('div', 'bf-no', String(i + 1)),
-        jacket,
-        main,
-        star,
-        el('div', 'bf-r bf-maxcol' + (isMax ? ' is-max' : ''), maxText),
-        el('div', 'bf-r bf-value', Number(t.value).toFixed(3))
-      );
-      list.appendChild(row);
-    });
-    box.appendChild(list);
+      const old = list;
+      // 譜面の一覧（2fRATE 実行時の表と同じ形式）
+      list = el('div', 'bf-list');
+      const hr = el('div', 'bf-row bf-hrow');
+      hr.append(el('div', 'bf-no', '#'), el('div'), el('div', '', '曲名'), el('div', 'bf-c', '☆'),
+        el('div', 'bf-r bf-maxcol', 'MAX差'), el('div', 'bf-c', 'レート値'));
+      list.appendChild(hr);
+      if (!top50) list.appendChild(el('div', 'bf-empty', `この記録には「${m.label}」のレート対象曲がありません（以前の版で登録された記録です。登録し直すと表示されます）。`));
+      else if (!top50.length) list.appendChild(el('div', 'bf-empty', 'ベスト枠のデータがありません。'));
+      (top50 || []).forEach((t, i) => {
+        const row = el('div', 'bf-row');
+        const song = bfResolveSong(jk.map, jk.overrides, t.name, t.kind, t.diff, t.level, t.max);
+        let jacket;
+        if (song?.img) {
+          jacket = el('img', 'bf-jk');
+          let k = 0;
+          jacket.alt = '';
+          jacket.loading = 'lazy';
+          jacket.src = JACKET_BASES[0] + song.img;
+          jacket.onerror = () => { k++; if (k < JACKET_BASES.length) jacket.src = JACKET_BASES[k] + song.img; else jacket.replaceWith(el('div', 'bf-jk')); };
+        } else {
+          jacket = el('div', 'bf-jk');
+        }
+        const main = el('div');
+        const nm = el('div', 'bf-title', t.name);
+        if (song?.genre) nm.appendChild(el('span', 'bf-genre', `（${song.genre}）`));
+        const chips = el('div', 'bf-chips');
+        const diff = el('span', 'bf-chip bf-diff', t.diff);
+        if (t.diff === 'Re:MASTER') diff.classList.add('bf-remas');
+        else diff.style.background = BF_DIFF_COLOR[t.diff] || '#999';
+        const isMax = t.score === t.max;
+        const maxText = isMax ? 'MAX' : `MAX-${(t.max - t.score).toLocaleString()}`;
+        chips.append(
+          el('span', `bf-chip bf-kind-${t.kind === 'ST' ? 'ST' : 'DX'}`, t.kind),
+          diff,
+          el('span', 'bf-chip bf-const', `${Number(t.const).toFixed(1)}${t.estimated ? '*' : ''}`),
+          el('span', 'bf-maxinline' + (isMax ? ' is-max' : ''), maxText)
+        );
+        main.append(nm, chips);
+        const star = el('div', 'bf-c');
+        star.appendChild(el('span', `bf-star ${bfStarClass(Math.floor(Number(t.star)))}`, `☆${Number(t.star).toFixed(1)}`));
+        row.append(
+          el('div', 'bf-no', String(i + 1)),
+          jacket,
+          main,
+          star,
+          el('div', 'bf-r bf-maxcol' + (isMax ? ' is-max' : ''), maxText),
+          el('div', 'bf-r bf-value', Number(t.value).toFixed(3))
+        );
+        list.appendChild(row);
+      });
+      if (old) old.replaceWith(list); else box.appendChild(list);
+    }
+    show(startId);
     document.body.appendChild(ov);
     x.focus();
   }
@@ -383,10 +411,11 @@
         const res = await fetch(RANKING_API + '?top50=' + encodeURIComponent(r.id) + '&t=' + Date.now());
         const data = await res.json();
         if (!data.ok) throw new Error(data.error || '読み込めませんでした。');
-        top50 = Array.isArray(data.top50) ? data.top50 : [];
+        top50 = framesOf(data.top50);
         top50Cache.set(r.id, top50);
       }
-      openBestFrame({ name: r.name, icon: r.icon, rateFull: r.rateFull }, top50, await loadJackets());
+      openBestFrame({ name: r.name, icon: r.icon, rateFull: r.rateFull, rateCap6: r.rateCap6, rateCap5: r.rateCap5 },
+        top50, await loadJackets(), mode.id);
     } catch (e) {
       alert(e.message || 'ベスト枠を読み込めませんでした。');
     } finally {
@@ -398,6 +427,9 @@
   let all = [];
   let mode = MODES[0];
   let version = null;
+  // 計算式の版：いちばん新しい版の記録だけを表示する（計算式が変わる前の記録とは比べられないため）
+  let formula = null;
+  const formulaNo = (v) => Number(String(v || '').replace(/^v/, '')) || 0;
   let query = '';
 
   function renderTabs() {
@@ -429,6 +461,7 @@
     const q = query.trim().toLowerCase();
     const sorted = all
       .filter((r) => !version || r.constVersion === version)
+      .filter((r) => !formula || r.formulaVersion === formula)
       .filter((r) => Number.isFinite(r[mode.key]))
       .sort((a, b) => b[mode.key] - a[mode.key]);
     // 順位は同じ値なら同順位（絞り込み前の並びで決める）
@@ -472,8 +505,8 @@
       const rate = el('div', 'rate');
       const v = r[mode.key];
       const val = el('span', 'rate-value', v.toFixed(3));
-      if (mode.ranked) {
-        const rank = rankOf(v);
+      {
+        const rank = rankOf(v, mode.shift);
         const ic = el('span', 'rank-icon');
         ic.innerHTML = rankIconSvg(rank.name); // ページ内で作る固定のSVGのみ
         val.classList.add('ranked');
@@ -481,9 +514,6 @@
         if (rank.glow) val.style.filter = `drop-shadow(0 0 3px ${rank.glow})`;
         rate.append(ic, val);
         right.append(rate, el('div', 'rank-name', rank.name));
-      } else {
-        rate.appendChild(val);
-        right.appendChild(rate);
       }
       row.appendChild(right);
       list.appendChild(row);
@@ -506,6 +536,7 @@
     const count = {};
     all.forEach((r) => { if (r.constVersion) count[r.constVersion] = (count[r.constVersion] || 0) + 1; });
     version = Object.keys(count).sort((a, b) => count[b] - count[a])[0] || null;
+    formula = all.map((r) => r.formulaVersion).filter(Boolean).sort((a, b) => formulaNo(b) - formulaNo(a))[0] || null;
     $('status').textContent = '';
     $('app').hidden = false;
     let timer = null;
