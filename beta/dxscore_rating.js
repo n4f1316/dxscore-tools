@@ -21,16 +21,18 @@
   const MAX_STARS = STAR_THRESHOLDS[0].stars;
 
   // 計算するレートの種類（capStars: この☆を上限として計算。☆6以上を☆5扱いにするなら 5）
+  //   rankShift: ランクの区切りを「☆7まで」からどれだけ下げるか（☆6まで は LEGEND 11.500、☆5まで は LEGEND 10.500）
   const RATE_MODES = [
-    { id: 'full', label: '☆7まで', capStars: MAX_STARS },
-    { id: 'cap6', label: '☆6まで', capStars: 6 },
-    { id: 'cap5', label: '☆5まで', capStars: 5 },
+    { id: 'full', label: '☆7まで', capStars: MAX_STARS, rankShift: 0 },
+    { id: 'cap6', label: '☆6まで', capStars: 6, rankShift: 0.5 },
+    { id: 'cap5', label: '☆5まで', capStars: 5, rankShift: 1.5 },
   ];
 
-  // ランク（今は「☆7まで」のレートだけに適用）。min 以上でそのランク。上から順に判定する
-  //   LEGEND は 12.000 以上、それより下は 0.500 刻み（RAINBOW PLUS 11.500、RAINBOW 11.000 …、WAKABA は 7.000 未満）
+  // ランク（3種類のレートすべてに適用）。min 以上でそのランク。上から順に判定する
+  //   min は「☆7まで」の区切り：LEGEND は 12.000 以上、それより下は 0.500 刻み（RAINBOW PLUS 11.500 …、WAKABA は 7.000 未満）
+  //   「☆6まで」「☆5まで」は、RATE_MODES の rankShift だけ区切りを下げて判定する
   //   colors: 文字色のグラデーション（1色なら単色）。glow: 文字のまわりの光（PLUS のランクと LEGEND）
-  const RANK_MODES = ['full'];
+  const RANK_MODES = RATE_MODES.map((m) => m.id);
   const RANKS = [
     { name: 'LEGEND',       min: 12, colors: ['#6A1BD8', '#D6246E', '#F2A007'], glow: 'rgba(242,160,7,.55)' },
     { name: 'RAINBOW PLUS', min: 11.5, colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'], glow: 'rgba(255,196,0,.6)' },
@@ -46,9 +48,11 @@
     { name: 'WAKABA',       min: -Infinity, colors: ['#3E9B3A', '#7CBF3F'] },
   ];
   // 表示している値（小数第3位で四捨五入）でランクを決める（表示と判定をそろえるため）
-  const rankOf = (rating) => {
+  //   modeId: 'full' / 'cap6' / 'cap5'（省略時は「☆7まで」）
+  const rankOf = (rating, modeId = 'full') => {
     const v = Math.round(rating * 1000) / 1000;
-    return RANKS.find((r) => v >= r.min);
+    const shift = RATE_MODES.find((m) => m.id === modeId)?.rankShift ?? 0;
+    return RANKS.find((r) => v >= r.min - shift);
   };
   const rankCss = (rank) =>
     `background-image: linear-gradient(90deg, ${rank.colors.join(', ')});` +
@@ -125,7 +129,7 @@
   //   ☆は小数第一位まで。最大は 15.0 × 15.0 × 7 ÷ 100 = 15.75
   const RATE_DIVISOR = 100;
   const FRACTION_WEIGHT = 0.5; // ☆の小数部分にかける係数
-  const MAX_BONUS = 0.1;       // ☆7（理論値）の譜面だけに加える値
+  const MAX_BONUS = 0.1;       // ☆がそのレートの上限（☆7まで は☆7、☆6まで は☆6、☆5まで は☆5）に達した譜面に加える値
 
   const TOP_N = 50;          // 平均を取る曲数
   const WAIT_MS = 1500;      // ページ取得の間隔（サーバー負荷対策）
@@ -147,7 +151,7 @@
   // ランキング（Google Apps Script の受け取り口と、ランキングのページ）
   const RANKING_API = 'https://2frate.want131611.workers.dev/';
   const RANKING_PAGE = 'https://n4f1316.github.io/dxscore-tools/ranking.html';
-  const FORMULA_VERSION = 'v1'; // 計算式の版（計算式を変えたら上げる）
+  const FORMULA_VERSION = 'v2'; // 計算式の版（計算式を変えたら上げる）。v2：☆6まで・☆5まで でも上限到達で +0.1
   const USER_KEY = 'dxr-ranking-user'; // このブラウザで最後に使ったユーザー名（PINは保存しない）
 
   // おすすめ楽曲：ランキング集計のデータ（譜面ごとの取りやすさ）の置き場所
@@ -198,9 +202,9 @@
       : { label: String(base), min: base, max: base + 0.5 };
   }
 
-  // そのレベルの譜面が取りうる値の上限（☆上限・定数最大のとき）
+  // そのレベルの譜面が取りうる値の上限（☆上限・定数最大のとき。上限に達しているので +0.1 も含む）
   const upperBound = (n, capStars) =>
-    (levelInfo(n).max ** 2 * capStars) / RATE_DIVISOR + (capStars >= 7 ? MAX_BONUS : 0);
+    (levelInfo(n).max ** 2 * capStars) / RATE_DIVISOR + MAX_BONUS;
 
   // 小数の誤差を避けるため整数同士で比較する（cur/max >= pct% と同じ意味）
   function starsOf(cur, max) {
@@ -307,7 +311,7 @@
       const whole = Math.floor(t / 10);             // ☆の整数部分（6）
       const frac = (t % 10) / 10;                   // ☆の小数部分（0.4）
       values[m.id] = (c * c * whole + c * c * frac * FRACTION_WEIGHT) / RATE_DIVISOR
-        + (t >= 70 ? MAX_BONUS : 0); // ☆7として計算される譜面だけ +0.1
+        + (t >= m.capStars * 10 ? MAX_BONUS : 0); // ☆がそのレートの上限に達した譜面は +0.1
     }
     return { ...s, c, estimated: !inTable, stars, values };
   }
@@ -856,7 +860,7 @@
     const top = result.top.slice(0, cols * rows);
     const files = top.map((s) => resolveSong(jackets, s.name, s.kind, s.diff, s.level, s.max)?.img);
     const ranked = RANK_MODES.includes(result.mode.id);
-    const rankImg = ranked ? await loadImage(rankIconUrl(rankOf(result.rating).name)) : null;
+    const rankImg = ranked ? await loadImage(rankIconUrl(rankOf(result.rating, result.mode.id).name)) : null;
     const [iconImg, ...jacketImgs] = await Promise.all([
       loadImage(profile.icon),
       ...files.map((f) => loadImage(f ? JACKET_BASE + f : null)),
@@ -918,7 +922,7 @@
     const rateText = result.rating.toFixed(3);
     if (RANK_MODES.includes(result.mode.id)) {
       // ランクの色で描く（グラデーション・光）
-      const rank = rankOf(result.rating);
+      const rank = rankOf(result.rating, result.mode.id);
       const tw = ctx.measureText(rateText).width;
       const g = ctx.createLinearGradient(rx - tw, 0, rx, 0);
       rank.colors.forEach((c, i) => g.addColorStop(rank.colors.length > 1 ? i / (rank.colors.length - 1) : 0, c));
@@ -1129,7 +1133,22 @@
     const round3 = (v) => Math.round(v * 1000) / 1000;
     const iconFile = (String(profile.icon || '').match(/\/Icon\/([0-9a-f]{16}\.png)/) || [])[1] || '';
     const constVersion = (CONST_URL.match(/maimai_consts_([^/]+)\.json/) || [])[1] || '';
-    const rankName = rankOf(full.rating).name;
+    const rankName = rankOf(full.rating, 'full').name;
+    const rankCap6 = rankOf(cap6.rating, 'cap6').name;
+    const rankCap5 = rankOf(cap5.rating, 'cap5').name;
+    // レート対象曲（上位50譜面）を送る形にする。value はそのレートでの単曲レート値
+    const frameOf = (res) => res.top.map((t) => ({
+      name: t.name,
+      kind: t.kind,
+      diff: t.diff,
+      level: t.level,
+      const: t.c,
+      estimated: !!t.estimated,
+      score: t.cur,
+      max: t.max,
+      star: Math.round(starTenths(t.cur, t.max)) / 10,
+      value: round3(t.values[res.mode.id]),
+    }));
 
     const modal = el('div', 'dxr-modal');
     const dlg = el('div', 'dxr-dialog');
@@ -1177,7 +1196,7 @@
         return { lab, cb };
       };
       const anon = check('匿名で掲載する（表示名の代わりに「匿名#記号」で表示）', prev.anonymous ?? false);
-      const pub = check('ベスト枠（☆7までのレート対象曲50譜面）をランキングで公開する', prev.publicTop50 ?? true);
+      const pub = check('ベスト枠（3種類のレートそれぞれのレート対象曲50譜面）をランキングで公開する', prev.publicTop50 ?? true);
       const sync = () => { name.disabled = anon.cb.checked; };
       anon.cb.onchange = sync;
       sync();
@@ -1244,7 +1263,7 @@
       dlg.replaceChildren();
       dlg.append(el('h3', '', check.exists ? '記録を更新します' : '新しく登録します'),
         el('p', '', form.publicTop50
-          ? 'ランキングには次の内容と、ベスト枠（☆7までのレート対象曲50譜面）が公開されます（アイコンは匿名でも表示されます）。ユーザー名とPINは公開されません。'
+          ? 'ランキングには次の内容と、ベスト枠（☆7まで・☆6まで・☆5まで それぞれのレート対象曲50譜面）が公開されます（アイコンは匿名でも表示されます）。ユーザー名とPINは公開されません。'
           : 'ランキングには次の内容が公開されます（アイコンは匿名でも表示されます）。ベスト枠は管理者の確認用に送信されますが、公開はされません。ユーザー名とPINは公開されません。'));
 
       const pv = el('div', 'dxr-preview');
@@ -1259,7 +1278,7 @@
       const tx = el('div');
       tx.append(
         el('div', 'nm', form.anonymous ? `匿名#${check.anonCode}` : form.displayName),
-        el('div', 'rt', `☆7まで ${full.rating.toFixed(3)}（${rankName}）／☆6まで ${cap6.rating.toFixed(3)}／☆5まで ${cap5.rating.toFixed(3)}`)
+        el('div', 'rt', `☆7まで ${full.rating.toFixed(3)}（${rankName}）／☆6まで ${cap6.rating.toFixed(3)}（${rankCap6}）／☆5まで ${cap5.rating.toFixed(3)}（${rankCap5}）`)
       );
       pv.appendChild(tx);
       dlg.appendChild(pv);
@@ -1294,19 +1313,12 @@
             rank: rankName,
             constVersion,
             formulaVersion: FORMULA_VERSION,
-            // ☆7までのレート対象曲（上位50譜面）
-            top50: full.top.map((t) => ({
-              name: t.name,
-              kind: t.kind,
-              diff: t.diff,
-              level: t.level,
-              const: t.c,
-              estimated: !!t.estimated,
-              score: t.cur,
-              max: t.max,
-              star: Math.round(starTenths(t.cur, t.max)) / 10,
-              value: round3(t.values.full),
-            })),
+            rankCap6,
+            rankCap5,
+            // レート対象曲（上位50譜面）：top50 は☆7まで、top50Cap6・top50Cap5 は☆6まで・☆5まで
+            top50: frameOf(full),
+            top50Cap6: frameOf(cap6),
+            top50Cap5: frameOf(cap5),
           }, () => { err.textContent = '混み合っているため、送り直しています…'; });
           if (!r.ok) {
             err.textContent = r.error || '登録できませんでした。';
@@ -1545,7 +1557,7 @@
           const rate = el('span', 'dxr-plate-rate');
           const value = el('span', 'dxr-plate-value', rating.toFixed(3));
           if (RANK_MODES.includes(mode.id)) {
-            const rank = rankOf(rating);
+            const rank = rankOf(rating, mode.id);
             value.classList.add('dxr-ranked');
             value.style.cssText = rankCss(rank);
             value.title = rank.name;
@@ -1586,8 +1598,9 @@
     const note = el('p', 'dxr-note',
       `${info}。` +
       (hasEst ? '定数の * は定数表にない譜面で、レベル表示からの概算値（下限）です。' : '') +
-      '☆の小数は次の☆までの進み具合で、計算には整数部分のみ使います。' +
+      '☆の小数は次の☆までの進み具合で、計算には0.5倍の重みで反映します。' +
       '「☆6まで」は☆7を☆6として、「☆5まで」は☆6以上を☆5として計算しています。' +
+      'どのレートも、☆が上限（☆7・☆6・☆5）に達した譜面には +0.1 されます。' +
       (jackets ? '' : 'ジャケット画像の対応表を読み込めなかったため、画像は表示していません。'));
 
     // ランキングに登録（☆7まで・☆6まで・☆5まで の3つのレートを送る）
