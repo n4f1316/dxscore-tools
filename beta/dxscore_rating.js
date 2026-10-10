@@ -134,6 +134,10 @@
   const TOP_N = 50;          // 平均を取る曲数
   const WAIT_MS = 1500;      // ページ取得の間隔（サーバー負荷対策）
   const LEVEL_MAX = 23;      // level=23 が Lv15
+  // ☆6・☆7達成譜面数の集計（MASTER・Re:MASTER のみ）。MASTER の最低難易度が 10+ なので、
+  // レート対象曲が決まっていても、少なくともこのレベルまでは取得する（level=14 が 10+）
+  const COUNT_DIFFS = ['MASTER', 'Re:MASTER'];
+  const COUNT_MIN_LEVEL = 14;
   const PLAYER_URL = '/maimai-mobile/home/';
 
   // ジャケット画像：「曲名 → 画像ファイル名」の対応表（collect_jackets.js で作成）を読み、
@@ -316,6 +320,18 @@
     return { ...s, c, estimated: !inTable, stars, values };
   }
 
+  // ☆6以上（☆7を含む）・☆7 を達成した MASTER / Re:MASTER の譜面数
+  function countStars(scored) {
+    const c = { star7Mas: 0, star7Remas: 0, star6Mas: 0, star6Remas: 0 };
+    for (const s of scored) {
+      if (!COUNT_DIFFS.includes(s.diff)) continue;
+      const re = s.diff === 'Re:MASTER';
+      if (s.stars >= 6) c[re ? 'star6Remas' : 'star6Mas']++;
+      if (s.stars >= 7) c[re ? 'star7Remas' : 'star7Mas']++;
+    }
+    return c;
+  }
+
   // ============================================================
   //  表示（見た目）
   // ============================================================
@@ -389,6 +405,15 @@
     .dxr-rank-icon { display: inline-flex; flex: none; width: 38px; height: 38px; }
     .dxr-rank-icon svg { width: 100%; height: 100%; }
     .dxr-plate-hint { display: block; font-size: 11px; color: var(--sub); }
+
+    /* ☆6・☆7達成譜面数 */
+    .dxr-counts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: -6px 0 18px; }
+    .dxr-count { background: var(--card); border: 1.5px solid var(--line); border-radius: 16px; padding: 10px 16px; }
+    .dxr-count-head { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--sub); }
+    .dxr-count-head .dxr-star-pill { min-width: 0; }
+    .dxr-count-num { font-size: 28px; font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
+    .dxr-count-num small { font-size: 13px; font-weight: 700; color: var(--sub); margin-left: 4px; }
+    .dxr-count-sub { font-size: 12px; font-weight: 700; color: var(--sub); font-variant-numeric: tabular-nums; }
 
     /* 譜面の一覧 */
     .dxr-list { background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; overflow: hidden; }
@@ -1126,7 +1151,7 @@
     return r;
   }
 
-  function openRankingDialog(root, profile, results) {
+  function openRankingDialog(root, profile, results, counts) {
     const full = results.find((r) => r.mode.id === 'full');
     const cap6 = results.find((r) => r.mode.id === 'cap6');
     const cap5 = results.find((r) => r.mode.id === 'cap5');
@@ -1280,6 +1305,11 @@
         el('div', 'nm', form.anonymous ? `匿名#${check.anonCode}` : form.displayName),
         el('div', 'rt', `☆7まで ${full.rating.toFixed(3)}（${rankName}）／☆6まで ${cap6.rating.toFixed(3)}（${rankCap6}）／☆5まで ${cap5.rating.toFixed(3)}（${rankCap5}）`)
       );
+      if (counts) {
+        tx.appendChild(el('div', 'rt',
+          `☆7達成 ${counts.star7Mas + counts.star7Remas}譜面（MAS ${counts.star7Mas}／Re:MAS ${counts.star7Remas}）・` +
+          `☆6以上 ${counts.star6Mas + counts.star6Remas}譜面（MAS ${counts.star6Mas}／Re:MAS ${counts.star6Remas}）`));
+      }
       pv.appendChild(tx);
       dlg.appendChild(pv);
       if (form.anonymous) dlg.appendChild(el('p', '', `あなたの匿名表記は「匿名#${check.anonCode}」です。ランキングで自分の記録を探すときの目印になります。`));
@@ -1315,6 +1345,8 @@
             formulaVersion: FORMULA_VERSION,
             rankCap6,
             rankCap5,
+            // ☆6以上・☆7 を達成した MASTER / Re:MASTER の譜面数
+            counts: counts || null,
             // レート対象曲（上位50譜面）：top50 は☆7まで、top50Cap6・top50Cap5 は☆6まで・☆5まで
             top50: frameOf(full),
             top50Cap6: frameOf(cap6),
@@ -1606,7 +1638,7 @@
     // ランキングに登録（☆7まで・☆6まで・☆5まで の3つのレートを送る）
     const rankBtn = el('button', 'dxr-rank-open', 'ランキングに登録・更新する');
     rankBtn.type = 'button';
-    rankBtn.onclick = () => openRankingDialog(ui.body.getRootNode(), profile, results);
+    rankBtn.onclick = () => openRankingDialog(ui.body.getRootNode(), profile, results, extras.counts);
 
     // おすすめ楽曲（☆7まで）：ボタンで開閉
     const recBtn = el('button', 'dxr-rank-open', 'おすすめ楽曲を見る');
@@ -1620,7 +1652,25 @@
       recBtn.textContent = 'おすすめ楽曲を閉じる';
     };
 
-    ui.body.append(player, plates, shareBtn, showLabel, rankBtn, ...(SHOW_RECOMMEND ? [recBtn] : []), ...lists, note);
+    // ☆6・☆7達成譜面数（MASTER・Re:MASTER の合計と内訳）
+    const counts = extras.counts;
+    const countBox = el('div', 'dxr-counts');
+    if (counts) {
+      [
+        { stars: 7, label: '☆7 達成', mas: counts.star7Mas, re: counts.star7Remas },
+        { stars: 6, label: '☆6以上 達成', mas: counts.star6Mas, re: counts.star6Remas },
+      ].forEach((c) => {
+        const card = el('div', 'dxr-count');
+        const head = el('div', 'dxr-count-head');
+        head.append(el('span', `dxr-star-pill ${starClass(c.stars)}`, `☆${c.stars}`), document.createTextNode(c.label));
+        const num = el('div', 'dxr-count-num', String(c.mas + c.re));
+        num.appendChild(el('small', '', '譜面'));
+        card.append(head, num, el('div', 'dxr-count-sub', `MAS ${c.mas} ／ Re:MAS ${c.re}`));
+        countBox.appendChild(card);
+      });
+    }
+
+    ui.body.append(player, plates, ...(counts ? [countBox] : []), shareBtn, showLabel, rankBtn, ...(SHOW_RECOMMEND ? [recBtn] : []), ...lists, note);
   }
 
   // ============================================================
@@ -1664,9 +1714,11 @@
     let scored = [];
     let fetched = 0;
     let lastLevel = LEVEL_MAX;
+    let rateLevel = null; // レート対象曲が確定したレベル（おすすめ楽曲のデータ読み込みに使う）
 
     for (let n = LEVEL_MAX; n >= 1; n--) {
-      ui.status(`Lv${levelInfo(n).label} を取得中…（${++fetched}ページ目）`);
+      ui.status(`Lv${levelInfo(n).label} を取得中…（${++fetched}ページ目）` +
+        (rateLevel !== null ? '　☆6・☆7達成譜面数の集計のため、Lv10+ まで読み込みます' : ''));
       const res = await fetch(LEVEL_URL(n), { credentials: 'same-origin' });
       if (!res.ok) throw new Error(`Lv${levelInfo(n).label} の取得に失敗しました (HTTP ${res.status})`);
 
@@ -1678,7 +1730,9 @@
         const nth = [...scored].sort((a, b) => b.values[m.id] - a.values[m.id])[TOP_N - 1];
         return nth && nth.values[m.id] >= upperBound(n - 1, m.capStars);
       });
-      if (n === 1 || allDone) break;
+      if (allDone && rateLevel === null) rateLevel = n;
+      // レート対象曲が確定し、☆6・☆7の集計に必要なレベル（10+）まで取得したら終了
+      if (n === 1 || (allDone && n <= COUNT_MIN_LEVEL)) break;
       await sleep(WAIT_MS);
     }
 
@@ -1699,7 +1753,7 @@
     const jackets = await jacketPromise;
     // おすすめ楽曲用に、取得したレベルのランキング集計（取りやすさ）を読み込む（GitHubから。失敗しても続行）
     ui.status('おすすめ楽曲のデータを確認中…');
-    const stats = await loadRankingStats(LEVEL_MAX, lastLevel);
+    const stats = await loadRankingStats(LEVEL_MAX, rateLevel ?? lastLevel);
     ui.status('');
     renderResult(
       ui,
@@ -1707,7 +1761,7 @@
       results,
       `Lv15〜Lv${levelInfo(lastLevel).label} の ${fetched} ページを取得し、${scored.length} 譜面から計算`,
       jackets,
-      { all: scored, stats }
+      { all: scored, stats, counts: countStars(scored) }
     );
   } catch (e) {
     ui.status('エラー: ' + e.message, true);
