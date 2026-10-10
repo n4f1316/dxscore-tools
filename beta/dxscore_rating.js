@@ -130,6 +130,16 @@
   const RATE_DIVISOR = 100;
   const FRACTION_WEIGHT = 0.5; // ☆の小数部分にかける係数
   const MAX_BONUS = 0.1;       // ☆がそのレートの上限（☆7まで は☆7、☆6まで は☆6、☆5まで は☆5）に達した譜面に加える値
+  // 希少ボーナス：全国ランキング（上位100人）で☆6以上の達成者が少ない譜面を☆6以上で達成していると加算する
+  //   人数は ranking/lv○○.json の star6Count（☆6）＋ maxCount（☆7）。集計データがない譜面は加算しない
+  //   「☆7まで」「☆6まで」のレートだけに適用（☆5まで には加算しない）
+  const RARE_BONUS = [
+    { maxPeople: 3, add: 0.15 },
+    { maxPeople: 10, add: 0.10 },
+    { maxPeople: 20, add: 0.05 },
+  ];
+  const RARE_BONUS_MAX = 0.15;
+  const RARE_MODES = ['full', 'cap6'];
 
   const TOP_N = 50;          // 平均を取る曲数
   const WAIT_MS = 1500;      // ページ取得の間隔（サーバー負荷対策）
@@ -155,7 +165,7 @@
   // ランキング（Google Apps Script の受け取り口と、ランキングのページ）
   const RANKING_API = 'https://2frate.want131611.workers.dev/';
   const RANKING_PAGE = 'https://n4f1316.github.io/dxscore-tools/ranking.html';
-  const FORMULA_VERSION = 'v2'; // 計算式の版（計算式を変えたら上げる）。v2：☆6まで・☆5まで でも上限到達で +0.1
+  const FORMULA_VERSION = 'v3'; // 計算式の版（計算式を変えたら上げる）。v2：☆6まで・☆5まで でも上限到達で +0.1、v3：希少ボーナス
   const USER_KEY = 'dxr-ranking-user'; // このブラウザで最後に使ったユーザー名（PINは保存しない）
 
   // おすすめ楽曲：ランキング集計のデータ（譜面ごとの取りやすさ）の置き場所
@@ -206,9 +216,19 @@
       : { label: String(base), min: base, max: base + 0.5 };
   }
 
-  // そのレベルの譜面が取りうる値の上限（☆上限・定数最大のとき。上限に達しているので +0.1 も含む）
+  // そのレベルの譜面が取りうる値の上限（☆上限・定数最大のとき。上限に達しているので +0.1 も含む。☆6以上のレートは希少ボーナスの最大も含む）
   const upperBound = (n, capStars) =>
-    (levelInfo(n).max ** 2 * capStars) / RATE_DIVISOR + MAX_BONUS;
+    (levelInfo(n).max ** 2 * capStars) / RATE_DIVISOR + MAX_BONUS + (capStars >= 6 ? RARE_BONUS_MAX : 0);
+
+  // 全国ランキングの集計（1譜面分）から、☆6以上の達成者数と希少ボーナスを出す（わからなければ人数 null・加算 0）
+  function rareOf(st) {
+    if (!st || st.star6Count === null || st.star6Count === undefined || st.maxCount === null || st.maxCount === undefined) {
+      return { people: null, add: 0 };
+    }
+    const people = st.star6Count + st.maxCount;
+    const hit = RARE_BONUS.find((b) => people <= b.maxPeople);
+    return { people, add: hit ? hit.add : 0 };
+  }
 
   // 小数の誤差を避けるため整数同士で比較する（cur/max >= pct% と同じ意味）
   function starsOf(cur, max) {
@@ -299,7 +319,7 @@
     return list;
   }
 
-  function score(s, constTable) {
+  function score(s, constTable, stats) {
     const key = `${s.name}|${s.kind}|${s.diff}`;
     const keyMax = `${key}|${s.max}`; // 同名の別曲はでらっくスコア最大値つきのキーで登録されている
     const hitKey = keyMax in constTable ? keyMax : key in constTable ? key : null;
@@ -310,14 +330,18 @@
     const values = {};
     // ☆は小数第一位まで反映（6.4なら6.4で計算）。レートの種類ごとの上限（☆5まで等）で切り詰める
     const tenths = starTenths(s.cur, s.max);
+    // 希少ボーナス：自分が☆6以上を達成している譜面だけ
+    const rare = rareOf(stats?.get(`${s.name}|${s.kind}|${s.diff}|${s.max}`));
+    const rareAdd = stars >= 6 ? rare.add : 0;
     for (const m of RATE_MODES) {
       const t = Math.min(tenths, m.capStars * 10); // ☆×10 の整数（6.4 → 64）
       const whole = Math.floor(t / 10);             // ☆の整数部分（6）
       const frac = (t % 10) / 10;                   // ☆の小数部分（0.4）
       values[m.id] = (c * c * whole + c * c * frac * FRACTION_WEIGHT) / RATE_DIVISOR
-        + (t >= m.capStars * 10 ? MAX_BONUS : 0); // ☆がそのレートの上限に達した譜面は +0.1
+        + (t >= m.capStars * 10 ? MAX_BONUS : 0) // ☆がそのレートの上限に達した譜面は +0.1
+        + (RARE_MODES.includes(m.id) ? rareAdd : 0); // 希少ボーナス（☆7まで・☆6まで のみ）
     }
-    return { ...s, c, estimated: !inTable, stars, values };
+    return { ...s, c, estimated: !inTable, stars, values, rareAdd, rarePeople: rare.people };
   }
 
   // ☆7・☆6・☆5 を達成した MASTER / Re:MASTER の譜面数（☆6達成は☆7を、☆5達成は☆6・☆7を含む）
@@ -432,6 +456,7 @@
       display: inline-block; font-size: 11px; font-weight: 700; line-height: 1; padding: 4px 7px;
       border-radius: 6px; color: #fff; white-space: nowrap;
     }
+    .dxr-rare { background: #2B2350; color: #FFE066; }
     .dxr-kind-DX { background: linear-gradient(90deg, var(--pink), #F29A2E); }
     .dxr-kind-ST { background: #3B82C4; }
     .dxr-kind-unknown { background: #999; }
@@ -665,6 +690,11 @@
         el('span', `dxr-chip dxr-const${s.estimated ? ' is-est' : ''}`, `${s.c.toFixed(1)}${s.estimated ? '*' : ''}`),
         el('span', `dxr-chip dxr-diffmax-inline${isMax ? ' is-max' : ''}`, diffText)
       );
+      if (s.rareAdd > 0 && RARE_MODES.includes(mode.id)) {
+        const rare = el('span', 'dxr-chip dxr-rare', `希少 +${s.rareAdd.toFixed(2)}`);
+        rare.title = `全国ランキング上位100人のうち☆6以上は ${s.rarePeople} 人`;
+        meta.appendChild(rare);
+      }
       main.appendChild(meta);
 
       // ジャケット画像（見つからない・読み込めない場合は空の枠）
@@ -1474,10 +1504,11 @@
       const targetTenths = targetStars * 10;
       const pct = STAR_THRESHOLDS.find((t) => t.stars === targetStars).pct;
       const needScore = targetStars >= 7 ? s.max : Math.ceil((s.max * pct) / 100);
-      const newValue = (s.c * s.c * targetStars) / RATE_DIVISOR + (targetTenths >= 70 ? MAX_BONUS : 0);
+      const st = stats.get(`${s.name}|${s.kind}|${s.diff}|${s.max}`);
+      const newValue = (s.c * s.c * targetStars) / RATE_DIVISOR + (targetTenths >= 70 ? MAX_BONUS : 0)
+        + (targetTenths >= 60 ? rareOf(st).add : 0); // ☆6以上で希少ボーナス
       const gain = inTop.has(s) ? (newValue - s.values.full) / TOP_N : Math.max(0, newValue - value50) / TOP_N;
       if (gain <= 0) continue;
-      const st = stats.get(`${s.name}|${s.kind}|${s.diff}|${s.max}`);
       list.push({
         s, inTop: inTop.has(s), now, targetTenths, needScore, rest: needScore - s.cur,
         newValue, gain, ease: easeOf(st, targetTenths),
@@ -1640,6 +1671,7 @@
       '☆の小数は次の☆までの進み具合で、計算には0.5倍の重みで反映します。' +
       '「☆6まで」は☆7を☆6として、「☆5まで」は☆6以上を☆5として計算しています。' +
       'どのレートも、☆が上限（☆7・☆6・☆5）に達した譜面には +0.1 されます。' +
+      '「☆7まで」「☆6まで」では、全国ランキング上位100人のうち☆6以上が20人以下の譜面を☆6以上で達成すると、希少ボーナス（20人以下 +0.05、10人以下 +0.10、3人以下 +0.15）が加わります。' +
       (jackets ? '' : 'ジャケット画像の対応表を読み込めなかったため、画像は表示していません。'));
 
     // ランキングに登録（☆7まで・☆6まで・☆5まで の3つのレートを送る）
@@ -1723,16 +1755,22 @@
     // 高いレベルから順に取得し、下のレベルが上位に入り得なくなったら打ち切る
     let scored = [];
     let fetched = 0;
+    const stats = new Map(); // 全国ランキングの集計（希少ボーナスとおすすめ楽曲に使う）
     let lastLevel = LEVEL_MAX;
-    let rateLevel = null; // レート対象曲が確定したレベル（おすすめ楽曲のデータ読み込みに使う）
+    let rateLevel = null; // レート対象曲が確定したレベル（読み込み中の表示に使う）
 
     for (let n = LEVEL_MAX; n >= 1; n--) {
       ui.status(`Lv${levelInfo(n).label} を取得中…（${++fetched}ページ目）` +
         (rateLevel !== null ? '　☆5・☆6・☆7達成譜面数の集計のため、Lv10+ まで読み込みます' : ''));
-      const res = await fetch(LEVEL_URL(n), { credentials: 'same-origin' });
+      // レコードのページと、そのレベルの全国ランキング集計（GitHub。なくても続行）を同時に読み込む
+      const [res, lvStats] = await Promise.all([
+        fetch(LEVEL_URL(n), { credentials: 'same-origin' }),
+        loadRankingStats(n, n),
+      ]);
       if (!res.ok) throw new Error(`Lv${levelInfo(n).label} の取得に失敗しました (HTTP ${res.status})`);
+      lvStats.forEach((v, k) => stats.set(k, v));
 
-      scored.push(...parsePage(await res.text(), n).map((s) => score(s, constTable)));
+      scored.push(...parsePage(await res.text(), n).map((s) => score(s, constTable, stats)));
       lastLevel = n;
 
       // すべてのレートで「下のレベルはもう上位に入れない」状態になったら打ち切る
@@ -1761,10 +1799,7 @@
     ui.status('');
     ui.status('ジャケット画像の対応表を確認中…');
     const jackets = await jacketPromise;
-    // おすすめ楽曲用に、取得したレベルのランキング集計（取りやすさ）を読み込む（GitHubから。失敗しても続行）
-    ui.status('おすすめ楽曲のデータを確認中…');
-    const stats = await loadRankingStats(LEVEL_MAX, rateLevel ?? lastLevel);
-    ui.status('');
+    // おすすめ楽曲には、取得したレベルの全国ランキング集計（すでに読み込み済み）を使う
     renderResult(
       ui,
       profile,
