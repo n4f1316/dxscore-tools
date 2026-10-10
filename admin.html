@@ -20,6 +20,7 @@
   button { font: inherit; font-weight: 700; padding: 6px 14px; border-radius: 999px; cursor: pointer;
     border: 1.5px solid var(--line); background: var(--card); color: var(--ink); }
   button:focus-visible, input:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+  .tab-label { align-self: center; font-size: 12px; font-weight: 800; color: var(--sub); margin-right: 2px; }
   .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 0; }
   .tabs button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
   .search { width: 100%; margin-top: 12px; font: inherit; padding: 8px 14px; border-radius: 999px;
@@ -153,6 +154,7 @@
   <div id="app" hidden>
     <div class="tabs" id="modeTabs" role="group" aria-label="レートの種類"></div>
     <div class="tabs" id="verTabs" role="group" aria-label="定数表のバージョン"></div>
+    <div class="tabs" id="formulaTabs" role="group" aria-label="計算式の版"></div>
     <input class="search" id="search" type="search" placeholder="名前・ユーザー名で絞り込み" aria-label="名前・ユーザー名で絞り込み">
     <div class="info" id="info"></div>
     <div id="listBox"></div>
@@ -512,6 +514,9 @@
   let adminKey = '';
   let mode = MODES[0];
   let version = null;
+  // 計算式の版（v1 / v2 / v3 …）の切り替え。null は「すべて」
+  let formula = null;
+  const formulaNo = (v) => Number(String(v || '').replace(/^v/, '')) || 0;
   let query = '';
 
   function renderTabs() {
@@ -537,12 +542,25 @@
         vt.appendChild(b);
       });
     }
+    // 計算式の版：記録にある版をすべて並べる（「すべて」＋ 版ごと）
+    const fvs = [...new Set(all.map((r) => r.formulaVersion || '不明'))].sort((a, b) => formulaNo(a) - formulaNo(b));
+    const ft = $('formulaTabs');
+    ft.replaceChildren(el('span', 'tab-label', '計算式'));
+    [null, ...fvs].forEach((v) => {
+      const n = v === null ? 0 : all.filter((r) => (r.formulaVersion || '不明') === v).length;
+      const b = el('button', '', v === null ? 'すべて' : `${v}（${n}）`);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(v === formula));
+      b.onclick = () => { formula = v; renderTabs(); renderList(); };
+      ft.appendChild(b);
+    });
   }
 
   function renderList() {
     const q = query.trim().toLowerCase();
     const sorted = all
       .filter((r) => !version || r.constVersion === version)
+      .filter((r) => !formula || (r.formulaVersion || '不明') === formula)
       .filter((r) => Number.isFinite(valueOf(r, mode)))
       .sort((a, b) => valueOf(b, mode) - valueOf(a, mode));
     // 順位は同じ値なら同順位（絞り込み前の並びで決める）
@@ -552,7 +570,8 @@
       posOf.set(r, prev && valueOf(prev, mode) === valueOf(r, mode) ? posOf.get(prev) : i + 1);
     });
     const items = sorted.filter((r) => !q || r.name.toLowerCase().includes(q) || r.username.includes(q) || (r.displayName || '').toLowerCase().includes(q));
-    $('info').textContent = `${sorted.length} 人が登録` + (version ? `（定数表：${version}）` : '');
+    const conds = [version && `定数表：${version}`, formula && `計算式：${formula}`].filter(Boolean);
+    $('info').textContent = `${sorted.length} 人が登録` + (conds.length ? `（${conds.join('・')}）` : '');
 
     const list = el('div', 'list');
     if (!items.length) list.appendChild(el('div', 'empty', '該当する記録はありません。'));
