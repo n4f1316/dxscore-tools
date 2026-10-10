@@ -142,18 +142,20 @@
     { key: 'rateFull', id: 'full', label: '☆7まで', shift: 0 },   // LEGEND 12.000 以上
     { key: 'rateCap6', id: 'cap6', label: '☆6まで', shift: 0.5 }, // LEGEND 11.500 以上
     { key: 'rateCap5', id: 'cap5', label: '☆5まで', shift: 1.5 }, // LEGEND 10.500 以上
-    // ☆7・☆6以上を達成した MASTER / Re:MASTER の譜面数で並べる（count: true）
+    // ☆7・☆6・☆5 を達成した MASTER / Re:MASTER の譜面数で並べる（count: true）
     { id: 'star7', label: '☆7達成数', count: true, mas: 'star7Mas', re: 'star7Remas' },
-    { id: 'star6', label: '☆6以上達成数', count: true, mas: 'star6Mas', re: 'star6Remas' },
+    { id: 'star6', label: '☆6達成数', count: true, mas: 'star6Mas', re: 'star6Remas' },
+    { id: 'star5', label: '☆5達成数', count: true, mas: 'star5Mas', re: 'star5Remas' },
   ];
   // ベスト枠の切り替えに使う、レートの種類だけ
   const RATE_MODES = MODES.filter((m) => !m.count);
   // 並べ替えに使う値（レートの値、または達成譜面数の合計。記録がなければ NaN）
-  const valueOf = (r, m) => (m.count ? (r.counts ? r.counts[m.mas] + r.counts[m.re] : NaN) : r[m.key]);
+  //   ☆5 を数える前の版で登録した記録は、☆5 の数が null なので「☆5達成数」には載せない
+  const hasCount = (r, m) => !!r.counts && Number.isFinite(r.counts[m.mas]) && Number.isFinite(r.counts[m.re]);
+  const valueOf = (r, m) => (m.count ? (hasCount(r, m) ? r.counts[m.mas] + r.counts[m.re] : NaN) : r[m.key]);
   // 名前の下に出す達成譜面数（記録がなければ空）
-  const countsText = (r) => (r.counts
-    ? `☆7 ${r.counts.star7Mas + r.counts.star7Remas}譜面・☆6以上 ${r.counts.star6Mas + r.counts.star6Remas}譜面（MAS・Re:MAS）`
-    : '');
+  const countsText = (r) => '達成譜面数 ' + MODES.filter((m) => m.count && hasCount(r, m))
+    .map((m) => `${m.label.replace('達成数', '')} ${valueOf(r, m)}`).join('・');
 
   // ランク（2fRATE と同じ区切りと色）。min は「☆7まで」の区切りで、☆6まで・☆5まで は MODES の shift だけ下げて判定する
   const RANKS = [
