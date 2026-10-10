@@ -40,6 +40,11 @@
   .rate-value.ranked { color: transparent; -webkit-background-clip: text; background-clip: text; display: inline-block; }
   .rank-icon { width: 30px; height: 30px; flex: none; }
   .rank-icon svg { width: 100%; height: 100%; display: block; }
+  .tab-break { display: none; }
+  .part-tabs { margin-top: 8px; }
+  .part-tabs button { font-size: 12px; padding: 4px 12px; }
+  .part-tabs[hidden] { display: none; }
+  @media (max-width: 520px) { .tab-break { display: block; flex-basis: 100%; height: 0; } }
   .count-unit { font-size: 12px; font-weight: 700; color: var(--sub); margin-left: 3px; }
   .rank-name { font-size: 10px; font-weight: 800; color: var(--sub); text-align: right; letter-spacing: .02em; }
   .empty { padding: 24px; text-align: center; color: var(--sub); }
@@ -119,6 +124,7 @@
   <div class="status" id="status">ランキングを読み込み中…</div>
   <div id="app" hidden>
     <div class="tabs" id="modeTabs" role="group" aria-label="レートの種類"></div>
+    <div class="tabs part-tabs" id="partTabs" role="group" aria-label="集計する難易度" hidden></div>
     <div class="tabs" id="verTabs" role="group" aria-label="定数表のバージョン"></div>
     <input class="search" id="search" type="search" placeholder="名前で絞り込み" aria-label="名前で絞り込み">
     <div class="info" id="info"></div>
@@ -152,10 +158,20 @@
   // 並べ替えに使う値（レートの値、または達成譜面数の合計。記録がなければ NaN）
   //   ☆5 を数える前の版で登録した記録は、☆5 の数が null なので「☆5達成数」には載せない
   const hasCount = (r, m) => !!r.counts && Number.isFinite(r.counts[m.mas]) && Number.isFinite(r.counts[m.re]);
-  const valueOf = (r, m) => (m.count ? (hasCount(r, m) ? r.counts[m.mas] + r.counts[m.re] : NaN) : r[m.key]);
-  // 名前の下に出す達成譜面数（記録がなければ空）
-  const countsText = (r) => '達成譜面数 ' + MODES.filter((m) => m.count && hasCount(r, m))
-    .map((m) => `${m.label.replace('達成数', '')} ${valueOf(r, m)}`).join('・');
+  // 達成譜面数のタブでの集計範囲：'all'（MAS＋Re:MAS）/ 'mas'（MASのみ）/ 're'（Re:MASのみ）
+  const PARTS = [
+    { id: 'all', label: '合計' },
+    { id: 'mas', label: 'MASのみ' },
+    { id: 're', label: 'Re:MASのみ' },
+  ];
+  let countPart = 'all';
+  const valueOf = (r, m) => {
+    if (!m.count) return r[m.key];
+    if (!hasCount(r, m)) return NaN;
+    if (countPart === 'mas') return r.counts[m.mas];
+    if (countPart === 're') return r.counts[m.re];
+    return r.counts[m.mas] + r.counts[m.re];
+  };
 
   // ランク（2fRATE と同じ区切りと色）。min は「☆7まで」の区切りで、☆6まで・☆5まで は MODES の shift だけ下げて判定する
   const RANKS = [
@@ -449,13 +465,28 @@
   function renderTabs() {
     const mt = $('modeTabs');
     mt.replaceChildren();
-    MODES.forEach((m) => {
+    MODES.forEach((m, i) => {
+      // スマホでは、レートのタブと達成譜面数のタブを別の行にする（区切りはスマホのときだけ表示）
+      if (m.count && !MODES[i - 1].count) mt.appendChild(el('span', 'tab-break'));
       const b = el('button', '', m.label);
       b.type = 'button';
       b.setAttribute('aria-pressed', String(m === mode));
       b.onclick = () => { mode = m; renderTabs(); renderList(); };
       mt.appendChild(b);
     });
+    // 達成譜面数のタブを表示しているときだけ、合計 / MASのみ / Re:MASのみ の切り替えを出す
+    const pt = $('partTabs');
+    pt.replaceChildren();
+    pt.hidden = !mode.count;
+    if (mode.count) {
+      PARTS.forEach((x) => {
+        const b = el('button', '', x.label);
+        b.type = 'button';
+        b.setAttribute('aria-pressed', String(x.id === countPart));
+        b.onclick = () => { countPart = x.id; renderTabs(); renderList(); };
+        pt.appendChild(b);
+      });
+    }
     // 定数表のバージョンが複数あるときだけ切り替えを出す
     const vers = [...new Set(all.map((r) => r.constVersion).filter(Boolean))];
     const vt = $('verTabs');
@@ -506,7 +537,7 @@
       }
 
       const main = el('div');
-      main.append(el('div', 'name' + (r.anonymous ? ' anon' : ''), r.name), el('div', 'meta', `更新 ${dateOf(r.updatedAt)}`), ...(r.counts ? [el('div', 'meta', countsText(r))] : []));
+      main.append(el('div', 'name' + (r.anonymous ? ' anon' : ''), r.name), el('div', 'meta', `更新 ${dateOf(r.updatedAt)}`));
       if (r.hasTop50 && r.id) {
         const bf = el('button', 'bf-open', 'ベスト枠を見る');
         bf.type = 'button';
