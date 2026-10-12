@@ -50,6 +50,8 @@
     border-radius: 12px; border: 2px solid var(--line); color: var(--ink); }
   .star-range { flex: 1 1 200px; accent-color: var(--pink); }
   .hint { font-size: 12px; color: var(--sub); margin-top: 6px; }
+  .rare-note { font-size: 12px; color: var(--sub); margin-top: 8px; line-height: 1.7; }
+  .chip.rare { background: #2B2350; color: #FFE066; }
   .results { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
   .res { background: var(--bg); border-radius: 14px; padding: 10px 12px; }
   .res-label { font-size: 12px; font-weight: 700; color: var(--sub); }
@@ -128,6 +130,7 @@
     <p class="foot">
       単曲レート値 =（譜面定数 × 譜面定数 × ☆の整数部分 ＋ 譜面定数 × 譜面定数 × ☆の小数部分 × 0.5）÷ 100。
       「☆6まで」「☆5まで」は、上限を超える☆をその上限として計算します。☆が上限（☆7まで は☆7、☆6まで は☆6、☆5まで は☆5）に達した譜面は ＋0.1 です。☆1未満は0です。<br>
+      全国ランキング上位100人のうち☆6以上が20人以下の譜面は、☆6以上で「☆7まで」「☆6まで」に希少ボーナス（20人以下 ＋0.05、10人以下 ＋0.10、3人以下 ＋0.15）が加わります。<br>
       ☆の基準：☆7 100%、☆6 99%以上、☆5 97%以上、☆4 95%以上、☆3 93%以上、☆2 90%以上、☆1 85%以上。<br>
       非公式のファンメイドツールです。株式会社セガとは一切関係ありません。楽曲のジャケット画像の著作権は、各権利者に帰属します。
     </p>
@@ -158,13 +161,41 @@
     { id: 'cap6', label: '☆6まで', cap: 6, shift: 0.5 },
     { id: 'cap5', label: '☆5まで', cap: 5, shift: 1.5 },
   ];
-  // ☆×10 の整数（例：6.4 → 64）から単曲レート値を出す
-  function rateOf(c, tenths, cap) {
+  // 希少ボーナス：全国ランキング（上位100人）で☆6以上（☆6＋☆7）が少ない譜面を☆6以上で達成すると、
+  // 「☆7まで」「☆6まで」に加算する（20人以下 +0.05、10人以下 +0.10、3人以下 +0.15）
+  const RARE_BONUS = [
+    { maxPeople: 3, add: 0.15 },
+    { maxPeople: 10, add: 0.10 },
+    { maxPeople: 20, add: 0.05 },
+  ];
+  const STATS_DIR = 'ranking/'; // 全国ランキングの集計（レベルごとの JSON）
+  function rareOf(st) {
+    if (!st || st.star6Count === null || st.star6Count === undefined || st.maxCount === null || st.maxCount === undefined) return null;
+    const people = st.star6Count + st.maxCount;
+    const hit = RARE_BONUS.find((b) => people <= b.maxPeople);
+    return { people, add: hit ? hit.add : 0 };
+  }
+
+  // ☆×10 の整数（例：6.4 → 64）から単曲レート値を出す。rareAdd：希少ボーナス（☆6以上・☆6まで以上のレートだけ）
+  function rateOf(c, tenths, cap, rareAdd = 0) {
     if (tenths < 10) return 0; // ☆1未満は0
     const t = Math.min(tenths, cap * 10);
     const whole = Math.floor(t / 10);
     const frac = (t % 10) / 10;
-    return (c * c * whole + c * c * frac * FRACTION_WEIGHT) / RATE_DIVISOR + (t >= cap * 10 ? MAX_BONUS : 0); // ☆が上限に達したら +0.1
+    return (c * c * whole + c * c * frac * FRACTION_WEIGHT) / RATE_DIVISOR
+      + (t >= cap * 10 ? MAX_BONUS : 0) // ☆が上限に達したら +0.1
+      + (cap >= 6 && tenths >= 60 ? rareAdd : 0); // 希少ボーナス
+  }
+
+  // 選んだ譜面の全国ランキング集計を探す（レベルごとの JSON を一度だけ読む）
+  const statsCache = new Map();
+  async function findStats(s) {
+    const file = `lv${s.level.replace('+', 'p')}.json`;
+    if (!statsCache.has(file)) statsCache.set(file, fetchJson(STATS_DIR + file));
+    const list = (await statsCache.get(file)) || [];
+    let hits = list.filter((r) => r && r.name === s.name && r.kind === s.kind && r.diff === s.diff && (!s.max || r.max === s.max));
+    if (hits.length > 1) hits = hits.filter((r) => r.const === s.c); // 同名の別曲は定数で見分ける
+    return hits.length === 1 ? hits[0] : null;
   }
 
   // ランク（2fRATE と同じ区切りと色）。min は「☆7まで」の区切り。☆6まで・☆5まで は MODES の shift だけ下げる
@@ -312,9 +343,10 @@
         starTenths = Math.max(0, Math.min(70, Math.floor(v * 10 + 1e-9))); // 小数第2位以下は切り捨て
         range.value = String(starTenths);
       }
+      const rareAdd = s.rare ? s.rare.add : 0;
       results.replaceChildren(...MODES.map((m, i) => {
         const card = el('div', 'res' + (i === 0 ? ' main' : ''));
-        const v = rateOf(s.c, starTenths, m.cap);
+        const v = rateOf(s.c, starTenths, m.cap, rareAdd);
         const val = el('div', 'res-value', v.toFixed(3));
         paintRank(val, v, m.shift); // ランクの色で表示（レートの種類ごとの区切り）
         card.append(el('div', 'res-label', m.label), val);
@@ -329,16 +361,37 @@
         const tr = body.insertRow();
         if (t === starTenths) tr.className = 'on';
         tr.insertCell().textContent = `☆${(t / 10).toFixed(1)}`;
-        MODES.forEach((m) => { tr.insertCell().textContent = rateOf(s.c, t, m.cap).toFixed(3); });
+        MODES.forEach((m) => { tr.insertCell().textContent = rateOf(s.c, t, m.cap, rareAdd).toFixed(3); });
       });
     }
     input.addEventListener('input', () => update(false));
     range.addEventListener('input', () => update(true));
 
+    // 希少ボーナスの案内（集計データを読み込んでから表示を更新する）
+    const rareNote = el('div', 'rare-note');
+    const showRare = () => {
+      if (s.rare === undefined) { rareNote.textContent = '希少ボーナスを確認中…'; return; }
+      if (s.rare === null) { rareNote.textContent = 'この譜面の全国ランキング集計がないため、希少ボーナスは計算に含めていません。'; return; }
+      if (!s.rare.add) {
+        rareNote.textContent = `希少ボーナスの対象外です（全国ランキング上位100人のうち☆6以上 ${s.rare.people}人）。`;
+        return;
+      }
+      rareNote.replaceChildren(
+        el('span', 'chip rare', `希少 +${s.rare.add.toFixed(2)}`),
+        document.createTextNode(` 上位100人のうち☆6以上が ${s.rare.people}人の譜面です。☆6以上なら「☆7まで」「☆6まで」に +${s.rare.add.toFixed(2)} されます（下の値に含めています）。`));
+    };
+
     box.append(head, row,
       el('div', 'hint', '☆は 0.0〜7.0 を小数第1位まで入力できます（スライダーでも変えられます）。'),
-      results, quick);
+      rareNote, results, quick);
+    showRare();
     update(false);
+    if (s.rare === undefined) {
+      findStats(s).then((st) => {
+        s.rare = rareOf(st);
+        if (selected === s) { showRare(); update(false); }
+      });
+    }
   }
 
   // ===== 一覧 =====

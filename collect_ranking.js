@@ -245,6 +245,7 @@
     .diff-MASTER { background: #8E44D6; }
     .diff-REMASTER { background: #fff; color: #8E44D6; box-shadow: inset 0 0 0 1.5px #B68BE0; }
     .const { background: #EFECF9; color: #2B2350; }
+    .rare { background: #2B2350; color: #FFE066; }
     .lv { background: transparent; color: #6E6892; padding-left: 2px; }
     .nw { white-space: nowrap; }
     .date { font-size: 11px; color: #9A94B8; margin-top: 1px; }
@@ -327,6 +328,19 @@
   // 平均取得率の高い順（取れなかった譜面は最後）
   // ランキングは上位100人までしか載らないため、100人目まで☆6以上の譜面は、
   // ☆6を達成した人（☆7を含む）が100人を超えている可能性がある。その場合は「100+」と表示する
+  // 2fRATE の希少ボーナス：上位100人のうち☆6以上（☆6＋☆7）が少ない譜面は、☆6以上で達成すると
+  // 「☆7まで」「☆6まで」の単曲レート値に加算される（20人以下 +0.05、10人以下 +0.10、3人以下 +0.15）
+  const RARE_BONUS = [
+    { maxPeople: 3, add: 0.15 },
+    { maxPeople: 10, add: 0.10 },
+    { maxPeople: 20, add: 0.05 },
+  ];
+  function rareOf(r) {
+    if (r.star6Count === null || r.star6Count === undefined || r.maxCount === null || r.maxCount === undefined) return null;
+    const people = r.star6Count + r.maxCount;
+    const hit = RARE_BONUS.find((b) => people <= b.maxPeople);
+    return hit ? { people, add: hit.add } : null;
+  }
   const isFull = (r) => r.count >= 100 && r.max && r.row100 !== null && r.row100 !== undefined;
   const sat7 = (r) => isFull(r) && r.row100 === r.max;             // 100人全員が☆7
   const sat6 = (r) => isFull(r) && r.row100 * 100 >= r.max * 99;   // 100人目まで☆6以上
@@ -608,6 +622,8 @@
         );
         if (r.const !== null && r.const !== undefined) chips.appendChild(el('span', 'chip const', Number(r.const).toFixed(1)));
         if (key === '*') chips.appendChild(el('span', 'chip lv', `Lv${r.level}`));
+        const rare = rareOf(r);
+        if (rare) chips.appendChild(el('span', 'chip rare', `希少 +${rare.add.toFixed(2)}（☆6以上 ${rare.people}人）`));
         main.appendChild(chips);
         // 「1位 1711」などの区切りの途中で改行されないよう、項目ごとにまとめる
         const meta = el('div', 'meta');

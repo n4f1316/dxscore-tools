@@ -82,6 +82,7 @@
   .bf-kind-ST { background: #3B82C4; }
   .bf-diff.bf-remas { background: #fff; color: #8E44D6; box-shadow: inset 0 0 0 1.5px #B68BE0; }
   .bf-const { background: #EFECF9; color: var(--ink); }
+  .bf-rare { background: #2B2350; color: #FFE066; }
   .bf-maxinline { display: none; font-size: 11px; font-weight: 700; color: var(--sub); padding: 0 2px; line-height: 1.6; }
   .bf-maxinline.is-max { color: #C98A00; }
   .bf-c { text-align: center; }
@@ -404,6 +405,8 @@
           el('span', 'bf-chip bf-const', `${Number(t.const).toFixed(1)}${t.estimated ? '*' : ''}`),
           el('span', 'bf-maxinline' + (isMax ? ' is-max' : ''), maxText)
         );
+        // 希少ボーナス（☆6以上の達成者が少ない譜面。単曲レート値に含まれている）
+        if (Number(t.rare) > 0) chips.appendChild(el('span', 'bf-chip bf-rare', `希少 +${Number(t.rare).toFixed(2)}`));
         main.append(nm, chips);
         const star = el('div', 'bf-c');
         star.appendChild(el('span', `bf-star ${bfStarClass(Math.floor(Number(t.star)))}`, `☆${Number(t.star).toFixed(1)}`));

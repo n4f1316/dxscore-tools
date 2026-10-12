@@ -69,6 +69,8 @@
   .diff-MASTER { background: #8E44D6; }
   .diff-REMASTER { background: #fff; color: #8E44D6; box-shadow: inset 0 0 0 1.5px #B68BE0; }
   .const { background: #EFECF9; color: var(--ink); }
+  .rare { background: #2B2350; color: #FFE066; }
+  .diffs button.rare-btn[aria-pressed="true"] { background: #2B2350; color: #FFE066; border-color: transparent; }
   .lv { background: transparent; color: var(--sub); padding-left: 2px; }
   .meta { font-size: 11px; color: var(--sub); margin-top: 3px; }
   .nw { white-space: nowrap; }
@@ -100,6 +102,7 @@
   <div id="app" hidden>
     <div class="tabs" id="levelTabs" role="group" aria-label="レベル"></div>
     <div class="tabs diffs" id="diffTabs" role="group" aria-label="難易度"></div>
+    <div class="tabs diffs" id="rareTabs" role="group" aria-label="希少ボーナス"></div>
     <input class="search" id="search" type="search" placeholder="曲名で絞り込み" aria-label="曲名で絞り込み">
     <div class="daterange" id="daterange"></div>
     <div id="listBox"></div>
@@ -107,6 +110,7 @@
       「平均」は上位100人のでらっくスコア取得率の平均と、その☆換算です。「☆7」は理論値の人数、「☆6」は取得率99%以上（理論値を除く）の人数です。
       見出しの「平均」「☆7」「☆6」を押すと並び替えられます。<br>
       ランキングには上位100人までしか載らないため、100人目まで☆6以上で埋まっている譜面は、☆6の欄を「100+」（☆7を含めて☆6を達成した人が100人以上）と表示しています。全員が☆7の譜面は、☆7の欄も「100+」になります。<br>
+      「希少」の印は、2fRATE の希少ボーナスの対象譜面です。上位100人のうち☆6以上（☆6＋☆7）が20人以下の譜面を☆6以上で達成すると、「☆7まで」「☆6まで」の単曲レート値に加算されます（20人以下 +0.05、10人以下 +0.10、3人以下 +0.15）。<br>
       ☆の基準：☆7 100%、☆6 99%以上、☆5 97%以上、☆4 95%以上、☆3 93%以上、☆2 90%以上、☆1 85%以上。<br>
       非公式のファンメイドツールです。株式会社セガとは一切関係ありません。プレーヤー名は集計・保存していません。
     </p>
@@ -200,6 +204,20 @@
   let sortKey = 'avgPct';
   let sortDir = -1;
   const SORTS = { avgPct: '平均', maxCount: '☆7', star6Count: '☆6' };
+  let rareOnly = false; // 希少ボーナスの対象譜面だけを表示する
+  // 2fRATE の希少ボーナス：上位100人のうち☆6以上（☆6＋☆7）が少ない譜面は、☆6以上で達成すると
+  // 「☆7まで」「☆6まで」の単曲レート値に加算される（20人以下 +0.05、10人以下 +0.10、3人以下 +0.15）
+  const RARE_BONUS = [
+    { maxPeople: 3, add: 0.15 },
+    { maxPeople: 10, add: 0.10 },
+    { maxPeople: 20, add: 0.05 },
+  ];
+  function rareOf(r) {
+    if (r.star6Count === null || r.star6Count === undefined || r.maxCount === null || r.maxCount === undefined) return null;
+    const people = r.star6Count + r.maxCount;
+    const hit = RARE_BONUS.find((b) => people <= b.maxPeople);
+    return hit ? { people, add: hit.add } : null;
+  }
 
   // ランキングは上位100人までしか載らないため、100人目まで☆6以上の譜面は、
   // ☆6を達成した人（☆7を含む）が100人を超えている可能性がある。その場合は「100+」と表示する
@@ -257,6 +275,13 @@
       };
       dt.appendChild(b);
     });
+    // 希少ボーナスの対象譜面だけに絞る切り替え
+    const rt = $('rareTabs');
+    const rb = el('button', 'rare-btn', '希少ボーナス対象のみ');
+    rb.type = 'button';
+    rb.setAttribute('aria-pressed', String(rareOnly));
+    rb.onclick = () => { rareOnly = !rareOnly; page = 1; renderTabs(); renderList(); };
+    rt.replaceChildren(rb);
   }
 
   function jacketEl(file) {
@@ -311,7 +336,8 @@
     const items = all
       .filter((r) => (currentLevel === '*' || r.level === currentLevel)
         && (currentDiffs === null || currentDiffs.has(r.diff))
-        && (!q || r.name.toLowerCase().includes(q)))
+        && (!q || r.name.toLowerCase().includes(q))
+        && (!rareOnly || rareOf(r)))
       .sort(sortFn);
 
     const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
@@ -364,6 +390,8 @@
       );
       if (r.const !== null && r.const !== undefined) chips.appendChild(el('span', 'chip const', Number(r.const).toFixed(1)));
       if (currentLevel === '*') chips.appendChild(el('span', 'chip lv', `Lv${r.level}`));
+      const rare = rareOf(r);
+      if (rare) chips.appendChild(el('span', 'chip rare', `希少 +${rare.add.toFixed(2)}（☆6以上 ${rare.people}人）`));
       main.appendChild(chips);
 
       const withStar = (v) => {
