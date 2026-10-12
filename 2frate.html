@@ -218,16 +218,6 @@
     <div><p>ブックマークは実行のたびに最新のプログラムを読み込みます。譜面定数は新バージョンの稼働後、順次更新します。</p></div>
   </details>
 
-  <h2 class="plain">β版（テスト版）</h2>
-  <details>
-    <summary>新機能を先に試したい方へ</summary>
-    <div>
-      <p>正式版に入れる前の新機能を試せるβ版です。動作が不安定なことがあります。正式版とは別のブックマーク（名前を「2fRATE β」など）として登録してください。登録・実行の手順は正式版と同じです。</p>
-      <div class="code" id="code-beta" style="margin-top:10px"></div>
-      <div class="code-row"><button class="copy" type="button" data-copy="code-beta">β版のコードをコピー</button></div>
-    </div>
-  </details>
-
   <h2 class="plain">注意事項</h2>
   <div class="card sub">
     <ul class="feat">
@@ -251,7 +241,6 @@
     "?'+Date.now();document.body.appendChild(s);})();void(0);";
   const CODES = {
     'code': bookmarklet('dxscore_rating.js'),
-    'code-beta': bookmarklet('beta/dxscore_rating.js'),
   };
   for (const [id, text] of Object.entries(CODES)) document.getElementById(id).textContent = text;
   document.getElementById('drag').href = CODES.code;
