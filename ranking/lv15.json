@@ -1,6 +1,6 @@
 [
  {
-  "date": "2026/9/30 12:16:57",
+  "date": "2026/10/12 23:08:08",
   "name": "PANDORA PARADOXXX",
   "kind": "ST",
   "diff": "Re:MASTER",
@@ -12,14 +12,14 @@
   "row50": 3861,
   "rank50": 49,
   "row100": 3831,
-  "rank100": 97,
-  "avgPct": 96.033,
+  "rank100": 99,
+  "avgPct": 96.042,
   "avgStar": 4.5,
   "maxCount": 0,
   "star6Count": 0
  },
  {
-  "date": "2026/9/30 12:16:59",
+  "date": "2026/10/12 23:08:11",
   "name": "系ぎて",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -32,13 +32,13 @@
   "rank50": 50,
   "row100": 3859,
   "rank100": 100,
-  "avgPct": 93.655,
+  "avgPct": 93.664,
   "avgStar": 3.3,
   "maxCount": 0,
   "star6Count": 0
  },
  {
-  "date": "2026/9/30 12:17:02",
+  "date": "2026/10/12 23:08:14",
   "name": "Xaleid◆scopiX",
   "kind": "DX",
   "diff": "Re:MASTER",
@@ -47,11 +47,11 @@
   "max": 6666,
   "count": 100,
   "top1": 6481,
-  "row50": 6159,
+  "row50": 6161,
   "rank50": 50,
-  "row100": 6094,
-  "rank100": 100,
-  "avgPct": 92.845,
+  "row100": 6095,
+  "rank100": 99,
+  "avgPct": 92.858,
   "avgStar": 2.9,
   "maxCount": 0,
   "star6Count": 0
