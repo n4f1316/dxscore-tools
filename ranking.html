@@ -47,6 +47,12 @@
   @media (max-width: 520px) { .tab-break { display: block; flex-basis: 100%; height: 0; } }
   .count-unit { font-size: 12px; font-weight: 700; color: var(--sub); margin-left: 3px; }
   .rank-name { font-size: 10px; font-weight: 800; color: var(--sub); text-align: right; letter-spacing: .02em; }
+.pager { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; margin: 10px 0; }
+  .pager:empty { display: none; }
+  .pager button { min-width: 40px; padding: 5px 10px; }
+  .pager button.current { background: var(--ink); border-color: var(--ink); color: #fff; cursor: default; }
+  .pager button:disabled { opacity: .4; cursor: default; }
+  .pager .gap { color: var(--sub); padding: 0 2px; }
   .empty { padding: 24px; text-align: center; color: var(--sub); }
   .default-icon { overflow: hidden; }
   .default-icon svg { display: block; }
@@ -132,7 +138,7 @@
     <div id="listBox"></div>
     <p class="foot">
       記録は各プレイヤーが自分で登録したもので、数値は自己申告です。匿名の記録は「匿名#記号」で表示しています。<br>
-      非公式のファンメイドツールです。株式会社セガとは一切関係ありません。アイコン画像の著作権は、各権利者に帰属します。
+      非公式のファンメイドツールです。株式会社セガおよび関連会社とは一切関係ありません。楽曲・ジャケット画像・アイコン画像の著作権は、株式会社セガおよび各権利者に帰属します。ジャケット画像・アイコン画像は公式サイトの画像を表示しているもので、本ツールでは保存・配布していません。権利者の方からご連絡をいただいた場合は、該当部分の公開停止などに速やかに対応します。
     </p>
   </div>
 </div>
@@ -474,7 +480,7 @@
       const b = el('button', '', m.label);
       b.type = 'button';
       b.setAttribute('aria-pressed', String(m === mode));
-      b.onclick = () => { mode = m; renderTabs(); renderList(); };
+      b.onclick = () => { mode = m; page = 1; renderTabs(); renderList(); };
       mt.appendChild(b);
     });
     // 達成譜面数のタブを表示しているときだけ、合計 / MASのみ / Re:MASのみ の切り替えを出す
@@ -486,7 +492,7 @@
         const b = el('button', '', x.label);
         b.type = 'button';
         b.setAttribute('aria-pressed', String(x.id === countPart));
-        b.onclick = () => { countPart = x.id; renderTabs(); renderList(); };
+        b.onclick = () => { countPart = x.id; page = 1; renderTabs(); renderList(); };
         pt.appendChild(b);
       });
     }
@@ -499,10 +505,43 @@
         const b = el('button', '', v);
         b.type = 'button';
         b.setAttribute('aria-pressed', String(v === version));
-        b.onclick = () => { version = v; renderTabs(); renderList(); };
+        b.onclick = () => { version = v; page = 1; renderTabs(); renderList(); };
         vt.appendChild(b);
       });
     }
+  }
+
+  // 50人ずつページを分けて表示する
+  const PAGE_SIZE = 50;
+  let page = 1;
+  function pager(totalPages, where) {
+    const box = el('nav', 'pager');
+    box.setAttribute('aria-label', `ページ切り替え（${where}）`);
+    if (totalPages <= 1) return box;
+    const go = (n) => {
+      page = n;
+      renderList();
+      $('info').scrollIntoView({ block: 'start' });
+    };
+    const btn = (label, n, opts = {}) => {
+      const b = el('button', opts.current ? 'current' : '', label);
+      b.type = 'button';
+      if (opts.current) b.setAttribute('aria-current', 'page');
+      if (opts.disabled) b.disabled = true;
+      else if (!opts.current) b.onclick = () => go(n);
+      return b;
+    };
+    box.appendChild(btn('« 前へ', page - 1, { disabled: page === 1 }));
+    const nums = new Set([1, totalPages]);
+    for (let n = page - 2; n <= page + 2; n++) if (n >= 1 && n <= totalPages) nums.add(n);
+    let prev = 0;
+    [...nums].sort((a, b) => a - b).forEach((n) => {
+      if (n - prev > 1) box.appendChild(el('span', 'gap', '…'));
+      box.appendChild(btn(String(n), n, { current: n === page }));
+      prev = n;
+    });
+    box.appendChild(btn('次へ »', page + 1, { disabled: page === totalPages }));
+    return box;
   }
 
   function renderList() {
@@ -519,11 +558,16 @@
       posOf.set(r, prev && valueOf(prev, mode) === valueOf(r, mode) ? posOf.get(prev) : i + 1);
     });
     const items = sorted.filter((r) => !q || r.name.toLowerCase().includes(q));
-    $('info').textContent = `${sorted.length} 人が登録` + (version ? `（定数表：${version}）` : '');
+    const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+    page = Math.min(Math.max(page, 1), totalPages);
+    const start = (page - 1) * PAGE_SIZE;
+    const shown = items.slice(start, start + PAGE_SIZE);
+    $('info').textContent = `${sorted.length} 人が登録` + (version ? `（定数表：${version}）` : '') +
+      (items.length > PAGE_SIZE ? `　${items.length} 人中 ${start + 1}〜${start + shown.length} 人目` : '');
 
     const list = el('div', 'list');
     if (!items.length) list.appendChild(el('div', 'empty', '該当する記録はありません。'));
-    items.forEach((r) => {
+    shown.forEach((r) => {
       const row = el('div', 'r');
       const pos = posOf.get(r);
       row.appendChild(el('div', 'pos' + (pos <= 3 ? ` top${pos}` : ''), String(pos)));
@@ -571,7 +615,7 @@
       row.appendChild(right);
       list.appendChild(row);
     });
-    $('listBox').replaceChildren(list);
+    $('listBox').replaceChildren(pager(totalPages, '上'), list, pager(totalPages, '下'));
   }
 
   async function load() {
@@ -595,7 +639,7 @@
     let timer = null;
     $('search').addEventListener('input', (e) => {
       clearTimeout(timer);
-      timer = setTimeout(() => { query = e.target.value; renderList(); }, 250);
+      timer = setTimeout(() => { query = e.target.value; page = 1; renderList(); }, 250);
     });
     renderTabs();
     renderList();
