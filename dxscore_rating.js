@@ -1040,6 +1040,12 @@
       ctx.restore();
 
       const r1 = jy + J - 36;
+      // DX/ST・難易度の1つ上の行（左詰め）：希少ボーナス（☆7まで・☆6まで のときだけ）
+      if (s.rareAdd > 0 && RARE_MODES.includes(result.mode.id)) {
+        pill(ctx, jx + 6, r1 - 32, `希少 +${s.rareAdd.toFixed(2)}`, {
+          bg: '#2B2350', fg: '#FFE066', border: 'rgba(255,224,102,.55)', h: 28, size: 15, padX: 9,
+        });
+      }
       let px = jx + 6;
       px += pill(ctx, px, r1, s.kind, {
         bg: s.kind === 'ST' ? '#3B82C4' : (lx, w) => {
