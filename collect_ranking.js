@@ -23,6 +23,12 @@
   // レベルごとに1ファイル：ranking/lv13p.json（13+）、ranking/lv14.json（14）… の形でGitHubに置く
   const RESULTS_DIR = 'https://n4f1316.github.io/dxscore-tools/ranking/';
   const fileOfLevel = (label) => `lv${String(label).replace('+', 'p')}.json`;
+  // 推移を見るための履歴：レベルごとに1ファイル（ranking/history/lv13p_history.json など）。
+  // ダウンロードのたびに、その日の集計結果を「スナップショット」として1つ追加する（同じ日なら置き換え）
+  const HISTORY_DIR = RESULTS_DIR + 'history/'; // 最新のファイルと分けて置く
+  const historyFileOfLevel = (label) => `lv${String(label).replace('+', 'p')}_history.json`;
+  const HISTORY_FIELDS = ['name', 'kind', 'diff', 'max', 'const', 'top1', 'row50', 'row100',
+    'avgPct', 'avgStar', 'maxCount', 'star6Count', 'count', 'date'];
   // 以前の1ファイル方式のJSON（残っていれば読み込んでレベルごとに振り分ける）
   const OLD_RESULTS_URL = 'https://n4f1316.github.io/dxscore-tools/dxscore_ranking.json';
   const LEGACY_KEY = 'dxr-ranking-progress';   // 以前の版がブラウザ内に保存していた記録
@@ -218,7 +224,7 @@
     .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
     .tabs button[aria-pressed="true"] { background: #2B2350; border-color: #2B2350; color: #fff; }
     .list { background: #fff; border: 1.5px solid #E4DFF3; border-radius: 16px; overflow: hidden; }
-    .r { display: grid; grid-template-columns: 30px 44px 1fr 70px 40px 40px; gap: 8px; align-items: center;
+    .r { display: grid; grid-template-columns: 30px 44px minmax(0, 1fr) 70px 40px 40px; gap: 8px; align-items: center;
       padding: 8px 12px; border-top: 1px solid #E4DFF3; font-variant-numeric: tabular-nums; }
     .r:nth-child(even) { background: #FBFAFE; }
     .r.head { border-top: 0; background: #2B2350 !important; color: #fff; font-size: 11px; font-weight: 700; padding-top: 7px; padding-bottom: 7px; }
@@ -246,6 +252,7 @@
     .diff-REMASTER { background: #fff; color: #8E44D6; box-shadow: inset 0 0 0 1.5px #B68BE0; }
     .const { background: #EFECF9; color: #2B2350; }
     .rare { background: #2B2350; color: #FFE066; }
+    .chip.rare { white-space: normal; line-height: 1.35; max-width: 100%; }
     .lv { background: transparent; color: #6E6892; padding-left: 2px; }
     .nw { white-space: nowrap; }
     .date { font-size: 11px; color: #9A94B8; margin-top: 1px; }
@@ -266,7 +273,7 @@
     .diffs button:not(.dbtn)[aria-pressed="true"] { background: #2B2350; border-color: #2B2350; color: #fff; }
     .empty { padding: 20px; text-align: center; color: #6E6892; }
     @media (max-width: 520px) {
-      .r { grid-template-columns: 22px 40px 1fr 58px 34px 34px; gap: 6px; padding: 8px 10px; }
+      .r { grid-template-columns: 22px 40px minmax(0, 1fr) 58px 34px 34px; gap: 6px; padding: 8px 10px; }
       .jacket { width: 40px; height: 40px; }
     }
   `;
@@ -449,7 +456,7 @@
     el('div', 'label', '取得のしかた'), refetchRow,
     actRow,
     loadInfo,
-    el('div', 'note', '集計結果はブラウザに保存しません。終わったら「更新したレベルのJSONをダウンロード」で保存し、GitHubの ranking フォルダに同じ名前でアップロードしてください（例：Lv13+ は lv13p.json）。プレーヤー名は保存しません。')
+    el('div', 'note', '集計結果はブラウザに保存しません。終わったら「更新したレベルのJSONをダウンロード」で保存し、GitHubにアップロードしてください（例：Lv13+ なら lv13p.json は ranking フォルダ、推移用の lv13p_history.json は ranking/history フォルダ）。プレーヤー名は保存しません。')
   );
   wrap.appendChild(setup);
 
@@ -542,10 +549,24 @@
     const dl = el('div', 'row');
     dl.style.marginTop = '14px';
     // レベルごとのJSONを書き出す（ブラウザが「複数ファイルのダウンロード」の許可を求めることがあります）
+    //   あわせて、推移用の履歴ファイル（lv○○_history.json）にも今日の分を追加してダウンロードする
+    const today = (() => {
+      const d = new Date();
+      const p = (x) => String(x).padStart(2, '0');
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    })();
     const downloadLevels = async (lvList) => {
       for (const lv of lvList) {
         const arr = all.filter((r) => r.level === lv).sort(byAvgDesc);
         download(fileOfLevel(lv), JSON.stringify(arr, null, 1), 'application/json');
+        await sleep(400);
+        // 履歴：GitHub にある今までの履歴を読み、今日のスナップショットを追加（同じ日付は置き換え）
+        const old = await fetchJson(HISTORY_DIR + historyFileOfLevel(lv));
+        const snapshots = (old && Array.isArray(old.snapshots) ? old.snapshots : []).filter((x) => x && x.date !== today);
+        snapshots.push({ date: today, rows: arr.map((r) => HISTORY_FIELDS.map((f) => r[f] ?? null)) });
+        snapshots.sort((a, b) => (a.date < b.date ? -1 : 1));
+        const history = { v: 1, level: lv, fields: HISTORY_FIELDS, snapshots };
+        download(historyFileOfLevel(lv), JSON.stringify(history), 'application/json');
         await sleep(400);
       }
     };
@@ -801,7 +822,7 @@
       setStatus((stopped
         ? `中止しました（選んだ範囲の ${doneNow}/${charts.length} 譜面が集計済み、今回 ${newCount} 譜面を取得）。`
         : `完了しました（対象 ${charts.length} 譜面のうち、今回 ${newCount} 譜面を取得${failCount ? `、${failCount} 譜面は取得に失敗` : ''}）。`) +
-        (changedLevels.size ? '「更新したレベルのJSONをダウンロード」で保存し、GitHubの ranking フォルダのファイルを置き換えてください。' : ''));
+        (changedLevels.size ? '「更新したレベルのJSONをダウンロード」で保存し、GitHubの ranking フォルダ（推移用の _history.json は ranking/history フォルダ）のファイルを置き換えてください。' : ''));
       renderResults(levelLabel(to));
     } catch (e) {
       setStatus('エラー: ' + e.message);

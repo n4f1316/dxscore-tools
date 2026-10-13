@@ -40,7 +40,7 @@
   .daterange { font-size: 12px; font-weight: 700; color: var(--sub); margin: 12px 2px 6px; }
 
   .list { background: var(--card); border: 1.5px solid var(--line); border-radius: 16px; overflow: hidden; }
-  .r { display: grid; grid-template-columns: 30px 44px 1fr 70px 40px 40px; gap: 8px; align-items: center;
+  .r { display: grid; grid-template-columns: 30px 44px minmax(0, 1fr) 70px 40px 40px; gap: 8px; align-items: center;
     padding: 8px 12px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
   .r:nth-child(even) { background: #FBFAFE; }
   .r.head { position: sticky; top: 0; z-index: 1; border-top: 0; background: var(--ink) !important; color: #fff;
@@ -70,6 +70,7 @@
   .diff-REMASTER { background: #fff; color: #8E44D6; box-shadow: inset 0 0 0 1.5px #B68BE0; }
   .const { background: #EFECF9; color: var(--ink); }
   .rare { background: #2B2350; color: #FFE066; }
+  .chip.rare { white-space: normal; line-height: 1.35; max-width: 100%; }
   .diffs button.rare-btn[aria-pressed="true"] { background: #2B2350; color: #FFE066; border-color: transparent; }
   .lv { background: transparent; color: var(--sub); padding-left: 2px; }
   .meta { font-size: 11px; color: var(--sub); margin-top: 3px; }
@@ -83,11 +84,38 @@
   .pager button.current { background: var(--ink); border-color: var(--ink); color: #fff; cursor: default; }
   .pager button:disabled { opacity: .4; cursor: default; }
   .pager .gap { color: var(--sub); padding: 0 2px; }
+  .snap-tabs { align-items: center; }
+  .snap-label { font-size: 12px; font-weight: 800; color: var(--sub); margin-right: 2px; }
+  .snap-tabs button { font-size: 13px; padding: 4px 12px; }
+  .snap-tabs button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .trend-btn { margin-top: 5px; font-size: 11px; padding: 2px 10px; border-color: var(--cyan); color: #156F86; }
+
+  /* 推移のグラフ */
+  .tr-overlay { position: fixed; inset: 0; z-index: 50; background: rgba(43,35,80,.5); overflow: auto; padding: 16px 10px 40px; }
+  .tr-box { position: relative; max-width: 720px; margin: 0 auto; background: var(--bg); border-radius: 22px; padding: 18px 16px 20px; }
+  .tr-close { position: absolute; top: 14px; right: 14px; }
+  .tr-head { padding-right: 90px; }
+  .tr-title { font-size: 17px; font-weight: 800; line-height: 1.4; word-break: break-word; }
+  .tr-card { background: var(--card); border: 1.5px solid var(--line); border-radius: 16px; padding: 14px 14px 10px; margin-top: 12px; }
+  .tr-ctitle { font-size: 13px; font-weight: 800; }
+  .tr-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; font-weight: 700; color: var(--sub); margin-top: 4px; }
+  .tr-key { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+  .tr-chart { position: relative; margin-top: 6px; }
+  .tr-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .tr-tip { position: absolute; pointer-events: none; background: var(--ink); color: #fff; font-size: 12px; font-weight: 700;
+    line-height: 1.6; padding: 6px 10px; border-radius: 10px; white-space: nowrap; transform: translate(-50%, -100%); }
+  .tr-tip[hidden] { display: none; }
+  .tr-note { font-size: 12px; color: var(--sub); margin-top: 10px; line-height: 1.7; }
+  .tr-table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; margin-top: 8px; }
+  .tr-table th, .tr-table td { padding: 5px 6px; border-top: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  .tr-table th:first-child, .tr-table td:first-child { text-align: left; }
+  .tr-table thead th { border-top: 0; color: var(--sub); font-weight: 800; }
+  .tr-tablewrap { overflow-x: auto; }
   .empty { padding: 24px; text-align: center; color: var(--sub); }
   .foot { margin-top: 18px; font-size: 12px; color: var(--sub); line-height: 1.8; }
 
   @media (max-width: 520px) {
-    .r { grid-template-columns: 22px 40px 1fr 58px 34px 34px; gap: 6px; padding: 8px 10px; }
+    .r { grid-template-columns: 22px 40px minmax(0, 1fr) 58px 34px 34px; gap: 6px; padding: 8px 10px; }
     .jacket { width: 40px; height: 40px; }
   }
 </style>
@@ -100,6 +128,7 @@
   <div class="status" id="status">データを読み込み中…</div>
 
   <div id="app" hidden>
+    <div class="tabs snap-tabs" id="snapTabs" role="group" aria-label="データの時点"></div>
     <div class="tabs" id="levelTabs" role="group" aria-label="レベル"></div>
     <div class="tabs diffs" id="diffTabs" role="group" aria-label="難易度"></div>
     <div class="tabs diffs" id="rareTabs" role="group" aria-label="希少ボーナス"></div>
@@ -109,6 +138,7 @@
     <p class="foot">
       「平均」は上位100人のでらっくスコア取得率の平均と、その☆換算です。「☆7」は理論値の人数、「☆6」は取得率99%以上（理論値を除く）の人数です。
       見出しの「平均」「☆7」「☆6」を押すと並び替えられます。<br>
+      上の「時点」で過去の集計に切り替えられます（レベルごとに、その日までで最後に集計したデータを表示）。各譜面の「推移を見る」で、☆7・☆6以上（理論値を含む）の人数と平均取得率の変化をグラフで確認できます。<br>
       ランキングには上位100人までしか載らないため、100人目まで☆6以上で埋まっている譜面は、☆6の欄を「100+」（☆7を含めて☆6を達成した人が100人以上）と表示しています。全員が☆7の譜面は、☆7の欄も「100+」になります。<br>
       「希少」の印は、2fRATE の希少ボーナスの対象譜面です。上位100人のうち☆6以上（☆6＋☆7）が20人以下の譜面を☆6以上で達成すると、「☆7まで」「☆6まで」の単曲レート値に加算されます（20人以下 +0.05、10人以下 +0.10、3人以下 +0.15）。<br>
       ☆の基準：☆7 100%、☆6 99%以上、☆5 97%以上、☆4 95%以上、☆3 93%以上、☆2 90%以上、☆1 85%以上。<br>
@@ -194,7 +224,44 @@
     fetch(url + '?' + Date.now()).then((res) => (res.ok ? res.json() : null)).catch(() => null);
 
   // ===== 状態 =====
-  let all = [];
+  let all = [];        // いま表示している時点のデータ
+  let latest = [];     // 最新のデータ（ranking/lv○○.json）
+  let histories = [];  // レベルごとの履歴（ranking/lv○○_history.json）：[{ level, snapshots: [{ date, rows }] }]
+  let snapDates = [];  // 履歴にある日付（新しい順）
+  let currentSnap = null; // null = 最新、それ以外は 'YYYY-MM-DD'
+  // 過去の記録（履歴）は ranking/history/ に置く（最新のファイルと分けるため）
+  const HISTORY_DIR = RESULTS_DIR + 'history/';
+  const historyFileOfLevel = (label) => `lv${String(label).replace('+', 'p')}_history.json`;
+  const chartKey = (r) => `${r.name}|${r.kind}|${r.diff}|${r.max}`;
+
+  // 履歴ファイル（項目名の配列＋値の配列）を、ふつうの行の形に戻す
+  function expandHistory(h, level) {
+    if (!h || !Array.isArray(h.snapshots) || !Array.isArray(h.fields)) return null;
+    return {
+      level,
+      snapshots: h.snapshots
+        .filter((x) => x && typeof x.date === 'string' && Array.isArray(x.rows))
+        .map((x) => ({
+          date: x.date,
+          rows: x.rows.map((vals) => {
+            const r = { level };
+            h.fields.forEach((f, i) => { r[f] = vals[i]; });
+            return r;
+          }).filter(isRow),
+        }))
+        .sort((a, b) => (a.date < b.date ? -1 : 1)),
+    };
+  }
+  // 指定した日付の時点のデータ：レベルごとに、その日までで最後のスナップショットを使う
+  function rowsAt(date) {
+    if (!date) return latest;
+    const out = [];
+    histories.forEach((h) => {
+      const snap = [...h.snapshots].reverse().find((x) => x.date <= date);
+      if (snap) out.push(...snap.rows);
+    });
+    return out;
+  }
   let jackets = null;
   let jacketOverrides = {};
   let currentLevel = null;
@@ -245,6 +312,222 @@
   };
 
   // ===== 描画 =====
+  function renderSnapTabs() {
+    const st = $('snapTabs');
+    st.replaceChildren();
+    if (!snapDates.length) { st.hidden = true; return; }
+    st.hidden = false;
+    st.appendChild(el('span', 'snap-label', '時点'));
+    [null, ...snapDates].forEach((d) => {
+      const b = el('button', '', d === null ? '最新' : d.replace(/-/g, '/'));
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(d === currentSnap));
+      b.onclick = () => {
+        currentSnap = d;
+        all = rowsAt(d);
+        const levels = [...new Set(all.map((r) => r.level))];
+        if (currentLevel !== '*' && !levels.includes(currentLevel)) currentLevel = levels.sort((a, b) => levelOrder(b) - levelOrder(a))[0] ?? '*';
+        page = 1;
+        renderSnapTabs(); renderTabs(); renderList();
+      };
+      st.appendChild(b);
+    });
+  }
+
+  // ===== 推移のグラフ =====
+  // ある譜面の推移：履歴の各スナップショット＋最新（最後のスナップショットと中身が違うときだけ）
+  function trendOf(r) {
+    const key = chartKey(r);
+    const pts = [];
+    histories.forEach((h) => h.snapshots.forEach((x) => {
+      const hit = x.rows.find((y) => chartKey(y) === key);
+      if (hit) pts.push({ label: x.date.replace(/-/g, '/'), date: x.date, r: hit });
+    }));
+    pts.sort((a, b) => (a.date < b.date ? -1 : 1));
+    const now = latest.find((y) => chartKey(y) === key);
+    const same = (a, b) => ['top1', 'row50', 'row100', 'avgPct', 'maxCount', 'star6Count'].every((f) => a[f] === b[f]);
+    if (now && (!pts.length || !same(pts[pts.length - 1].r, now))) pts.push({ label: '最新', date: '9999', r: now });
+    return pts;
+  }
+
+  // 折れ線グラフ（SVG）。series: [{ name, color, values }]。1本なら凡例なし（見出しが名前を表す）
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  function svgEl(tag, attrs) {
+    const e = document.createElementNS(SVGNS, tag);
+    Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v));
+    return e;
+  }
+  function lineChart({ labels, series, yMin, yMax, fmt, tipFmt }) {
+    // スマホでは横幅を詰めて、文字が小さくなりすぎないようにする
+    const narrow = window.innerWidth < 560;
+    const W = narrow ? 360 : 640, H = narrow ? 200 : 220, L = 40, R = narrow ? 34 : 48, T = 12, B = 28;
+    const iw = W - L - R, ih = H - T - B;
+    const xAt = (i) => L + (labels.length === 1 ? iw / 2 : (iw * i) / (labels.length - 1));
+    const yAt = (v) => T + ih - ((v - yMin) / (yMax - yMin)) * ih;
+    const wrap = el('div', 'tr-chart');
+    const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img' });
+    // 目盛り（4本の横線）
+    for (let k = 0; k <= 4; k++) {
+      const v = yMin + ((yMax - yMin) * k) / 4;
+      const y = yAt(v);
+      svg.appendChild(svgEl('line', { x1: L, x2: W - R, y1: y, y2: y, stroke: k === 0 ? '#CFC8E6' : '#ECE8F6', 'stroke-width': 1 }));
+      const t = svgEl('text', { x: L - 8, y: y + 4, 'text-anchor': 'end', 'font-size': 11, fill: '#6E6892' });
+      t.textContent = fmt(v);
+      svg.appendChild(t);
+    }
+    // 日付（多いときは間引く）
+    const step = Math.max(1, Math.ceil(labels.length / 6));
+    labels.forEach((lb, i) => {
+      if (i % step !== 0 && i !== labels.length - 1) return;
+      const t = svgEl('text', { x: xAt(i), y: H - 8, 'text-anchor': 'middle', 'font-size': 11, fill: '#6E6892' });
+      t.textContent = lb === '最新' ? lb : lb.slice(5);
+      svg.appendChild(t);
+    });
+    // 縦の補助線（マウスを乗せた位置）
+    const cross = svgEl('line', { x1: 0, x2: 0, y1: T, y2: T + ih, stroke: '#B9B1D6', 'stroke-width': 1, visibility: 'hidden' });
+    svg.appendChild(cross);
+    // 線と点
+    series.forEach((sr) => {
+      const pts = sr.values.map((v, i) => (v === null || v === undefined ? null : [xAt(i), yAt(v)]));
+      const d = pts.reduce((acc, p, i) => (p ? acc + `${acc && pts[i - 1] ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}` : acc), '');
+      if (d) svg.appendChild(svgEl('path', { d, fill: 'none', stroke: sr.color, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+      pts.forEach((p) => { if (p) svg.appendChild(svgEl('circle', { cx: p[0], cy: p[1], r: 4, fill: sr.color, stroke: '#FFFFFF', 'stroke-width': 2 })); });
+      // 最後の値を線の右端に（文字は本文の色）
+      const lastI = sr.values.map((v, i) => (v === null || v === undefined ? -1 : i)).filter((i) => i >= 0).pop();
+      if (lastI !== undefined) {
+        const t = svgEl('text', { x: xAt(lastI) + 9, y: yAt(sr.values[lastI]) + 4, 'font-size': 12, 'font-weight': 800, fill: '#2B2350' });
+        t.textContent = fmt(sr.values[lastI]);
+        svg.appendChild(t);
+      }
+    });
+    // マウス・タップで値を表示（点より広い当たり判定）
+    const tip = el('div', 'tr-tip');
+    tip.hidden = true;
+    labels.forEach((lb, i) => {
+      const half = labels.length === 1 ? iw / 2 : iw / (labels.length - 1) / 2;
+      const hit = svgEl('rect', { x: xAt(i) - half, y: T, width: half * 2, height: ih, fill: 'transparent' });
+      const show = () => {
+        cross.setAttribute('x1', xAt(i)); cross.setAttribute('x2', xAt(i)); cross.setAttribute('visibility', 'visible');
+        tip.textContent = '';
+        tip.appendChild(document.createTextNode(lb));
+        series.forEach((sr) => {
+          tip.appendChild(document.createElement('br'));
+          tip.appendChild(document.createTextNode(`${sr.name}：${tipFmt(sr, i)}`));
+        });
+        const box = svg.getBoundingClientRect();
+        const top = Math.min(...series.map((sr) => (sr.values[i] === null || sr.values[i] === undefined ? T + ih : yAt(sr.values[i]))));
+        tip.style.left = `${(xAt(i) / W) * box.width}px`;
+        tip.style.top = `${(top / H) * box.height - 8}px`;
+        tip.hidden = false;
+      };
+      hit.addEventListener('mouseenter', show);
+      hit.addEventListener('click', show);
+      svg.appendChild(hit);
+    });
+    svg.addEventListener('mouseleave', () => { tip.hidden = true; cross.setAttribute('visibility', 'hidden'); });
+    wrap.append(svg, tip);
+    return wrap;
+  }
+
+  // ☆6以上（理論値を含む）の人数。100人目まで☆6以上で埋まっている回は「100+」
+  const star6Plus = (r) => (r.star6Count === null || r.star6Count === undefined || r.maxCount === null || r.maxCount === undefined
+    ? null : r.star6Count + r.maxCount);
+  const star6PlusText = (r) => (sat6(r) ? '100+' : star6Plus(r) === null ? '-' : String(star6Plus(r)));
+
+  function openTrend(r, song) {
+    const pts = trendOf(r);
+    const ov = el('div', 'tr-overlay');
+    const box = el('div', 'tr-box');
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.setAttribute('aria-label', `${r.name} の推移`);
+    ov.appendChild(box);
+    const close = () => { ov.remove(); document.removeEventListener('keydown', onKey); };
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', onKey);
+    ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+    const x = el('button', 'tr-close', '閉じる');
+    x.type = 'button';
+    x.onclick = close;
+
+    const head = el('div', 'tr-head');
+    const nm = el('div', 'tr-title', r.name);
+    if (song?.genre) nm.appendChild(el('span', 'genre', `（${song.genre}）`));
+    const chips = el('div', 'chips');
+    chips.append(
+      el('span', `chip kind-${r.kind === '?' ? 'unknown' : r.kind}`, r.kind),
+      el('span', `chip diff-${String(r.diff).replace(':', '').toUpperCase()}`, r.diff),
+      el('span', 'chip lv', `Lv${r.level}`)
+    );
+    head.append(nm, chips);
+    box.append(x, head);
+
+    const labels = pts.map((p) => p.label);
+    if (pts.length < 2) {
+      box.appendChild(el('div', 'tr-note', 'この譜面の集計はまだ1回分しかないため、推移は表示できません。次回以降の集計から、変化をグラフで見られるようになります。'));
+    } else {
+      // ① ☆7・☆6 の人数（同じ単位なので1つのグラフに2本）
+      const c7 = '#D12A7F', c6 = '#1584A6';
+      const cnt = el('div', 'tr-card');
+      const legend = el('div', 'tr-legend');
+      [['☆7（理論値）', c7], ['☆6以上（理論値を含む）', c6]].forEach(([t, c]) => {
+        const k = el('span');
+        const key = el('span', 'tr-key');
+        key.style.background = c;
+        k.append(key, document.createTextNode(t));
+        legend.appendChild(k);
+      });
+      const v7 = pts.map((p) => p.r.maxCount ?? null);
+      const v6 = pts.map((p) => star6Plus(p.r));
+      const top = Math.max(10, ...v7.filter((v) => v !== null), ...v6.filter((v) => v !== null));
+      // 目盛りがきりのいい数になるように（4等分して 1・2・5・10・25 刻みのどれか）
+      const stepY = [1, 2, 5, 10, 25].find((st) => st * 4 >= top) ?? 25;
+      const yMax = stepY * 4;
+      cnt.append(el('div', 'tr-ctitle', '人数（上位100人のうち）'), legend, lineChart({
+        labels,
+        series: [{ name: '☆7', color: c7, values: v7 }, { name: '☆6以上', color: c6, values: v6 }],
+        yMin: 0, yMax,
+        fmt: (v) => String(Math.round(v)),
+        tipFmt: (sr, i) => `${sr.name === '☆7' ? countCell(pts[i].r, 'maxCount').text : star6PlusText(pts[i].r)}人`,
+      }));
+      // ② 平均取得率（単位が違うので別のグラフ）
+      const va = pts.map((p) => (p.r.avgPct === null || p.r.avgPct === undefined ? null : Number(p.r.avgPct)));
+      const nums = va.filter((v) => v !== null);
+      const lo = Math.max(0, Math.floor(Math.min(...nums) - 0.5));
+      const hi = Math.min(100, Math.ceil(Math.max(...nums) + 0.5));
+      const avg = el('div', 'tr-card');
+      avg.append(el('div', 'tr-ctitle', '平均取得率（上位100人）'), lineChart({
+        labels,
+        series: [{ name: '平均', color: '#2B2350', values: va }],
+        yMin: lo, yMax: hi === lo ? lo + 1 : hi,
+        fmt: (v) => `${v.toFixed(hi - lo <= 2 ? 1 : 0)}%`,
+        tipFmt: (sr, i) => `${va[i] === null ? '-' : va[i].toFixed(2)}%`,
+      }));
+      box.append(cnt, avg);
+    }
+
+    // 表（グラフと同じ値。100人目まで埋まっている回は「100+」）
+    const tbl = el('table', 'tr-table');
+    const thead = tbl.createTHead().insertRow();
+    ['集計日', '☆7', '☆6以上', '平均', '1位', '50位', '100位'].forEach((t) => thead.appendChild(el('th', '', t)));
+    const tb = tbl.createTBody();
+    [...pts].reverse().forEach((p) => {
+      const tr = tb.insertRow();
+      [p.label, countCell(p.r, 'maxCount').text, star6PlusText(p.r),
+        p.r.avgPct === null || p.r.avgPct === undefined ? '-' : `${Number(p.r.avgPct).toFixed(2)}%`,
+        p.r.top1 ?? '-', p.r.row50 ?? '-', p.r.row100 ?? '-'].forEach((v) => { tr.insertCell().textContent = String(v); });
+    });
+    const tw = el('div', 'tr-card');
+    const wrapT = el('div', 'tr-tablewrap');
+    wrapT.appendChild(tbl);
+    tw.append(el('div', 'tr-ctitle', '集計ごとの値'), wrapT);
+    box.appendChild(tw);
+    box.appendChild(el('div', 'tr-note', '「☆6以上」は取得率99%以上の人数で、理論値（☆7）の人も含みます。100人目まで☆6以上で埋まっている回は、表では「100+」、グラフでは100人で表示しています。'));
+
+    document.body.appendChild(ov);
+    x.focus();
+  }
+
   function renderTabs() {
     const levels = [...new Set(all.map((r) => r.level))].sort((a, b) => levelOrder(b) - levelOrder(a));
     const lt = $('levelTabs');
@@ -408,6 +691,12 @@
       main.appendChild(meta);
       const got = dateOf(r.date);
       if (got) main.appendChild(el('div', 'date', `取得日 ${got}`));
+      if (histories.length) {
+        const tb = el('button', 'trend-btn', '推移を見る');
+        tb.type = 'button';
+        tb.onclick = () => openTrend(r, song);
+        main.appendChild(tb);
+      }
 
       const avg = el('div', 'c-num');
       avg.append(
@@ -433,17 +722,21 @@
   async function load() {
     const labels = [];
     for (let n = LEVEL_MAX; n >= LEVEL_MIN; n--) labels.push(levelLabel(n));
-    const [lists, jmap, overrides] = await Promise.all([
+    const [lists, hists, jmap, overrides] = await Promise.all([
       Promise.all(labels.map((lb) => fetchJson(RESULTS_DIR + fileOfLevel(lb)))),
+      Promise.all(labels.map((lb) => fetchJson(HISTORY_DIR + historyFileOfLevel(lb)))),
       fetchJson(JACKETS_URL),
       fetchJson(OVERRIDES_URL),
     ]);
+    histories = hists.map((h, i) => expandHistory(h, labels[i])).filter((h) => h && h.snapshots.length);
+    snapDates = [...new Set(histories.flatMap((h) => h.snapshots.map((x) => x.date)))].sort().reverse();
     jacketOverrides = overrides ?? {};
     jackets = jmap ? new Map(Object.entries(jmap)) : null;
     lists.forEach((list) => {
       if (!list) return;
-      (Array.isArray(list) ? list : Object.values(list)).filter(isRow).forEach((r) => all.push(r));
+      (Array.isArray(list) ? list : Object.values(list)).filter(isRow).forEach((r) => latest.push(r));
     });
+    all = latest;
 
     if (!all.length) {
       $('status').textContent = '表示できるデータがまだありません。';
@@ -460,6 +753,7 @@
       clearTimeout(timer);
       timer = setTimeout(() => { query = e.target.value; page = 1; renderList(); }, 250);
     });
+    renderSnapTabs();
     renderTabs();
     renderList();
   }
