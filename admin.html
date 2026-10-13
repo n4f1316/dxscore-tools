@@ -111,6 +111,13 @@
   .r.user:hover { background: #F3EEFC; }
   .r.open { background: #FDEAF3 !important; }
   .admin-meta { font-size: 11px; color: #9A94B8; }
+  .tag.dup { background: #E0434B; }
+  .ops { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .ops button { font-size: 11px; padding: 2px 10px; }
+  .ops .danger { border-color: #E0434B; color: #C0262E; }
+  .pin-box { margin-top: 6px; font-size: 12px; font-weight: 800; background: #FFF6E5; border: 1.5px solid #F4D79A; color: #7A5300;
+    border-radius: 10px; padding: 6px 10px; }
+  .pin-box b { font-size: 16px; letter-spacing: .12em; font-variant-numeric: tabular-nums; }
   .tag { display: inline-block; font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 6px; margin-left: 4px;
     background: #E0434B; color: #fff; vertical-align: middle; }
   /* レート対象曲 */
@@ -156,11 +163,13 @@
     <div class="tabs" id="modeTabs" role="group" aria-label="レートの種類"></div>
     <div class="tabs" id="verTabs" role="group" aria-label="定数表のバージョン"></div>
     <div class="tabs" id="formulaTabs" role="group" aria-label="計算式の版"></div>
+    <div class="tabs" id="toolTabs" role="group" aria-label="管理"></div>
     <input class="search" id="search" type="search" placeholder="名前・ユーザー名で絞り込み" aria-label="名前・ユーザー名で絞り込み">
     <div class="info" id="info"></div>
     <div id="listBox"></div>
     <p class="foot">
-      管理者用のページです。鍵はこのページには保存されず、閉じると入力し直しになります。
+      管理者用のページです。鍵はこのページには保存されず、閉じると入力し直しになります。<br>
+      「PINを再発行」は新しい6桁のPINを作って表示します（表示は1度だけ）。本人確認をしたうえで、本人にだけ伝えてください。「削除」は元に戻せません。
     </p>
   </div>
 </div>
@@ -515,6 +524,20 @@
 
   let all = [];
   let adminKey = '';
+  let dupOnly = false; // 表示名が重複している記録だけを表示
+  // 表示名（前後の空白を除いた完全一致）が2人以上いるもの
+  const dupNames = () => {
+    const count = new Map();
+    all.forEach((r) => { const n = (r.displayName || '').trim(); if (n) count.set(n, (count.get(n) || 0) + 1); });
+    return new Set([...count].filter(([, c]) => c > 1).map(([n]) => n));
+  };
+  async function adminCall(body) {
+    const res = await fetch(RANKING_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ ...body, key: adminKey }) });
+    const d = await res.json();
+    if (!d.ok) throw new Error(d.error || '失敗しました。');
+    return d;
+  }
   let mode = MODES[0];
   let version = null;
   // 計算式の版（v1 / v2 / v3 …）の切り替え。null は「すべて」
@@ -547,6 +570,14 @@
     }
     // 計算式の版：記録にある版をすべて並べる（「すべて」＋ 版ごと）
     const fvs = [...new Set(all.map((r) => r.formulaVersion || '不明'))].sort((a, b) => formulaNo(a) - formulaNo(b));
+    const tt = $('toolTabs');
+    const dn = dupNames();
+    const dupCount = all.filter((r) => dn.has((r.displayName || '').trim())).length;
+    const db = el('button', '', `表示名が重複している記録のみ（${dupCount}）`);
+    db.type = 'button';
+    db.setAttribute('aria-pressed', String(dupOnly));
+    db.onclick = () => { dupOnly = !dupOnly; renderTabs(); renderList(); };
+    tt.replaceChildren(db);
     const ft = $('formulaTabs');
     ft.replaceChildren(el('span', 'tab-label', '計算式'));
     [null, ...fvs].forEach((v) => {
@@ -572,7 +603,13 @@
       const prev = sorted[i - 1];
       posOf.set(r, prev && valueOf(prev, mode) === valueOf(r, mode) ? posOf.get(prev) : i + 1);
     });
-    const items = sorted.filter((r) => !q || r.name.toLowerCase().includes(q) || r.username.includes(q) || (r.displayName || '').toLowerCase().includes(q));
+    const dn = dupNames();
+    let items = sorted.filter((r) => !q || r.name.toLowerCase().includes(q) || r.username.includes(q) || (r.displayName || '').toLowerCase().includes(q));
+    // 重複のみ：同じ表示名どうしが並ぶように、表示名 → 更新日の新しい順
+    if (dupOnly) {
+      items = items.filter((r) => dn.has((r.displayName || '').trim()))
+        .sort((a, b) => (a.displayName || '').localeCompare(b.displayName || '', 'ja') || String(b.updatedAt).localeCompare(String(a.updatedAt)));
+    }
     const conds = [version && `定数表：${version}`, formula && `計算式：${formula}`].filter(Boolean);
     $('info').textContent = `${sorted.length} 人が登録` + (conds.length ? `（${conds.join('・')}）` : '');
 
@@ -598,8 +635,49 @@
       const nm = el('div', 'name' + (r.anonymous ? ' anon' : ''), r.name);
       if (r.hidden) nm.appendChild(el('span', 'tag', '非表示'));
       nm.appendChild(el('span', r.publicTop50 ? 'tag pub' : 'tag priv', r.publicTop50 ? 'ベスト枠公開' : 'ベスト枠非公開'));
-      main.append(nm, el('div', 'meta', `更新 ${dateOf(r.updatedAt)}`), ...(r.counts ? [el('div', 'meta', countsText(r))] : []),
+      if (dn.has((r.displayName || '').trim())) nm.appendChild(el('span', 'tag dup', '表示名重複'));
+      main.append(nm, el('div', 'meta', `登録 ${dateOf(r.createdAt)}　更新 ${dateOf(r.updatedAt)}`), ...(r.counts ? [el('div', 'meta', countsText(r))] : []),
         el('div', 'admin-meta', `@${r.username}` + (r.anonymous && r.displayName ? `（表示名：${r.displayName}）` : '')));
+      // 操作：PINの再発行・削除（行を押したときのベスト枠表示とは別）
+      const ops = el('div', 'ops');
+      const resetBtn = el('button', '', 'PINを再発行');
+      const delBtn = el('button', 'danger', '削除');
+      resetBtn.type = delBtn.type = 'button';
+      resetBtn.onclick = async (e) => {
+        e.stopPropagation();
+        if (!confirm(`@${r.username}（${r.name}）のPINを再発行しますか？\n今のPINは使えなくなります。`)) return;
+        resetBtn.disabled = true;
+        try {
+          const d = await adminCall({ action: 'adminResetPin', username: r.username });
+          const box = el('div', 'pin-box');
+          box.append(document.createTextNode(`@${d.username} の新しいPIN：`), el('b', '', d.pin),
+            document.createTextNode('（この画面を閉じると再表示できません。本人にだけ伝えてください）'));
+          box.addEventListener('click', (ev) => ev.stopPropagation());
+          main.appendChild(box);
+        } catch (err) {
+          alert(err.message);
+        } finally {
+          resetBtn.disabled = false;
+        }
+      };
+      delBtn.onclick = async (e) => {
+        e.stopPropagation();
+        const typed = prompt(`@${r.username}（${r.name}）の記録を削除します。元に戻せません。\n確認のため、ユーザー名「${r.username}」を入力してください。`);
+        if (typed === null) return;
+        if (typed.trim().toLowerCase() !== r.username) { alert('ユーザー名が一致しないため、削除しませんでした。'); return; }
+        delBtn.disabled = true;
+        try {
+          await adminCall({ action: 'adminDelete', username: r.username });
+          all = all.filter((x) => x !== r);
+          renderTabs();
+          renderList();
+        } catch (err) {
+          alert(err.message);
+          delBtn.disabled = false;
+        }
+      };
+      ops.append(resetBtn, delBtn);
+      main.appendChild(ops);
       row.appendChild(main);
       row.classList.add('user');
       row.tabIndex = 0;
