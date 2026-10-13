@@ -142,6 +142,13 @@ javascript:(()=>{const s=document.createElement('script');s.src='https://n4f1316
 
 結果画面のレートの札の下にある「上位50を画像にする」ボタンを押すと、別のタブに画像が表示されます。スマホは画像を長押しして「写真に保存」、PCは画像の上の「画像をダウンロード」から保存できます。画像には、プレイヤー情報と選んだレート、上位50譜面（順位・ジャケット・曲名・DX/ST・難易度・譜面定数・☆・単曲レート値）が載ります。
 
+### ランキングビューア（viewer.html）
+
+楽曲別のでらっくスコア全国ランキング（上位100人）から、譜面ごとに1位・50位・100位のスコア、平均取得率、☆7・☆6の人数を集計します。プレーヤー名は保存しません。
+集計結果は、閲覧専用のビューアで誰でも見られます（ログイン不要）。
+
+https://n4f1316.github.io/dxscore-tools/viewer.html
+
 ## 注意事項
 
 - 非公式のファンメイドツールです。株式会社セガおよび関連会社とは一切関係ありません。
@@ -150,65 +157,3 @@ javascript:(()=>{const s=document.createElement('script');s.src='https://n4f1316
 - 公式サイトへの負荷を抑えるため、ページの読み込みは間隔を空けて行っています。短時間に何度も連続で実行しないようにしてください。
 - 公式サイトの構成が変わると、動作しなくなることがあります。
 - 公式サイトの機能の利用状況（コースの加入状況など）によっては、一部のページが見られず正しく計算できない場合があります。
-
----
-
-## 管理者向け
-
-### 譜面定数表の作成（collect_consts.js）
-
-レベル別のレコードページは「定数の低い順、同じ定数内はジャンル順」に並んでいるため、ジャンルの並びが後戻りした地点を定数の段の境目とみなして、定数を割り当てています。検出した段数が理論上の段数（例：13+ なら 13.6〜13.9 の4段）と一致したレベルのみ定数を確定します。
-
-```
-javascript:(()=>{const s=document.createElement('script');s.src='https://n4f1316.github.io/dxscore-tools/collect_consts.js?'+Date.now();document.body.appendChild(s);})();void(0);
-```
-
-バージョン更新時は、maimaiでらっくすNET で実行して各レベルが「確定」になっていることを確認し、定数表を `maimai_consts_<バージョン名>.json` としてアップロードし、`dxscore_rating.js` の `CONST_URL` を書き換えます。
-
-### ジャケット対応表の作成（collect_jackets.js）
-
-公式の楽曲リストから「曲名 → ジャケット画像のファイル名」の対応表を作ります。**maimaiでらっくすNET ではなく、公式サイト（https://maimai.sega.jp/）を開いた状態で**実行し、`maimai_jackets.json` をアップロードします。新曲が追加されたときに作り直してください。
-
-```
-javascript:(()=>{const s=document.createElement('script');s.src='https://n4f1316.github.io/dxscore-tools/collect_jackets.js?'+Date.now();document.body.appendChild(s);})();void(0);
-```
-
-同名の別曲（Link など）で、種別・難易度・レベルまで同じ譜面は自動で判別できないため、`jacket_overrides.json` に「曲名|種別|難易度|でらっくスコア最大値」とジャンルの対応を手動で書きます。
-
-```json
-{
- "Link|ST|MASTER|924": "maimai",
- "Link|ST|MASTER|1839": "niconico＆ボーカロイド"
-}
-```
-
-### ランキング集計（collect_ranking.js）とビューア（viewer.html）
-
-楽曲別のでらっくスコア全国ランキング（上位100人）から、譜面ごとに1位・50位・100位のスコア、平均取得率、☆7・☆6の人数を集計します。プレーヤー名は保存しません。結果はレベルごとのJSON（`ranking/lv13p.json` など）としてダウンロードし、`ranking` フォルダに置きます。
-
-```
-javascript:(()=>{const s=document.createElement('script');s.src='https://n4f1316.github.io/dxscore-tools/collect_ranking.js?'+Date.now();document.body.appendChild(s);})();void(0);
-```
-
-集計結果は、閲覧専用のビューアで誰でも見られます（ログイン不要）。
-
-https://n4f1316.github.io/dxscore-tools/viewer.html
-
-### β版
-
-新機能は `beta/dxscore_rating.js` で試し、問題がなければ正式版に移します。β版の説明は [beta/README.md](beta/README.md) を参照してください。
-
-## ファイル構成
-
-| ファイル | 内容 |
-|---|---|
-| `dxscore_rating.js` | 2fRATE の計算・表示・画像化（正式版） |
-| `beta/dxscore_rating.js` | 2fRATE のβ版 |
-| `collect_consts.js` | 譜面定数の収集（管理者向け） |
-| `collect_jackets.js` | ジャケット対応表の作成（管理者向け） |
-| `collect_ranking.js` | でらっくスコア全国ランキングの集計（管理者向け） |
-| `viewer.html` | ランキング集計結果のビューア |
-| `maimai_consts_magical.json` | 譜面定数表（maimaiでらっくす MAGiCAL） |
-| `maimai_jackets.json` | ジャケット対応表 |
-| `jacket_overrides.json` | 同名曲のジャケット判別用の手動対応表 |
-| `ranking/` | ランキング集計結果（レベルごと） |
