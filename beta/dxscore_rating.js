@@ -167,6 +167,7 @@
   const RANKING_PAGE = 'https://n4f1316.github.io/dxscore-tools/ranking.html';
   const FORMULA_VERSION = 'v3'; // 計算式の版（計算式を変えたら上げる）。v2：☆6まで・☆5まで でも上限到達で +0.1、v3：希少ボーナス
   const USER_KEY = 'dxr-ranking-user'; // このブラウザで最後に使ったユーザー名（PINは保存しない）
+  const FORM_KEY = 'dxr-ranking-form'; // このブラウザで最後に登録したときの表示名・匿名・ベスト枠公開の選択
 
   // おすすめ楽曲：ランキング集計のデータ（譜面ごとの取りやすさ）の置き場所
   const RANKING_STATS_DIR = 'https://n4f1316.github.io/dxscore-tools/ranking/';
@@ -1228,6 +1229,9 @@
 
     let savedUser = '';
     try { savedUser = localStorage.getItem(USER_KEY) || ''; } catch { /* なし */ }
+    // 前回の登録で入力した表示名など（このブラウザの中だけに保存。サーバーには送らない）
+    let savedForm = {};
+    try { savedForm = JSON.parse(localStorage.getItem(FORM_KEY) || '{}') || {}; } catch { savedForm = {}; }
 
     // ---- 入力画面 ----
     function inputView(prev = {}) {
@@ -1250,7 +1254,7 @@
         '英数字とアンダーバーで3〜16文字（公開されません）', { autocomplete: 'username', autocapitalize: 'off', spellcheck: 'false' });
       const pin = field('PIN', 'password', prev.pin ?? '',
         '数字4〜8桁（公開されません。忘れると更新できなくなります）', { inputmode: 'numeric', autocomplete: 'current-password' });
-      const name = field('表示名', 'text', prev.displayName ?? (profile.name || ''),
+      const name = field('表示名', 'text', prev.displayName ?? (typeof savedForm.displayName === 'string' && savedForm.displayName ? savedForm.displayName : (profile.name || '')),
         'ランキングに表示する名前（20文字まで）', { maxlength: '20' });
 
       const check = (label, checked) => {
@@ -1262,11 +1266,22 @@
         dlg.appendChild(lab);
         return { lab, cb };
       };
-      const anon = check('匿名で掲載する（表示名の代わりに「匿名#記号」で表示）', prev.anonymous ?? false);
-      const pub = check('ベスト枠（3種類のレートそれぞれのレート対象曲50譜面）をランキングで公開する', prev.publicTop50 ?? true);
+      const anon = check('匿名で掲載する（表示名の代わりに「匿名#記号」で表示）', prev.anonymous ?? (savedForm.anonymous === true));
+      const pub = check('ベスト枠（3種類のレートそれぞれのレート対象曲50譜面）をランキングで公開する', prev.publicTop50 ?? (typeof savedForm.publicTop50 === 'boolean' ? savedForm.publicTop50 : true));
       const sync = () => { name.disabled = anon.cb.checked; };
       anon.cb.onchange = sync;
       sync();
+
+      // PINの変更（管理者から仮のPINを受け取った人や、PINを変えたい人向け）。上の「PIN」には今のPIN（仮のPIN）を入れる
+      const chg = check('PINを変更する（管理者から仮のPINを受け取った方など）', !!prev.newPin);
+      const newPin = field('新しいPIN', 'password', prev.newPin ?? '',
+        '数字4〜8桁。上の「PIN」には今のPIN（仮のPIN）を入力してください', { inputmode: 'numeric', autocomplete: 'new-password' });
+      const newPin2 = field('新しいPIN（確認のためもう一度）', 'password', prev.newPin ?? '', '', { inputmode: 'numeric', autocomplete: 'new-password' });
+      const syncPin = () => {
+        [newPin, newPin2].forEach((x) => { x.closest('label').style.display = chg.cb.checked ? '' : 'none'; });
+      };
+      chg.cb.onchange = syncPin;
+      syncPin();
 
       const err = el('div', 'dxr-err');
       const actions = el('div', 'dxr-actions');
@@ -1302,7 +1317,12 @@
           anonymous: anon.cb.checked,
           showIcon: !!iconFile, // アイコンは匿名かどうかに関わらず必ず表示する
           publicTop50: pub.cb.checked,
+          newPin: chg.cb.checked ? newPin.value.trim() : '',
         };
+        if (chg.cb.checked) {
+          if (!/^\d{4,8}$/.test(form.newPin)) { err.textContent = '新しいPINは数字4〜8桁にしてください。'; return; }
+          if (form.newPin !== newPin2.value.trim()) { err.textContent = '新しいPINが2回とも同じになるように入力してください。'; return; }
+        }
         if (!/^[a-z0-9_]{3,16}$/.test(form.username)) { err.textContent = 'ユーザー名は英数字とアンダーバーで3〜16文字にしてください。'; return; }
         if (!/^\d{4,8}$/.test(form.pin)) { err.textContent = 'PINは数字4〜8桁にしてください。'; return; }
         if (!form.anonymous && !form.displayName) { err.textContent = '表示名を入力するか、匿名で掲載を選んでください。'; return; }
@@ -1317,6 +1337,7 @@
               () => { err.textContent = '混み合っているため、送り直しています…'; });
           }
           if (!r.ok) { err.textContent = r.error || '確認できませんでした。'; next.disabled = false; return; }
+          if (form.newPin && !r.exists) { err.textContent = 'PINの変更は、登録済みのユーザー名でだけできます。初めての方は「PINを変更する」のチェックを外してください。'; next.disabled = false; return; }
           confirmView(form, r);
         } catch (e) {
           err.textContent = '通信に失敗しました。時間をおいてもう一度お試しください。';
@@ -1357,6 +1378,7 @@
       pv.appendChild(tx);
       dlg.appendChild(pv);
       if (form.anonymous) dlg.appendChild(el('p', '', `あなたの匿名表記は「匿名#${check.anonCode}」です。ランキングで自分の記録を探すときの目印になります。`));
+      if (form.newPin) dlg.appendChild(el('p', '', 'あわせて、PINを新しいものに変更します。次回からは新しいPINで更新してください。'));
 
       const err = el('div', 'dxr-err');
       const actions = el('div', 'dxr-actions');
@@ -1377,6 +1399,7 @@
             username: form.username,
             pin: form.pin,
             displayName: form.displayName,
+            newPin: form.newPin || undefined, // PINを変更するときだけ
             anonymous: form.anonymous,
             showIcon: form.showIcon,
             publicTop50: form.publicTop50,
@@ -1402,7 +1425,12 @@
             back.disabled = false;
             return;
           }
-          try { localStorage.setItem(USER_KEY, form.username); } catch { /* 無視 */ }
+          try {
+            localStorage.setItem(USER_KEY, form.username);
+            localStorage.setItem(FORM_KEY, JSON.stringify({
+              displayName: form.displayName, anonymous: form.anonymous, publicTop50: form.publicTop50,
+            }));
+          } catch { /* 保存できない環境では何もしない */ }
           doneView(r, form);
         } catch (e) {
           err.textContent = '通信に失敗しました。時間をおいてもう一度お試しください。';
