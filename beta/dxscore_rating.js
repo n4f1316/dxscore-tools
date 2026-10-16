@@ -577,6 +577,44 @@
       .dxr-row > .dxr-diffmax { display: none; }
       .dxr-meta .dxr-diffmax-inline { display: inline-block; }
     }
+    /* 起動時のメニュー・マイページ */
+    .dxr-top-btns { display: flex; gap: 8px; }
+    .dxr-close[hidden] { display: none; }
+    .dxr-menu { display: grid; gap: 12px; }
+    .dxr-menu-item {
+      display: block; width: 100%; text-align: left; font: inherit; color: var(--ink); cursor: pointer;
+      background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 16px 18px;
+    }
+    .dxr-menu-item.is-primary { border-color: var(--pink); }
+    .dxr-menu-title { display: block; font-size: 18px; font-weight: 800; }
+    .dxr-menu-item.is-primary .dxr-menu-title { color: var(--pink); }
+    .dxr-menu-desc { display: block; font-size: 12px; font-weight: 700; color: var(--sub); margin-top: 2px; }
+    .dxr-card { background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; padding: 16px; margin-bottom: 16px; }
+    .dxr-card h3 { margin: 0 0 4px; font-size: 17px; }
+    .dxr-card h4 { margin: 0 0 4px; font-size: 15px; }
+    .dxr-card-desc { margin: 2px 0 8px; font-size: 12px; color: var(--sub); }
+    .dxr-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .dxr-card .dxr-list { margin-top: 4px; }
+    .dxr-sub { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
+    .dxr-mini { font: inherit; font-size: 12px; font-weight: 700; color: var(--sub); background: #fff;
+      border: 1.5px solid var(--line); border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+    .dxr-tabs { display: flex; gap: 6px; margin: 12px 0 4px; }
+    .dxr-tab { font: inherit; font-weight: 800; padding: 6px 16px; border-radius: 999px; cursor: pointer;
+      border: 1.5px solid var(--line); background: #fff; color: var(--ink); }
+    .dxr-tab[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .dxr-fav-now { background: var(--bg); border-radius: 12px; padding: 10px 12px; margin: 6px 0 8px; }
+    .dxr-fav-results { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
+    .dxr-fav-hit { font: inherit; font-size: 13px; font-weight: 700; text-align: left; padding: 5px 10px; border-radius: 10px;
+      cursor: pointer; border: 1.5px solid var(--line); background: #fff; color: var(--ink); max-width: 100%; word-break: break-word; }
+    .dxr-fav-hit.is-on { border-color: var(--pink); background: #FCE6F1; }
+    .dxr-fav-pick { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+    .dxr-fav-pick select { font: inherit; font-size: 15px; padding: 6px 10px; border-radius: 10px; border: 1.5px solid var(--line);
+      background: #fff; color: var(--ink); }
+    .dxr-card .dxr-field input[type="text"], .dxr-card .dxr-field input[type="password"] {
+      display: block; width: 100%; margin-top: 4px; font: inherit; font-size: 16px; padding: 8px 12px;
+      border-radius: 10px; border: 1.5px solid var(--line); color: var(--ink); background: #fff;
+    }
+    .dxr-card .dxr-actions button.primary { background: var(--pink); border-color: var(--pink); color: #fff; }
     .dxr-diffmax-inline { display: none; background: transparent; color: var(--sub); padding-left: 2px; }
     .dxr-diffmax-inline.is-max { color: var(--gold); }
   `;
@@ -617,7 +655,13 @@
     const close = el('button', 'dxr-close', '閉じる');
     close.type = 'button';
     close.onclick = () => host.remove();
-    top.append(title, close);
+    // メニューに戻るボタン（メニュー以外の画面で表示）
+    const back = el('button', 'dxr-close', '← メニュー');
+    back.type = 'button';
+    back.hidden = true;
+    const btns = el('div', 'dxr-top-btns');
+    btns.append(back, close);
+    top.append(title, btns);
 
     const status = el('p', 'dxr-status');
     const body = el('div');
@@ -627,6 +671,10 @@
 
     return {
       body,
+      setBack: (fn) => {
+        back.hidden = !fn;
+        back.onclick = fn;
+      },
       status: (t, isError = false) => {
         status.textContent = t;
         status.classList.toggle('is-error', isError);
@@ -1272,17 +1320,6 @@
       anon.cb.onchange = sync;
       sync();
 
-      // PINの変更（管理者から仮のPINを受け取った人や、PINを変えたい人向け）。上の「PIN」には今のPIN（仮のPIN）を入れる
-      const chg = check('PINを変更する（管理者から仮のPINを受け取った方など）', !!prev.newPin);
-      const newPin = field('新しいPIN', 'password', prev.newPin ?? '',
-        '数字4〜8桁。上の「PIN」には今のPIN（仮のPIN）を入力してください', { inputmode: 'numeric', autocomplete: 'new-password' });
-      const newPin2 = field('新しいPIN（確認のためもう一度）', 'password', prev.newPin ?? '', '', { inputmode: 'numeric', autocomplete: 'new-password' });
-      const syncPin = () => {
-        [newPin, newPin2].forEach((x) => { x.closest('label').style.display = chg.cb.checked ? '' : 'none'; });
-      };
-      chg.cb.onchange = syncPin;
-      syncPin();
-
       const err = el('div', 'dxr-err');
       const actions = el('div', 'dxr-actions');
       const cancel = el('button', '', 'やめる');
@@ -1317,12 +1354,7 @@
           anonymous: anon.cb.checked,
           showIcon: !anon.cb.checked, // 匿名のときはアイコンも送らない（初期アイコンで表示）
           publicTop50: pub.cb.checked,
-          newPin: chg.cb.checked ? newPin.value.trim() : '',
         };
-        if (chg.cb.checked) {
-          if (!/^\d{4,8}$/.test(form.newPin)) { err.textContent = '新しいPINは数字4〜8桁にしてください。'; return; }
-          if (form.newPin !== newPin2.value.trim()) { err.textContent = '新しいPINが2回とも同じになるように入力してください。'; return; }
-        }
         if (!/^[a-z0-9_]{3,16}$/.test(form.username)) { err.textContent = 'ユーザー名は英数字とアンダーバーで3〜16文字にしてください。'; return; }
         if (!/^\d{4,8}$/.test(form.pin)) { err.textContent = 'PINは数字4〜8桁にしてください。'; return; }
         if (!form.anonymous && !form.displayName) { err.textContent = '表示名を入力するか、匿名で掲載を選んでください。'; return; }
@@ -1337,7 +1369,6 @@
               () => { err.textContent = '混み合っているため、送り直しています…'; });
           }
           if (!r.ok) { err.textContent = r.error || '確認できませんでした。'; next.disabled = false; return; }
-          if (form.newPin && !r.exists) { err.textContent = 'PINの変更は、登録済みのユーザー名でだけできます。初めての方は「PINを変更する」のチェックを外してください。'; next.disabled = false; return; }
           confirmView(form, r);
         } catch (e) {
           err.textContent = '通信に失敗しました。時間をおいてもう一度お試しください。';
@@ -1388,7 +1419,6 @@
       dlg.appendChild(pv);
       if (form.showIcon && !iconFile) dlg.appendChild(el('p', '', 'カメラで撮影した写真をアイコンにしている場合、ランキングではカメラマークで表示されます（写真は送信されません）。'));
       if (form.anonymous) dlg.appendChild(el('p', '', `あなたの匿名表記は「匿名#${check.anonCode}」です。ランキングで自分の記録を探すときの目印になります。`));
-      if (form.newPin) dlg.appendChild(el('p', '', 'あわせて、PINを新しいものに変更します。次回からは新しいPINで更新してください。'));
 
       const err = el('div', 'dxr-err');
       const actions = el('div', 'dxr-actions');
@@ -1409,7 +1439,6 @@
             username: form.username,
             pin: form.pin,
             displayName: form.displayName,
-            newPin: form.newPin || undefined, // PINを変更するときだけ
             anonymous: form.anonymous,
             showIcon: form.showIcon,
             publicTop50: form.publicTop50,
@@ -1762,6 +1791,406 @@
   }
 
   // ============================================================
+  //  マイページ
+  // ============================================================
+
+  const GENRE_URL = (d) => `/maimai-mobile/record/musicGenre/search/?genre=99&diff=${d}`; // 全ジャンル（d：3=MASTER, 4=Re:MASTER）
+  const RARE_TOP = 10; // 少人数の譜面を何件出すか
+  const FAV_DIFFS = ['BASIC', 'ADVANCED', 'EXPERT', 'MASTER', 'Re:MASTER'];
+
+  // ランキングは上位100人までしか載らないので、100人目まで埋まっている譜面は「100人以上」の可能性がある（譜面データビューアと同じ扱い）
+  const statFull = (r) => r.count >= 100 && r.max && r.row100 !== null && r.row100 !== undefined;
+  const PEOPLE_METRICS = [
+    {
+      id: 'max', label: '☆7', need: 7,
+      desc: '自分が☆7（理論値）を達成した譜面のうち、全国ランキング上位100人で☆7の人数が少ない譜面',
+      people: (r) => (r.maxCount === null || r.maxCount === undefined ? null : r.maxCount),
+      plus: (r) => statFull(r) && r.row100 === r.max,
+    },
+    {
+      id: 'star6', label: '☆6以上', need: 6,
+      desc: '自分が☆6以上を達成した譜面のうち、全国ランキング上位100人で☆6以上（☆7を含む）の人数が少ない譜面',
+      people: (r) => (r.star6Count === null || r.star6Count === undefined || r.maxCount === null || r.maxCount === undefined
+        ? null : r.star6Count + r.maxCount),
+      plus: (r) => statFull(r) && r.row100 * 100 >= r.max * 99,
+    },
+  ];
+
+  // 自分の MASTER・Re:MASTER の全譜面を読み込み、指標ごとに達成人数の少ない譜面を選ぶ
+  async function findRareCharts(onStatus) {
+    const statsPromise = loadRankingStats(LEVEL_MAX, COUNT_MIN_LEVEL); // 全国ランキングの集計（Lv10+〜Lv15）
+    const jacketPromise = loadJacketMap();
+    const mine = [];
+    for (const [i, d] of [[0, 3], [1, 4]]) {
+      onStatus(`${d === 3 ? 'MASTER' : 'Re:MASTER'} の全楽曲を取得中…（${i + 1} / 2ページ目）`);
+      if (i > 0) await sleep(WAIT_MS);
+      const res = await fetch(GENRE_URL(d), { credentials: 'same-origin' });
+      if (!res.ok) throw new Error(`${d === 3 ? 'MASTER' : 'Re:MASTER'} の取得に失敗しました (HTTP ${res.status})`);
+      mine.push(...parsePage(await res.text(), 0).filter((s) => COUNT_DIFFS.includes(s.diff)));
+    }
+    onStatus('全国ランキングの集計と照らし合わせています…');
+    const [stats, jackets] = await Promise.all([statsPromise, jacketPromise]);
+    const lists = {};
+    for (const m of PEOPLE_METRICS) {
+      const rows = [];
+      for (const s of mine) {
+        const stars = starsOf(s.cur, s.max);
+        if (stars < m.need) continue;
+        const st = stats.get(`${s.name}|${s.kind}|${s.diff}|${s.max}`);
+        if (!st) continue;
+        const people = m.people(st);
+        if (people === null) continue;
+        const plus = m.plus(st);
+        rows.push({ ...s, level: st.level || s.level, c: st.const ?? null, stars, people, plus, sort: people + (plus ? 0.5 : 0) });
+      }
+      // 人数の少ない順。同じ人数なら定数の高い順
+      rows.sort((a, b) => a.sort - b.sort || (b.c ?? 0) - (a.c ?? 0) || a.name.localeCompare(b.name, 'ja'));
+      lists[m.id] = rows.slice(0, RARE_TOP);
+    }
+    return { lists, jackets, scanned: mine.length };
+  }
+
+  function rareListEl(rows, metric, jackets) {
+    const list = el('div', 'dxr-list');
+    if (!rows.length) {
+      list.appendChild(el('div', 'dxr-rec-empty', `${metric.label}を達成した譜面のうち、全国ランキングの集計がある譜面（Lv10+以上）はまだありません。`));
+      return list;
+    }
+    rows.forEach((s, i) => {
+      const row = el('div', 'dxr-rec-row');
+      const song = resolveSong(jackets, s.name, s.kind, s.diff, s.level, s.max);
+      let jacket;
+      if (song?.img) {
+        jacket = el('img', 'dxr-jacket');
+        jacket.src = JACKET_BASE + song.img;
+        jacket.alt = '';
+        jacket.loading = 'lazy';
+        jacket.onerror = () => { jacket.removeAttribute('src'); };
+      } else {
+        jacket = el('div', 'dxr-jacket');
+      }
+      const main = el('div');
+      const nameEl = el('div', 'dxr-name', s.name);
+      if (song?.genre) nameEl.appendChild(el('span', 'dxr-genre', `（${song.genre}）`));
+      const meta = el('div', 'dxr-meta');
+      meta.append(
+        el('span', `dxr-chip dxr-kind-${s.kind === '?' ? 'unknown' : s.kind}`, s.kind),
+        el('span', `dxr-chip dxr-diff-${s.diff.replace(':', '').toUpperCase()}`, s.diff),
+        el('span', 'dxr-chip dxr-const', s.c ? s.c.toFixed(1) : `Lv${s.level}`)
+      );
+      const pill = el('span', `dxr-star-pill ${starClass(s.stars)}`, `☆${starDisplay(s.cur, s.max)}`);
+      pill.style.marginLeft = '2px';
+      meta.appendChild(pill);
+      main.append(nameEl, meta);
+      const gain = el('div', 'dxr-rec-gain');
+      gain.append(el('div', 'dxr-rec-plus', `${s.people}${s.plus ? '+' : ''}人`), el('div', 'dxr-rec-sub', `上位100人中の${metric.label}`));
+      row.append(el('div', 'dxr-rank', String(i + 1)), jacket, main, gain);
+      list.appendChild(row);
+    });
+    return list;
+  }
+
+  // 希少譜面TOP10のカード
+  function rareCard() {
+    const card = el('section', 'dxr-card');
+    card.append(el('h3', '', '達成人数が少ない譜面 TOP10'),
+      el('p', 'dxr-card-desc', '自分が達成した譜面のうち、全国ランキング上位100人で達成している人が少ない譜面を表示します。MASTER・Re:MASTER の全楽曲（2ページ）を読み込みます。人数は譜面データビューアと同じ集計（Lv10+以上）を使います。'));
+    const btn = el('button', 'dxr-rank-open', '集計する');
+    btn.type = 'button';
+    btn.style.margin = '4px 0 0';
+    const msg = el('p', 'dxr-status');
+    const out = el('div');
+    card.append(btn, msg, out);
+    btn.onclick = async () => {
+      btn.disabled = true;
+      out.replaceChildren();
+      msg.classList.remove('is-error');
+      try {
+        const { lists, jackets, scanned } = await findRareCharts((t) => { msg.textContent = t; });
+        msg.textContent = `${scanned} 譜面から集計しました。`;
+        const tabs = el('div', 'dxr-tabs');
+        const desc = el('p', 'dxr-card-desc');
+        const holder = el('div');
+        const show = (m) => {
+          [...tabs.children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === m.id)));
+          desc.textContent = m.desc;
+          holder.replaceChildren(rareListEl(lists[m.id], m, jackets));
+        };
+        PEOPLE_METRICS.forEach((m) => {
+          const b = el('button', 'dxr-tab', m.label);
+          b.type = 'button';
+          b.dataset.id = m.id;
+          b.onclick = () => show(m);
+          tabs.appendChild(b);
+        });
+        out.append(tabs, desc, holder);
+        show(PEOPLE_METRICS[0]);
+        btn.textContent = 'もう一度集計する';
+      } catch (e) {
+        msg.textContent = 'エラー: ' + e.message;
+        msg.classList.add('is-error');
+        console.error(e);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+    return card;
+  }
+
+  // 定数表から「曲名 → 種別・難易度の組み合わせ」を作る（お気に入りの検索用）
+  let favIndexPromise = null;
+  function loadFavIndex() {
+    if (!favIndexPromise) {
+      favIndexPromise = fetch(CONST_URL + '?' + Date.now())
+        .then((r) => (r.ok ? r.json() : {}))
+        .catch(() => ({}))
+        .then((table) => {
+          const map = new Map(); // 曲名 → Set('DX|MASTER', …)
+          Object.keys(table).forEach((k) => {
+            const [name, kind, diff] = k.split('|');
+            if (!name || !FAV_DIFFS.includes(diff)) return;
+            if (!map.has(name)) map.set(name, new Set());
+            map.get(name).add(`${kind === 'ST' ? 'ST' : 'DX'}|${diff}`);
+          });
+          return map;
+        });
+    }
+    return favIndexPromise;
+  }
+
+  const favChips = (fav) => {
+    const meta = el('div', 'dxr-meta');
+    meta.append(
+      el('span', `dxr-chip dxr-kind-${fav.kind}`, fav.kind),
+      el('span', `dxr-chip dxr-diff-${fav.diff.replace(':', '').toUpperCase()}`, fav.diff)
+    );
+    return meta;
+  };
+
+  // ランキング登録者向けのカード（ログイン → お気に入り譜面・PINの変更）
+  function memberCard() {
+    const card = el('section', 'dxr-card');
+    let savedUser = '';
+    try { savedUser = localStorage.getItem(USER_KEY) || ''; } catch { /* なし */ }
+
+    const field = (parent, label, type, value, note, attrs = {}) => {
+      const lab = el('label', 'dxr-field', label);
+      const input = el('input');
+      input.type = type;
+      input.value = value;
+      Object.entries(attrs).forEach(([k, v]) => input.setAttribute(k, v));
+      lab.appendChild(input);
+      if (note) lab.appendChild(el('small', '', note));
+      parent.appendChild(lab);
+      return input;
+    };
+
+    function loginView() {
+      card.replaceChildren(el('h3', '', 'お気に入り譜面・PINの変更'),
+        el('p', 'dxr-card-desc', 'ランキングに登録したユーザー名とPINで入ります。お気に入り譜面は、ランキングページの「ベスト枠を見る」に表示されます。'));
+      const user = field(card, 'ユーザー名', 'text', savedUser, '', { autocomplete: 'username', autocapitalize: 'off', spellcheck: 'false' });
+      const pin = field(card, 'PIN', 'password', '', '', { inputmode: 'numeric', autocomplete: 'current-password' });
+      const err = el('div', 'dxr-err');
+      const actions = el('div', 'dxr-actions');
+      const go = el('button', 'primary', '入る');
+      go.type = 'button';
+      actions.appendChild(go);
+      card.append(err, actions);
+      const submit = async () => {
+        const username = user.value.trim().toLowerCase();
+        const p = pin.value.trim();
+        if (!/^[a-z0-9_]{3,16}$/.test(username)) { err.textContent = 'ユーザー名は英数字とアンダーバーで3〜16文字です。'; return; }
+        if (!/^\d{4,8}$/.test(p)) { err.textContent = 'PINは数字4〜8桁です。'; return; }
+        go.disabled = true;
+        err.textContent = '確認中…';
+        const r = await callRanking({ action: 'mypage', username, pin: p }, () => { err.textContent = '混み合っています。送り直しています…'; })
+          .catch(() => ({ ok: false, error: '通信できませんでした。' }));
+        go.disabled = false;
+        if (!r.ok) { err.textContent = r.error || '確認できませんでした。'; return; }
+        try { localStorage.setItem(USER_KEY, username); } catch { /* 保存できなくても続ける */ }
+        savedUser = username;
+        memberView({ username, pin: p, info: r });
+      };
+      go.onclick = submit;
+      pin.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+    }
+
+    function memberView(auth) {
+      const { info } = auth;
+      card.replaceChildren();
+      const head = el('div', 'dxr-card-head');
+      head.append(el('h3', '', info.anonymous ? `匿名#${info.anonCode}` : (info.displayName || auth.username)));
+      const out = el('button', 'dxr-mini', 'ログアウト');
+      out.type = 'button';
+      out.onclick = loginView;
+      head.appendChild(out);
+      card.appendChild(head);
+      card.appendChild(el('p', 'dxr-card-desc', `ユーザー名：${auth.username}`));
+
+      // ---- お気に入り譜面 ----
+      const fav = el('div', 'dxr-sub');
+      card.appendChild(fav);
+      let current = info.favorite || null;
+      const favView = () => {
+        fav.replaceChildren(el('h4', '', 'お気に入り譜面'));
+        const now = el('div', 'dxr-fav-now');
+        if (current) {
+          now.append(el('div', 'dxr-name', current.name), favChips(current));
+        } else {
+          now.appendChild(el('div', 'dxr-card-desc', 'まだ登録されていません。'));
+        }
+        fav.appendChild(now);
+        fav.appendChild(el('p', 'dxr-card-desc', '1譜面だけ登録できます。曲名の一部を入力して探してください。ランキングでは曲名・ST/DX・難易度だけが表示されます。'));
+        const q = field(fav, '曲名で探す', 'text', '', '', { autocomplete: 'off', spellcheck: 'false' });
+        const results = el('div', 'dxr-fav-results');
+        const pick = el('div');
+        const err = el('div', 'dxr-err');
+        fav.append(results, pick, err);
+        if (current) {
+          const actions = el('div', 'dxr-actions');
+          const clear = el('button', '', 'お気に入りを外す');
+          clear.type = 'button';
+          clear.onclick = () => save(null, clear, err);
+          actions.appendChild(clear);
+          fav.appendChild(actions);
+        }
+        let timer = null;
+        q.addEventListener('input', () => {
+          clearTimeout(timer);
+          timer = setTimeout(async () => {
+            const word = q.value.trim().toLowerCase();
+            results.replaceChildren();
+            pick.replaceChildren();
+            if (!word) return;
+            const index = await loadFavIndex();
+            if (!index.size) { results.appendChild(el('div', 'dxr-card-desc', '曲の一覧を読み込めませんでした。時間をおいてお試しください。')); return; }
+            const hits = [...index.keys()].filter((n) => n.toLowerCase().includes(word)).slice(0, 20);
+            if (!hits.length) { results.appendChild(el('div', 'dxr-card-desc', '見つかりませんでした。')); return; }
+            hits.forEach((name) => {
+              const b = el('button', 'dxr-fav-hit', name);
+              b.type = 'button';
+              b.onclick = () => {
+                [...results.children].forEach((x) => x.classList.toggle('is-on', x === b));
+                pickView(name, index.get(name));
+              };
+              results.appendChild(b);
+            });
+          }, 250);
+        });
+        // 曲を選んだあと：種別と難易度を選んで登録
+        const pickView = (name, combos) => {
+          pick.replaceChildren(el('div', 'dxr-name', name));
+          const kinds = ['DX', 'ST'].filter((k) => [...combos].some((c) => c.startsWith(k + '|')));
+          const row = el('div', 'dxr-fav-pick');
+          const kindSel = el('select');
+          (kinds.length ? kinds : ['DX', 'ST']).forEach((k) => kindSel.appendChild(Object.assign(el('option', '', k), { value: k })));
+          const diffSel = el('select');
+          FAV_DIFFS.forEach((d) => diffSel.appendChild(Object.assign(el('option', '', d), { value: d })));
+          diffSel.value = 'MASTER';
+          const okBtn = el('button', 'primary', 'この譜面を登録');
+          okBtn.type = 'button';
+          okBtn.onclick = () => save({ name, kind: kindSel.value, diff: diffSel.value }, okBtn, err);
+          row.append(kindSel, diffSel);
+          const actions = el('div', 'dxr-actions');
+          actions.appendChild(okBtn);
+          pick.append(row, actions);
+        };
+      };
+      const save = async (value, button, err) => {
+        button.disabled = true;
+        err.textContent = '保存中…';
+        const r = await callRanking({ action: 'setFavorite', username: auth.username, pin: auth.pin, favorite: value },
+          () => { err.textContent = '混み合っています。送り直しています…'; })
+          .catch(() => ({ ok: false, error: '通信できませんでした。' }));
+        button.disabled = false;
+        if (!r.ok) { err.textContent = r.error || '保存できませんでした。'; return; }
+        current = r.favorite || null;
+        favView();
+        fav.appendChild(el('div', 'dxr-ok', current ? 'お気に入り譜面を登録しました。' : 'お気に入り譜面を外しました。'));
+      };
+      favView();
+
+      // ---- PINの変更 ----
+      const pinBox = el('div', 'dxr-sub');
+      pinBox.appendChild(el('h4', '', 'PINの変更'));
+      pinBox.appendChild(el('p', 'dxr-card-desc', '管理者から仮のPINを受け取った方は、ここで自分で決めたPINに変更してください。'));
+      const np1 = field(pinBox, '新しいPIN', 'password', '', '数字4〜8桁', { inputmode: 'numeric', autocomplete: 'new-password' });
+      const np2 = field(pinBox, '新しいPIN（確認のためもう一度）', 'password', '', '', { inputmode: 'numeric', autocomplete: 'new-password' });
+      const pinErr = el('div', 'dxr-err');
+      const pinActions = el('div', 'dxr-actions');
+      const pinBtn = el('button', 'primary', 'PINを変更');
+      pinBtn.type = 'button';
+      pinActions.appendChild(pinBtn);
+      pinBox.append(pinErr, pinActions);
+      card.appendChild(pinBox);
+      pinBtn.onclick = async () => {
+        const v = np1.value.trim();
+        if (!/^\d{4,8}$/.test(v)) { pinErr.textContent = '新しいPINは数字4〜8桁にしてください。'; return; }
+        if (v !== np2.value.trim()) { pinErr.textContent = '新しいPINが2回とも同じになるように入力してください。'; return; }
+        pinBtn.disabled = true;
+        pinErr.textContent = '変更中…';
+        const r = await callRanking({ action: 'changePin', username: auth.username, pin: auth.pin, newPin: v },
+          () => { pinErr.textContent = '混み合っています。送り直しています…'; })
+          .catch(() => ({ ok: false, error: '通信できませんでした。' }));
+        pinBtn.disabled = false;
+        if (!r.ok) { pinErr.textContent = r.error || '変更できませんでした。'; return; }
+        auth.pin = v;
+        np1.value = np2.value = '';
+        pinErr.textContent = '';
+        pinErr.replaceChildren(Object.assign(el('span', 'dxr-ok', 'PINを変更しました。次からは新しいPINを使ってください。')));
+      };
+    }
+
+    loginView();
+    return card;
+  }
+
+  function renderMyPage(ui, profile) {
+    ui.status('');
+    const player = el('div', 'dxr-profile');
+    if (profile.icon) {
+      const icon = el('img', 'dxr-icon');
+      icon.src = profile.icon;
+      icon.alt = '';
+      icon.onerror = () => icon.remove();
+      player.appendChild(icon);
+    }
+    const text = el('div', 'dxr-profile-text');
+    text.append(el('div', 'dxr-card-desc', 'マイページ'), el('div', 'dxr-player', profile.name || 'プレイヤー'));
+    player.appendChild(text);
+    ui.body.append(player, rareCard(), memberCard());
+  }
+
+  // 起動時のメニュー（ログインを確認したあとに表示）
+  function renderMenu(ui, profile, go) {
+    ui.status('');
+    ui.setBack(null);
+    ui.body.replaceChildren();
+    const player = el('div', 'dxr-profile');
+    if (profile.icon) {
+      const icon = el('img', 'dxr-icon');
+      icon.src = profile.icon;
+      icon.alt = '';
+      icon.onerror = () => icon.remove();
+      player.appendChild(icon);
+    }
+    const text = el('div', 'dxr-profile-text');
+    text.append(el('div', 'dxr-card-desc', 'ログインを確認しました'), el('div', 'dxr-player', profile.name || 'プレイヤー'));
+    player.appendChild(text);
+    const menu = el('div', 'dxr-menu');
+    const item = (title, desc, onClick, primary) => {
+      const b = el('button', 'dxr-menu-item' + (primary ? ' is-primary' : ''));
+      b.type = 'button';
+      b.append(el('span', 'dxr-menu-title', title), el('span', 'dxr-menu-desc', desc));
+      b.onclick = onClick;
+      menu.appendChild(b);
+    };
+    item('レート計算・ランキング登録', '2fRATE を計算して、レート対象曲の一覧・画像化・ランキング登録を行います', () => go('rating'), true);
+    item('マイページ', '達成人数が少ない譜面 TOP10・お気に入り譜面の登録・PINの変更', () => go('mypage'), false);
+    ui.body.append(player, menu);
+  }
+
+  // ============================================================
   //  メイン処理
   // ============================================================
 
@@ -1772,11 +2201,33 @@
 
   const ui = createPanel();
 
+  // ① まずログインできているかを確認する（できていなければ、メニューを出す前にエラーを表示して終わる）
+  let profile;
   try {
-    // まずログインできているかを確認（プレイヤー情報の取得を兼ねる）
     ui.status('ログイン状態を確認中…');
-    const profile = await getPlayerProfile();
+    profile = await getPlayerProfile();
+  } catch (e) {
+    ui.status('エラー: ' + e.message, true);
+    console.error(e);
+    return;
+  }
 
+  // ② レート計算・ランキング登録 か マイページ かを選ぶ
+  let navId = 0; // 画面を切り替えるたびに増やす（読み込み途中でメニューに戻ったら、その読み込みの結果は表示しない）
+  const go = (where) => {
+    navId++;
+    ui.body.replaceChildren();
+    ui.status('');
+    ui.setBack(() => { navId++; renderMenu(ui, profile, go); });
+    if (where === 'mypage') renderMyPage(ui, profile);
+    else runRating();
+  };
+  renderMenu(ui, profile, go);
+
+  async function runRating() {
+  const myNav = navId;
+  const left = () => myNav !== navId; // メニューに戻った
+  try {
     // 譜面定数表の読み込み（任意）
     let constTable = {};
     if (CONST_URL) {
@@ -1795,6 +2246,7 @@
         await sleep(4000);
       }
     }
+    if (left()) return;
 
     const jacketPromise = loadJacketMap(); // 別サーバーなので並行して読み込む
 
@@ -1806,6 +2258,7 @@
     let rateLevel = null; // レート対象曲が確定したレベル（読み込み中の表示に使う）
 
     for (let n = LEVEL_MAX; n >= 1; n--) {
+      if (left()) return;
       ui.status(`Lv${levelInfo(n).label} を取得中…（${++fetched}ページ目）` +
         (rateLevel !== null ? '　☆5・☆6・☆7達成譜面数の集計のため、Lv10+ まで読み込みます' : ''));
       // レコードのページと、そのレベルの全国ランキング集計（GitHub。なくても続行）を同時に読み込む
@@ -1813,6 +2266,7 @@
         fetch(LEVEL_URL(n), { credentials: 'same-origin' }),
         loadRankingStats(n, n),
       ]);
+      if (left()) return;
       if (!res.ok) throw new Error(`Lv${levelInfo(n).label} の取得に失敗しました (HTTP ${res.status})`);
       lvStats.forEach((v, k) => stats.set(k, v));
 
@@ -1845,6 +2299,7 @@
     ui.status('');
     ui.status('ジャケット画像の対応表を確認中…');
     const jackets = await jacketPromise;
+    if (left()) return;
     // おすすめ楽曲には、取得したレベルの全国ランキング集計（すでに読み込み済み）を使う
     renderResult(
       ui,
@@ -1855,7 +2310,9 @@
       { all: scored, stats, counts: countStars(scored) }
     );
   } catch (e) {
+    if (left()) return;
     ui.status('エラー: ' + e.message, true);
     console.error(e);
+  }
   }
 })();
