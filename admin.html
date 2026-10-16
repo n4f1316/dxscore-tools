@@ -57,10 +57,16 @@
   .bf-who { flex: 1 1 160px; min-width: 0; }
   .bf-name { font-size: 22px; font-weight: 800; word-break: break-all; line-height: 1.3; }
   .bf-label { font-size: 12px; font-weight: 700; color: var(--sub); }
-  .bf-fav { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 4px; font-size: 12px; }
+  .bf-fav { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 12px; }
+  .bf-fav-jk { width: 40px; height: 40px; flex: none; border-radius: 8px; object-fit: cover; display: block; background: #EFECF9; box-shadow: 0 0 0 1px var(--line); }
+  .bf-fav-text { min-width: 0; flex: 1 1 auto; }
+  .bf-fav-top { display: flex; align-items: center; gap: 4px; }
+  .bf-namerow { display: flex; align-items: center; gap: 10px; }
+  /* 名前とレートを必ず横に並べる。名前が長い場合は … で省略する */
+  .bf-namerow .bf-name { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; word-break: normal; }
   .bf-fav-label { font-size: 11px; font-weight: 800; color: #fff; background: #E0348C; border-radius: 6px; padding: 3px 7px; line-height: 1.2; }
-  .bf-fav-name { font-weight: 700; word-break: break-word; }
-  .bf-rate { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  .bf-fav-name { font-weight: 700; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bf-rate { display: flex; align-items: center; gap: 6px; flex: none; }
   .bf-rank-icon { width: 40px; height: 40px; flex: none; }
   .bf-rank-icon svg { width: 100%; height: 100%; display: block; }
   .bf-rate-value { font-size: 38px; font-weight: 800; font-variant-numeric: tabular-nums; color: transparent;
@@ -104,7 +110,7 @@
     .bf-jk { width: 40px; height: 40px; }
     .bf-star { min-width: 0; padding: 3px 5px; font-size: 12px; }
     .bf-head { gap: 10px; } .bf-icon { width: 52px; height: 52px; } .bf-name { font-size: 18px; }
-    .bf-rate { margin-left: 0; } .bf-rate-value { font-size: 30px; } .bf-rank-icon { width: 32px; height: 32px; }
+    .bf-namerow { gap: 6px; } .bf-rate { gap: 3px; } .bf-rate-value { font-size: 24px; } .bf-rank-icon { width: 26px; height: 26px; }
   }
   .tag.pub { background: #2E9E5B; } .tag.priv { background: #9A94B8; }
   .login { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
@@ -412,22 +418,42 @@
     head.appendChild(iconNode(player.icon, 'bf-icon'));
     const who = el('div', 'bf-who');
     const label = el('div', 'bf-label');
-    who.append(el('div', 'bf-name', player.name), label);
+    // 名前の横にレート（ランクのアイコンと値）を並べる
+    const nameRow = el('div', 'bf-namerow');
+    const rate = el('div', 'bf-rate');
+    const nm = el('div', 'bf-name', player.name);
+    nm.title = player.name;
+    nameRow.append(nm, rate);
+    who.append(nameRow, label);
     // お気に入り譜面（マイページで登録したもの。曲名・ST/DX・難易度だけ）
     const fav = player.favorite;
     if (fav && fav.name) {
       const fv = el('div', 'bf-fav');
-      fv.appendChild(el('span', 'bf-fav-label', 'お気に入り'));
-      fv.appendChild(el('span', 'bf-fav-name', fav.name));
+      // ジャケット（ベスト枠の一覧と同じ方法で探す。見つからなければ空の枠）
+      const song = bfResolveSong(jk.map, jk.overrides, fav.name, fav.kind, fav.diff, fav.level || '', fav.max ?? null);
+      let fj = el('div', 'bf-fav-jk');
+      if (song?.img) {
+        fj = el('img', 'bf-fav-jk');
+        fj.alt = '';
+        let k = 0;
+        fj.src = JACKET_BASES[0] + song.img;
+        fj.onerror = () => { k++; if (k < JACKET_BASES.length) fj.src = JACKET_BASES[k] + song.img; else fj.replaceWith(el('div', 'bf-fav-jk')); };
+      }
+      // 1行目：お気に入り・ST/DX・難易度、2行目：曲名（長い場合は … で省略）
+      const ft = el('div', 'bf-fav-text');
+      const top = el('div', 'bf-fav-top');
       const d = el('span', 'bf-chip bf-diff', fav.diff);
       if (fav.diff === 'Re:MASTER') d.classList.add('bf-remas');
       else d.style.background = BF_DIFF_COLOR[fav.diff] || '#999';
-      fv.append(el('span', `bf-chip bf-kind-${fav.kind === 'ST' ? 'ST' : 'DX'}`, fav.kind === 'ST' ? 'ST' : 'DX'), d);
+      top.append(el('span', 'bf-fav-label', 'お気に入り'),
+        el('span', `bf-chip bf-kind-${fav.kind === 'ST' ? 'ST' : 'DX'}`, fav.kind === 'ST' ? 'ST' : 'DX'), d);
+      const fname = el('div', 'bf-fav-name', fav.name);
+      fname.title = fav.name;
+      ft.append(top, fname);
+      fv.append(fj, ft);
       who.appendChild(fv);
     }
     head.appendChild(who);
-    const rate = el('div', 'bf-rate');
-    head.appendChild(rate);
     const x = el('button', 'bf-close', '閉じる');
     x.type = 'button';
     x.onclick = close;
