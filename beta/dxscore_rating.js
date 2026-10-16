@@ -1047,7 +1047,7 @@
     ctx.textAlign = 'right';
     ctx.fillStyle = IMG.sub;
     ctx.font = `800 23px ${IMG.font}`;
-    ctx.fillText(`2fRATE（${result.mode.label}）`, rx, iy + 36);
+    ctx.fillText(`2fRATE${result.mode.label.replace("まで", "")}`, rx, iy + 36); // 例：2fRATE☆7
     ctx.font = `800 80px ${IMG.font}`;
     const rateText = result.rating.toFixed(3);
     if (RANK_MODES.includes(result.mode.id)) {
