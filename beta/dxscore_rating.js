@@ -1266,7 +1266,7 @@
         dlg.appendChild(lab);
         return { lab, cb };
       };
-      const anon = check('匿名で掲載する（表示名の代わりに「匿名#記号」で表示）', prev.anonymous ?? (savedForm.anonymous === true));
+      const anon = check('匿名で掲載する（表示名の代わりに「匿名#記号」で表示し、アイコンも初期アイコンにします）', prev.anonymous ?? (savedForm.anonymous === true));
       const pub = check('ベスト枠（3種類のレートそれぞれのレート対象曲50譜面）をランキングで公開する', prev.publicTop50 ?? (typeof savedForm.publicTop50 === 'boolean' ? savedForm.publicTop50 : true));
       const sync = () => { name.disabled = anon.cb.checked; };
       anon.cb.onchange = sync;
@@ -1315,7 +1315,7 @@
           pin: pin.value.trim(),
           displayName: name.value.trim(),
           anonymous: anon.cb.checked,
-          showIcon: !!iconFile, // アイコンは匿名かどうかに関わらず必ず表示する
+          showIcon: !anon.cb.checked, // 匿名のときはアイコンも送らない（初期アイコンで表示）
           publicTop50: pub.cb.checked,
           newPin: chg.cb.checked ? newPin.value.trim() : '',
         };
@@ -1351,15 +1351,24 @@
       dlg.replaceChildren();
       dlg.append(el('h3', '', check.exists ? '記録を更新します' : '新しく登録します'),
         el('p', '', form.publicTop50
-          ? 'ランキングには次の内容と、ベスト枠（☆7まで・☆6まで・☆5まで それぞれのレート対象曲50譜面）が公開されます（アイコンは匿名でも表示されます）。ユーザー名とPINは公開されません。'
-          : 'ランキングには次の内容が公開されます（アイコンは匿名でも表示されます）。ベスト枠は管理者の確認用に送信されますが、公開はされません。ユーザー名とPINは公開されません。'));
+          ? 'ランキングには次の内容と、ベスト枠（☆7まで・☆6まで・☆5まで それぞれのレート対象曲50譜面）が公開されます（匿名の場合、アイコンは初期アイコンで表示されます）。ユーザー名とPINは公開されません。'
+          : 'ランキングには次の内容が公開されます（匿名の場合、アイコンは初期アイコンで表示されます）。ベスト枠は管理者の確認用に送信されますが、公開はされません。ユーザー名とPINは公開されません。'));
 
       const pv = el('div', 'dxr-preview');
-      if (form.showIcon && profile.icon) {
+      if (form.showIcon && iconFile) {
         const img = el('img');
         img.src = profile.icon;
         img.alt = '';
         pv.appendChild(img);
+      } else if (form.showIcon) {
+        // カメラで撮影したアイコンはランキングではカメラマークで表示する（写真そのものは送らない）
+        const ph = el('div', 'ph');
+        ph.innerHTML = '<svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true">' +
+          '<rect width="64" height="64" fill="#E9E4F7"/>' +
+          '<path d="M24 19l3-5h10l3 5h7a5 5 0 0 1 5 5v19a5 5 0 0 1-5 5H17a5 5 0 0 1-5-5V24a5 5 0 0 1 5-5z" fill="#B9AEDD"/>' +
+          '<circle cx="32" cy="33" r="9" fill="#E9E4F7"/><circle cx="32" cy="33" r="5.5" fill="#B9AEDD"/></svg>';
+        ph.style.overflow = 'hidden';
+        pv.appendChild(ph);
       } else {
         pv.appendChild(el('div', 'ph'));
       }
@@ -1377,6 +1386,7 @@
       }
       pv.appendChild(tx);
       dlg.appendChild(pv);
+      if (form.showIcon && !iconFile) dlg.appendChild(el('p', '', 'カメラで撮影した写真をアイコンにしている場合、ランキングではカメラマークで表示されます（写真は送信されません）。'));
       if (form.anonymous) dlg.appendChild(el('p', '', `あなたの匿名表記は「匿名#${check.anonCode}」です。ランキングで自分の記録を探すときの目印になります。`));
       if (form.newPin) dlg.appendChild(el('p', '', 'あわせて、PINを新しいものに変更します。次回からは新しいPINで更新してください。'));
 
@@ -1403,7 +1413,8 @@
             anonymous: form.anonymous,
             showIcon: form.showIcon,
             publicTop50: form.publicTop50,
-            icon: form.showIcon ? iconFile : '',
+            // 通常のアイコンはファイル名、カメラで撮影したアイコン（通常のアイコンURLでないもの）は 'camera' を送る
+            icon: form.showIcon ? (iconFile || 'camera') : '',
             rateFull: round3(full.rating),
             rateCap6: round3(cap6.rating),
             rateCap5: round3(cap5.rating),
