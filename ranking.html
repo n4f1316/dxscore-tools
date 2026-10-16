@@ -70,15 +70,18 @@
   .bf-fav-jk { width: 40px; height: 40px; flex: none; border-radius: 8px; object-fit: cover; display: block; background: #EFECF9; box-shadow: 0 0 0 1px var(--line); }
   .bf-fav-text { min-width: 0; flex: 1 1 auto; }
   .bf-fav-top { display: flex; align-items: center; gap: 4px; }
-  .bf-namerow { display: flex; align-items: center; gap: 10px; }
-  /* 名前とレートを必ず横に並べる。名前が長い場合は … で省略する */
-  .bf-namerow .bf-name { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; word-break: normal; }
+  /* 名前（1行目）・2fRATE（☆nまで）（2行目）の右に、2行分の高さでレートを置く。お気に入りはその下の行全体 */
+  .bf-who { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: center; }
+  .bf-who .bf-name { grid-column: 1; grid-row: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; word-break: normal; }
+  .bf-who .bf-label { grid-column: 1; grid-row: 2; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bf-who .bf-rate { grid-column: 2; grid-row: 1 / span 2; }
+  .bf-who .bf-fav { grid-column: 1 / -1; grid-row: 3; }
   .bf-fav-label { font-size: 11px; font-weight: 800; color: #fff; background: #E0348C; border-radius: 6px; padding: 3px 7px; line-height: 1.2; }
   .bf-fav-name { font-weight: 700; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .bf-rate { display: flex; align-items: center; gap: 6px; flex: none; margin-left: auto; } /* 名前の行の右端に寄せる */
-  .bf-rank-icon { width: 40px; height: 40px; flex: none; }
+  .bf-rate { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+  .bf-rank-icon { width: 46px; height: 46px; flex: none; }
   .bf-rank-icon svg { width: 100%; height: 100%; display: block; }
-  .bf-rate-value { font-size: 38px; font-weight: 800; font-variant-numeric: tabular-nums; color: transparent;
+  .bf-rate-value { line-height: 1; font-size: 46px; font-weight: 800; font-variant-numeric: tabular-nums; color: transparent;
     -webkit-background-clip: text; background-clip: text; line-height: 1.1; }
   .bf-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
   .bf-tabs button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
@@ -119,7 +122,8 @@
     .bf-jk { width: 40px; height: 40px; }
     .bf-star { min-width: 0; padding: 3px 5px; font-size: 12px; }
     .bf-head { gap: 10px; } .bf-icon { width: 52px; height: 52px; } .bf-name { font-size: 18px; }
-    .bf-namerow { gap: 6px; } .bf-rate { gap: 3px; } .bf-rate-value { font-size: 24px; } .bf-rank-icon { width: 26px; height: 26px; }
+    .bf-who { column-gap: 6px; } .bf-rate { gap: 3px; } .bf-rate-value { font-size: 32px; } .bf-rank-icon { width: 30px; height: 30px; }
+    .bf-head .bf-icon { width: 44px; height: 44px; }
   }
   .bf-open { margin-top: 4px; font-size: 11px; padding: 2px 10px; border-color: var(--pink); color: var(--pink); }
   .foot { margin-top: 18px; font-size: 12px; color: var(--sub); line-height: 1.8; }
@@ -365,13 +369,11 @@
     head.appendChild(iconNode(player.icon, 'bf-icon'));
     const who = el('div', 'bf-who');
     const label = el('div', 'bf-label');
-    // 名前の横にレート（ランクのアイコンと値）を並べる
-    const nameRow = el('div', 'bf-namerow');
+    // 名前と「2fRATE（☆nまで）」の2行の右側に、2行分の高さでレート（ランクのアイコンと値）を置く
     const rate = el('div', 'bf-rate');
     const nm = el('div', 'bf-name', player.name);
     nm.title = player.name;
-    nameRow.append(nm, rate);
-    who.append(nameRow, label);
+    who.append(nm, rate, label);
     // お気に入り譜面（マイページで登録したもの。曲名・ST/DX・難易度だけ）
     const fav = player.favorite;
     if (fav && fav.name) {
