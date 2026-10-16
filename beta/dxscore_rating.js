@@ -602,14 +602,35 @@
     .dxr-tab { font: inherit; font-weight: 800; padding: 6px 16px; border-radius: 999px; cursor: pointer;
       border: 1.5px solid var(--line); background: #fff; color: var(--ink); }
     .dxr-tab[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
-    .dxr-fav-now { background: var(--bg); border-radius: 12px; padding: 10px 12px; margin: 6px 0 8px; }
-    .dxr-fav-results { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
-    .dxr-fav-hit { font: inherit; font-size: 13px; font-weight: 700; text-align: left; padding: 5px 10px; border-radius: 10px;
-      cursor: pointer; border: 1.5px solid var(--line); background: #fff; color: var(--ink); max-width: 100%; word-break: break-word; }
-    .dxr-fav-hit.is-on { border-color: var(--pink); background: #FCE6F1; }
-    .dxr-fav-pick { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
-    .dxr-fav-pick select { font: inherit; font-size: 15px; padding: 6px 10px; border-radius: 10px; border: 1.5px solid var(--line);
-      background: #fff; color: var(--ink); }
+    .dxr-fav-now { display: flex; align-items: center; gap: 10px; background: var(--bg); border-radius: 12px; padding: 10px 12px; margin: 6px 0 8px; }
+    .dxr-picker { margin-top: 10px; }
+    .dxr-ptabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
+    .dxr-ptab { font: inherit; font-size: 12px; font-weight: 800; padding: 4px 11px; border-radius: 999px; cursor: pointer;
+      border: 1.5px solid var(--line); background: #fff; color: var(--ink); }
+    .dxr-ptab[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .dxr-ptab.pd-BASIC[aria-pressed="true"] { background: var(--basic); border-color: var(--basic); }
+    .dxr-ptab.pd-ADVANCED[aria-pressed="true"] { background: var(--advanced); border-color: var(--advanced); }
+    .dxr-ptab.pd-EXPERT[aria-pressed="true"] { background: var(--expert); border-color: var(--expert); }
+    .dxr-ptab.pd-MASTER[aria-pressed="true"] { background: var(--master); border-color: var(--master); }
+    .dxr-ptab.pd-REMASTER[aria-pressed="true"] { background: #F1E6FD; color: var(--master); border-color: var(--remaster); }
+    .dxr-psearch { display: block; width: 100%; margin-top: 10px; font: inherit; font-size: 16px; padding: 8px 14px; border-radius: 999px;
+      border: 1.5px solid var(--line); background: #fff; color: var(--ink); }
+    .dxr-prow { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; align-items: center; width: 100%;
+      text-align: left; font: inherit; color: var(--ink); background: #fff; border: 0; border-top: 1px solid var(--line);
+      padding: 8px 12px; cursor: pointer; }
+    .dxr-prow:first-child { border-top: 0; }
+    .dxr-prow:nth-child(even) { background: #FBFAFE; }
+    .dxr-prow.is-on { background: #FCE6F1 !important; box-shadow: inset 3px 0 0 var(--pink); }
+    .dxr-pconfirm { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; padding: 8px 12px 12px; background: #FCE6F1; }
+    .dxr-pconfirm button { font: inherit; font-weight: 800; padding: 7px 14px; border-radius: 999px; cursor: pointer;
+      border: 1.5px solid var(--line); background: #fff; color: var(--ink); }
+    .dxr-pconfirm button.primary { background: var(--pink); border-color: var(--pink); color: #fff; }
+    .dxr-pager { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin: 8px 0; }
+    .dxr-pager button { font: inherit; font-size: 12px; font-weight: 800; min-width: 32px; padding: 4px 9px; border-radius: 999px;
+      border: 1.5px solid var(--line); background: #fff; color: var(--ink); cursor: pointer; }
+    .dxr-pager button.is-on { background: var(--ink); border-color: var(--ink); color: #fff; opacity: 1; }
+    .dxr-pager button:disabled:not(.is-on) { opacity: .4; cursor: default; }
+    .dxr-pager .gap { align-self: center; color: var(--sub); }
     .dxr-card .dxr-field input[type="text"], .dxr-card .dxr-field input[type="password"] {
       display: block; width: 100%; margin-top: 4px; font: inherit; font-size: 16px; padding: 8px 12px;
       border-radius: 10px; border: 1.5px solid var(--line); color: var(--ink); background: #fff;
@@ -1937,25 +1958,165 @@
     return card;
   }
 
-  // 定数表から「曲名 → 種別・難易度の組み合わせ」を作る（お気に入りの検索用）
-  let favIndexPromise = null;
-  function loadFavIndex() {
-    if (!favIndexPromise) {
-      favIndexPromise = fetch(CONST_URL + '?' + Date.now())
-        .then((r) => (r.ok ? r.json() : {}))
-        .catch(() => ({}))
-        .then((table) => {
-          const map = new Map(); // 曲名 → Set('DX|MASTER', …)
-          Object.keys(table).forEach((k) => {
-            const [name, kind, diff] = k.split('|');
-            if (!name || !FAV_DIFFS.includes(diff)) return;
-            if (!map.has(name)) map.set(name, new Set());
-            map.get(name).add(`${kind === 'ST' ? 'ST' : 'DX'}|${diff}`);
-          });
-          return map;
+  // お気に入り譜面の候補：定数表に載っている譜面（＝実在する譜面の組み合わせ）を一覧にする
+  //   定数からレベル表記（14 / 14+ など）を出す。同名の別曲は「|最大値」つきのキーで別々に入っている
+  const FAV_PAGE_SIZE = 50;
+  const levelLabelOf = (c) => {
+    const base = Math.floor(c + 1e-9);
+    return base >= 7 && c - base >= 0.6 - 1e-9 ? `${base}+` : String(base);
+  };
+  const levelSortOf = (label) => parseInt(label, 10) + (label.endsWith('+') ? 0.5 : 0);
+  let favChartsPromise = null;
+  function loadFavCharts() {
+    if (!favChartsPromise) {
+      favChartsPromise = Promise.all([
+        fetch(CONST_URL + '?' + Date.now()).then((r) => (r.ok ? r.json() : {})).catch(() => ({})),
+        loadJacketMap(),
+      ]).then(([table, jackets]) => {
+        const charts = [];
+        Object.entries(table).forEach(([k, c]) => {
+          const [name, kind, diff, max] = k.split('|');
+          if (!name || !FAV_DIFFS.includes(diff) || typeof c !== 'number') return;
+          const level = levelLabelOf(c);
+          const mx = max ? Number(max) : null;
+          const song = resolveSong(jackets, name, kind === 'ST' ? 'ST' : 'DX', diff, level, mx);
+          charts.push({ name, kind: kind === 'ST' ? 'ST' : 'DX', diff, c, level, max: mx, img: song?.img || '', genre: song?.genre || '' });
         });
+        // 同名の別曲で、最大値つきのキーと最大値なしのキーが両方ある場合は、最大値つきだけを残す
+        const withMax = new Set(charts.filter((x) => x.max).map((x) => `${x.name}|${x.kind}|${x.diff}`));
+        const list = charts.filter((x) => x.max || !withMax.has(`${x.name}|${x.kind}|${x.diff}`));
+        list.sort((a, b) => b.c - a.c || a.name.localeCompare(b.name, 'ja'));
+        return { list, jackets };
+      });
     }
-    return favIndexPromise;
+    return favChartsPromise;
+  }
+
+  // ジャケット画像（見つからなければ空の枠）
+  function jacketBox(file) {
+    if (!file) return el('div', 'dxr-jacket');
+    const img = el('img', 'dxr-jacket');
+    img.src = JACKET_BASE + file;
+    img.alt = '';
+    img.loading = 'lazy';
+    img.onerror = () => { img.removeAttribute('src'); };
+    return img;
+  }
+
+  // 譜面データビューアと同じ形の選択画面（レベル・難易度・曲名で絞り込み、50件ずつ表示）
+  function favPicker(onPick) {
+    const box = el('div', 'dxr-picker');
+    const status = el('p', 'dxr-card-desc', '譜面の一覧を読み込み中…');
+    box.appendChild(status);
+    loadFavCharts().then(({ list }) => {
+      if (!list.length) { status.textContent = '譜面の一覧を読み込めませんでした。時間をおいてお試しください。'; return; }
+      status.remove();
+      let level = '*';
+      let diffs = null; // null = すべて
+      let query = '';
+      let page = 1;
+      let selected = null;
+      const levelTabs = el('div', 'dxr-ptabs');
+      const diffTabs = el('div', 'dxr-ptabs');
+      const search = el('input', 'dxr-psearch');
+      search.type = 'search';
+      search.placeholder = '曲名で絞り込み';
+      search.setAttribute('aria-label', '曲名で絞り込み');
+      const info = el('p', 'dxr-card-desc');
+      const listBox = el('div');
+      box.append(levelTabs, diffTabs, search, info, listBox);
+
+      const levels = [...new Set(list.map((x) => x.level))].sort((a, b) => levelSortOf(b) - levelSortOf(a));
+      const diffsHere = FAV_DIFFS.filter((d) => list.some((x) => x.diff === d));
+      const tab = (label, on, cls, onClick) => {
+        const b = el('button', 'dxr-ptab' + (cls ? ' ' + cls : ''), label);
+        b.type = 'button';
+        b.setAttribute('aria-pressed', String(on));
+        b.onclick = onClick;
+        return b;
+      };
+      const renderTabs = () => {
+        levelTabs.replaceChildren(...[['*', 'すべて'], ...levels.map((l) => [l, `Lv${l}`])].map(([v, label]) =>
+          tab(label, level === v, '', () => { level = v; page = 1; renderTabs(); renderList(); })));
+        diffTabs.replaceChildren(tab('すべての難易度', diffs === null, '', () => { diffs = null; page = 1; renderTabs(); renderList(); }),
+          ...diffsHere.map((d) => tab(d, !!diffs?.has(d), `pd-${d.replace(':', '').toUpperCase()}`, () => {
+            if (diffs === null) diffs = new Set([d]);
+            else if (diffs.has(d)) { diffs.delete(d); if (!diffs.size) diffs = null; } else diffs.add(d);
+            page = 1; renderTabs(); renderList();
+          })));
+      };
+      const pager = (total) => {
+        const nav = el('div', 'dxr-pager');
+        if (total <= 1) return nav;
+        const btn = (label, n, opts = {}) => {
+          const b = el('button', opts.current ? 'is-on' : '', label);
+          b.type = 'button';
+          if (opts.disabled || opts.current) b.disabled = true;
+          else b.onclick = () => { page = n; renderList(); info.scrollIntoView({ block: 'start' }); };
+          return b;
+        };
+        nav.appendChild(btn('« 前へ', page - 1, { disabled: page === 1 }));
+        const nums = new Set([1, total]);
+        for (let n = page - 2; n <= page + 2; n++) if (n >= 1 && n <= total) nums.add(n);
+        let prev = 0;
+        [...nums].sort((a, b) => a - b).forEach((n) => {
+          if (n - prev > 1) nav.appendChild(el('span', 'gap', '…'));
+          nav.appendChild(btn(String(n), n, { current: n === page }));
+          prev = n;
+        });
+        nav.appendChild(btn('次へ »', page + 1, { disabled: page === total }));
+        return nav;
+      };
+      const renderList = () => {
+        const q = query.trim().toLowerCase();
+        const items = list.filter((x) => (level === '*' || x.level === level)
+          && (diffs === null || diffs.has(x.diff)) && (!q || x.name.toLowerCase().includes(q)));
+        const total = Math.max(1, Math.ceil(items.length / FAV_PAGE_SIZE));
+        page = Math.min(Math.max(page, 1), total);
+        const shown = items.slice((page - 1) * FAV_PAGE_SIZE, page * FAV_PAGE_SIZE);
+        info.textContent = `${items.length} 譜面（押して選ぶ）`;
+        const ul = el('div', 'dxr-list');
+        if (!shown.length) ul.appendChild(el('div', 'dxr-rec-empty', '見つかりませんでした。'));
+        shown.forEach((x) => {
+          const row = el('button', 'dxr-prow' + (selected === x ? ' is-on' : ''));
+          row.type = 'button';
+          const main = el('div');
+          const nm = el('div', 'dxr-name', x.name);
+          if (x.genre) nm.appendChild(el('span', 'dxr-genre', `（${x.genre}）`));
+          const meta = el('div', 'dxr-meta');
+          meta.append(
+            el('span', `dxr-chip dxr-kind-${x.kind}`, x.kind),
+            el('span', `dxr-chip dxr-diff-${x.diff.replace(':', '').toUpperCase()}`, x.diff),
+            el('span', 'dxr-chip dxr-const', `Lv${x.level}（${x.c.toFixed(1)}）`)
+          );
+          main.append(nm, meta);
+          row.append(jacketBox(x.img), main);
+          row.onclick = () => { selected = x; renderList(); };
+          ul.appendChild(row);
+          // 選んだ譜面のすぐ下に、登録ボタンを出す
+          if (selected === x) {
+            const bar = el('div', 'dxr-pconfirm');
+            const ok = el('button', 'primary', 'この譜面をお気に入りに登録');
+            ok.type = 'button';
+            ok.onclick = () => onPick(x, ok);
+            const cancel = el('button', '', 'やめる');
+            cancel.type = 'button';
+            cancel.onclick = () => { selected = null; renderList(); };
+            bar.append(cancel, ok);
+            ul.appendChild(bar);
+          }
+        });
+        listBox.replaceChildren(pager(total), ul, pager(total));
+      };
+      let timer = null;
+      search.addEventListener('input', () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => { query = search.value; page = 1; renderList(); }, 250);
+      });
+      renderTabs();
+      renderList();
+    });
+    return box;
   }
 
   const favChips = (fav) => {
@@ -2035,65 +2196,36 @@
         fav.replaceChildren(el('h4', '', 'お気に入り譜面'));
         const now = el('div', 'dxr-fav-now');
         if (current) {
-          now.append(el('div', 'dxr-name', current.name), favChips(current));
+          const main = el('div');
+          main.append(el('div', 'dxr-name', current.name), favChips(current));
+          const jk = el('div', 'dxr-jacket');
+          now.append(jk, main);
+          // 登録済みの譜面のジャケット（ランキングページと同じ方法で探す）
+          loadFavCharts().then(({ jackets }) => {
+            const song = resolveSong(jackets, current.name, current.kind, current.diff, current.level || '', current.max ?? null);
+            if (song?.img) jk.replaceWith(jacketBox(song.img));
+          });
         } else {
           now.appendChild(el('div', 'dxr-card-desc', 'まだ登録されていません。'));
         }
         fav.appendChild(now);
-        fav.appendChild(el('p', 'dxr-card-desc', '1譜面だけ登録できます。曲名の一部を入力して探してください。ランキングでは曲名・ST/DX・難易度だけが表示されます。'));
-        const q = field(fav, '曲名で探す', 'text', '', '', { autocomplete: 'off', spellcheck: 'false' });
-        const results = el('div', 'dxr-fav-results');
-        const pick = el('div');
+        fav.appendChild(el('p', 'dxr-card-desc', '1譜面だけ登録できます。ランキングでは、ジャケット・曲名・ST/DX・難易度が表示されます。'));
         const err = el('div', 'dxr-err');
-        fav.append(results, pick, err);
+        const actions = el('div', 'dxr-actions');
         if (current) {
-          const actions = el('div', 'dxr-actions');
           const clear = el('button', '', 'お気に入りを外す');
           clear.type = 'button';
           clear.onclick = () => save(null, clear, err);
           actions.appendChild(clear);
-          fav.appendChild(actions);
         }
-        let timer = null;
-        q.addEventListener('input', () => {
-          clearTimeout(timer);
-          timer = setTimeout(async () => {
-            const word = q.value.trim().toLowerCase();
-            results.replaceChildren();
-            pick.replaceChildren();
-            if (!word) return;
-            const index = await loadFavIndex();
-            if (!index.size) { results.appendChild(el('div', 'dxr-card-desc', '曲の一覧を読み込めませんでした。時間をおいてお試しください。')); return; }
-            const hits = [...index.keys()].filter((n) => n.toLowerCase().includes(word)).slice(0, 20);
-            if (!hits.length) { results.appendChild(el('div', 'dxr-card-desc', '見つかりませんでした。')); return; }
-            hits.forEach((name) => {
-              const b = el('button', 'dxr-fav-hit', name);
-              b.type = 'button';
-              b.onclick = () => {
-                [...results.children].forEach((x) => x.classList.toggle('is-on', x === b));
-                pickView(name, index.get(name));
-              };
-              results.appendChild(b);
-            });
-          }, 250);
-        });
-        // 曲を選んだあと：種別と難易度を選んで登録
-        const pickView = (name, combos) => {
-          pick.replaceChildren(el('div', 'dxr-name', name));
-          const kinds = ['DX', 'ST'].filter((k) => [...combos].some((c) => c.startsWith(k + '|')));
-          const row = el('div', 'dxr-fav-pick');
-          const kindSel = el('select');
-          (kinds.length ? kinds : ['DX', 'ST']).forEach((k) => kindSel.appendChild(Object.assign(el('option', '', k), { value: k })));
-          const diffSel = el('select');
-          FAV_DIFFS.forEach((d) => diffSel.appendChild(Object.assign(el('option', '', d), { value: d })));
-          diffSel.value = 'MASTER';
-          const okBtn = el('button', 'primary', 'この譜面を登録');
-          okBtn.type = 'button';
-          okBtn.onclick = () => save({ name, kind: kindSel.value, diff: diffSel.value }, okBtn, err);
-          row.append(kindSel, diffSel);
-          const actions = el('div', 'dxr-actions');
-          actions.appendChild(okBtn);
-          pick.append(row, actions);
+        const open = el('button', 'primary', current ? '別の譜面に変える' : '譜面を選ぶ');
+        open.type = 'button';
+        actions.appendChild(open);
+        const holder = el('div');
+        fav.append(actions, err, holder);
+        open.onclick = () => {
+          open.remove();
+          holder.replaceChildren(favPicker((x, btn) => save({ name: x.name, kind: x.kind, diff: x.diff, level: x.level, max: x.max }, btn, err)));
         };
       };
       const save = async (value, button, err) => {
