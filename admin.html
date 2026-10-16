@@ -61,7 +61,7 @@
   .bf-fav-jk { width: 40px; height: 40px; flex: none; border-radius: 8px; object-fit: cover; display: block; background: #EFECF9; box-shadow: 0 0 0 1px var(--line); }
   .bf-fav-text { min-width: 0; flex: 1 1 auto; }
   .bf-fav-top { display: flex; align-items: center; gap: 4px; }
-  /* 名前（1行目）・2fRATE（☆nまで）（2行目）の右に、2行分の高さでレートを置く。お気に入りはその下の行全体 */
+  /* 名前（1行目）・2fRATE☆n（2行目）の右に、2行分の高さでレートを置く。お気に入りはその下の行全体 */
   .bf-who { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: center; }
   .bf-who .bf-name { grid-column: 1; grid-row: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; word-break: normal; }
   .bf-who .bf-label { grid-column: 1; grid-row: 2; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -422,7 +422,7 @@
     head.appendChild(iconNode(player.icon, 'bf-icon'));
     const who = el('div', 'bf-who');
     const label = el('div', 'bf-label');
-    // 名前と「2fRATE（☆nまで）」の2行の右側に、2行分の高さでレート（ランクのアイコンと値）を置く
+    // 名前と「2fRATE☆n」の2行の右側に、2行分の高さでレート（ランクのアイコンと値）を置く
     const rate = el('div', 'bf-rate');
     const nm = el('div', 'bf-name', player.name);
     nm.title = player.name;
@@ -476,7 +476,7 @@
         return b;
       }));
       // 上部のレート（ランクの色）
-      label.textContent = `2fRATE（${m.label}）`;
+      label.textContent = `2fRATE${m.label.replace('まで', '')}`; // 例：2fRATE☆7
       rate.replaceChildren();
       const v = player[m.key];
       if (Number.isFinite(v)) {
