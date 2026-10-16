@@ -57,6 +57,9 @@
   .bf-who { flex: 1 1 160px; min-width: 0; }
   .bf-name { font-size: 22px; font-weight: 800; word-break: break-all; line-height: 1.3; }
   .bf-label { font-size: 12px; font-weight: 700; color: var(--sub); }
+  .bf-fav { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 4px; font-size: 12px; }
+  .bf-fav-label { font-size: 11px; font-weight: 800; color: #fff; background: #E0348C; border-radius: 6px; padding: 3px 7px; line-height: 1.2; }
+  .bf-fav-name { font-weight: 700; word-break: break-word; }
   .bf-rate { display: flex; align-items: center; gap: 8px; margin-left: auto; }
   .bf-rank-icon { width: 40px; height: 40px; flex: none; }
   .bf-rank-icon svg { width: 100%; height: 100%; display: block; }
@@ -169,7 +172,7 @@
     <div id="listBox"></div>
     <p class="foot">
       管理者用のページです。鍵はこのページには保存されず、閉じると入力し直しになります。<br>
-      「仮PINを発行」は仮の6桁のPINを作って表示します（表示は1度だけ）。本人確認をしたうえで本人にだけ伝え、2fRATE の登録画面の「PINを変更する」で、本人が決めたPINに変えてもらってください。「削除」は元に戻せません。
+      「仮PINを発行」は仮の6桁のPINを作って表示します（表示は1度だけ）。本人確認をしたうえで本人にだけ伝え、2fRATE β版のマイページの「PINの変更」で、本人が決めたPINに変えてもらってください。「削除」は元に戻せません。
     </p>
   </div>
 </div>
@@ -410,6 +413,18 @@
     const who = el('div', 'bf-who');
     const label = el('div', 'bf-label');
     who.append(el('div', 'bf-name', player.name), label);
+    // お気に入り譜面（マイページで登録したもの。曲名・ST/DX・難易度だけ）
+    const fav = player.favorite;
+    if (fav && fav.name) {
+      const fv = el('div', 'bf-fav');
+      fv.appendChild(el('span', 'bf-fav-label', 'お気に入り'));
+      fv.appendChild(el('span', 'bf-fav-name', fav.name));
+      const d = el('span', 'bf-chip bf-diff', fav.diff);
+      if (fav.diff === 'Re:MASTER') d.classList.add('bf-remas');
+      else d.style.background = BF_DIFF_COLOR[fav.diff] || '#999';
+      fv.append(el('span', `bf-chip bf-kind-${fav.kind === 'ST' ? 'ST' : 'DX'}`, fav.kind === 'ST' ? 'ST' : 'DX'), d);
+      who.appendChild(fv);
+    }
     head.appendChild(who);
     const rate = el('div', 'bf-rate');
     head.appendChild(rate);
@@ -669,7 +684,7 @@
           const d = await adminCall({ action: 'adminResetPin', username: r.username });
           const box = el('div', 'pin-box');
           box.append(document.createTextNode(`@${d.username} の仮のPIN：`), el('b', '', d.pin),
-            document.createTextNode('（この画面を閉じると再表示できません。本人にだけ伝え、2fRATE の登録画面の「PINを変更する」で自分のPINに変えてもらってください）'));
+            document.createTextNode('（この画面を閉じると再表示できません。本人にだけ伝え、2fRATE β版のマイページの「PINの変更」で自分のPINに変えてもらってください）'));
           box.addEventListener('click', (ev) => ev.stopPropagation());
           main.appendChild(box);
         } catch (err) {
@@ -709,6 +724,7 @@
             const d = await res.json();
             if (!d.ok) throw new Error(d.error || '読み込めませんでした。');
             r.top50 = framesOf(d.top50);
+            r.top50.favorite = d.favorite || null;
           } catch (e) {
             alert(e.message || 'ベスト枠を読み込めませんでした。');
             return;
@@ -716,7 +732,7 @@
             row.style.opacity = '';
           }
         }
-        openBestFrame({ name: r.name, icon: r.icon, rateFull: r.rateFull, rateCap6: r.rateCap6, rateCap5: r.rateCap5 },
+        openBestFrame({ name: r.name, icon: r.icon, rateFull: r.rateFull, rateCap6: r.rateCap6, rateCap5: r.rateCap5, favorite: r.top50.favorite },
           r.top50, { map: jackets, overrides }, mode.id);
       };
       row.onclick = toggle;

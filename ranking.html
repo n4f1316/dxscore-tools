@@ -66,6 +66,9 @@
   .bf-who { flex: 1 1 160px; min-width: 0; }
   .bf-name { font-size: 22px; font-weight: 800; word-break: break-all; line-height: 1.3; }
   .bf-label { font-size: 12px; font-weight: 700; color: var(--sub); }
+  .bf-fav { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 4px; font-size: 12px; }
+  .bf-fav-label { font-size: 11px; font-weight: 800; color: #fff; background: #E0348C; border-radius: 6px; padding: 3px 7px; line-height: 1.2; }
+  .bf-fav-name { font-weight: 700; word-break: break-word; }
   .bf-rate { display: flex; align-items: center; gap: 8px; margin-left: auto; }
   .bf-rank-icon { width: 40px; height: 40px; flex: none; }
   .bf-rank-icon svg { width: 100%; height: 100%; display: block; }
@@ -357,6 +360,18 @@
     const who = el('div', 'bf-who');
     const label = el('div', 'bf-label');
     who.append(el('div', 'bf-name', player.name), label);
+    // お気に入り譜面（マイページで登録したもの。曲名・ST/DX・難易度だけ）
+    const fav = player.favorite;
+    if (fav && fav.name) {
+      const fv = el('div', 'bf-fav');
+      fv.appendChild(el('span', 'bf-fav-label', 'お気に入り'));
+      fv.appendChild(el('span', 'bf-fav-name', fav.name));
+      const d = el('span', 'bf-chip bf-diff', fav.diff);
+      if (fav.diff === 'Re:MASTER') d.classList.add('bf-remas');
+      else d.style.background = BF_DIFF_COLOR[fav.diff] || '#999';
+      fv.append(el('span', `bf-chip bf-kind-${fav.kind === 'ST' ? 'ST' : 'DX'}`, fav.kind === 'ST' ? 'ST' : 'DX'), d);
+      who.appendChild(fv);
+    }
     head.appendChild(who);
     const rate = el('div', 'bf-rate');
     head.appendChild(rate);
@@ -471,9 +486,10 @@
         const data = await res.json();
         if (!data.ok) throw new Error(data.error || '読み込めませんでした。');
         top50 = framesOf(data.top50);
+        top50.favorite = data.favorite || null;
         top50Cache.set(r.id, top50);
       }
-      openBestFrame({ name: r.name, icon: r.icon, rateFull: r.rateFull, rateCap6: r.rateCap6, rateCap5: r.rateCap5 },
+      openBestFrame({ name: r.name, icon: r.icon, rateFull: r.rateFull, rateCap6: r.rateCap6, rateCap5: r.rateCap5, favorite: top50.favorite },
         top50, await loadJackets(), mode.id);
     } catch (e) {
       alert(e.message || 'ベスト枠を読み込めませんでした。');
