@@ -304,6 +304,34 @@
     d.innerHTML = DEFAULT_ICON_SVG;
     return d;
   }
+  // カメラアイコン（maimai のカメラ機能で撮った写真をアイコンにしている人用。写真は表示しない）
+  const CAMERA_ICON_SVG =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true">' +
+    '<rect width="64" height="64" fill="#E9E4F7"/>' +
+    '<path d="M24 19l3-5h10l3 5h7a5 5 0 0 1 5 5v19a5 5 0 0 1-5 5H17a5 5 0 0 1-5-5V24a5 5 0 0 1 5-5z" fill="#B9AEDD"/>' +
+    '<circle cx="32" cy="33" r="9" fill="#E9E4F7"/>' +
+    '<circle cx="32" cy="33" r="5.5" fill="#B9AEDD"/>' +
+    '</svg>';
+  function cameraIcon(cls) {
+    const d = el('div', cls + ' default-icon');
+    d.innerHTML = CAMERA_ICON_SVG;
+    d.title = 'カメラで撮影したアイコン';
+    return d;
+  }
+  // 登録されたアイコンの値から表示用の要素を作る
+  //   'camera' → カメラアイコン／16桁.png → maimaiでらっくすNETのアイコン画像／それ以外 → 初期アイコン
+  function iconNode(icon, cls, lazy) {
+    if (icon === 'camera') return cameraIcon(cls);
+    if (icon && /^[0-9a-f]{16}\.png$/.test(icon)) {
+      const img = el('img', cls);
+      img.src = ICON_BASE + icon;
+      img.alt = '';
+      if (lazy) img.loading = 'lazy';
+      img.onerror = () => img.replaceWith(defaultIcon(cls));
+      return img;
+    }
+    return defaultIcon(cls);
+  }
 
   function dateOf(v) {
     const d = new Date(v);
@@ -378,15 +406,7 @@
 
     // 上部：アイコン・名前・レート
     const head = el('div', 'bf-head');
-    if (player.icon) {
-      const img = el('img', 'bf-icon');
-      img.src = ICON_BASE + player.icon;
-      img.alt = '';
-      img.onerror = () => img.replaceWith(defaultIcon('bf-icon'));
-      head.appendChild(img);
-    } else {
-      head.appendChild(defaultIcon('bf-icon'));
-    }
+    head.appendChild(iconNode(player.icon, 'bf-icon'));
     const who = el('div', 'bf-who');
     const label = el('div', 'bf-label');
     who.append(el('div', 'bf-name', player.name), label);
@@ -627,16 +647,7 @@
       const pos = posOf.get(r);
       row.appendChild(el('div', 'pos' + (pos <= 3 ? ` top${pos}` : ''), String(pos)));
 
-      if (r.icon && /^[0-9a-f]{16}\.png$/.test(r.icon)) {
-        const img = el('img', 'icon');
-        img.src = ICON_BASE + r.icon;
-        img.alt = '';
-        img.loading = 'lazy';
-        img.onerror = () => img.replaceWith(defaultIcon('icon'));
-        row.appendChild(img);
-      } else {
-        row.appendChild(defaultIcon('icon'));
-      }
+      row.appendChild(iconNode(r.icon, 'icon', true));
 
       const main = el('div');
       const nm = el('div', 'name' + (r.anonymous ? ' anon' : ''), r.name);
