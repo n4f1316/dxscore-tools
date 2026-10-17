@@ -161,7 +161,7 @@ javascript:(()=>{const s=document.createElement('script');s.src='https://n4f1316
 - [譜面データビューア](https://n4f1316.github.io/dxscore-tools/viewer.html)：でらっくスコア全国ランキング（上位100人）をもとにした、譜面ごとの取りやすさの目安
 - [単曲レート計算](https://n4f1316.github.io/dxscore-tools/calculator.html)：譜面定数と☆から単曲レート値を計算
 
-## 著作権
+##
 
 © 2026 なふ（2fRATE）
 
