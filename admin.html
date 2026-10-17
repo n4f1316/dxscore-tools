@@ -182,7 +182,7 @@
     <div id="listBox"></div>
     <p class="foot">
       管理者用のページです。鍵はこのページには保存されず、閉じると入力し直しになります。<br>
-      「仮PINを発行」は仮の6桁のPINを作って表示します（表示は1度だけ）。本人確認をしたうえで本人にだけ伝え、2fRATE β版のマイページの「PINの変更」で、本人が決めたPINに変えてもらってください。「削除」は元に戻せません。
+      「仮PINを発行」は仮の6桁のPINを作って表示します（表示は1度だけ）。本人確認をしたうえで本人にだけ伝え、2fRATE のマイページの「PINの変更」で、本人が決めたPINに変えてもらってください。「削除」は元に戻せません。
     </p>
   </div>
 </div>
@@ -712,7 +712,7 @@
           const d = await adminCall({ action: 'adminResetPin', username: r.username });
           const box = el('div', 'pin-box');
           box.append(document.createTextNode(`@${d.username} の仮のPIN：`), el('b', '', d.pin),
-            document.createTextNode('（この画面を閉じると再表示できません。本人にだけ伝え、2fRATE β版のマイページの「PINの変更」で自分のPINに変えてもらってください）'));
+            document.createTextNode('（この画面を閉じると再表示できません。本人にだけ伝え、2fRATE のマイページの「PINの変更」で自分のPINに変えてもらってください）'));
           box.addEventListener('click', (ev) => ev.stopPropagation());
           main.appendChild(box);
         } catch (err) {
