@@ -35,6 +35,13 @@
   .diffs button.db-MASTER[aria-pressed="true"] { background: #8E44D6; }
   .diffs button.db-REMASTER[aria-pressed="true"] { background: #F1E6FD; color: #8E44D6; box-shadow: inset 0 0 0 2px #B68BE0; }
 
+  .crange { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 14px 0 0; }
+  .crange-label { font-size: 12px; font-weight: 800; color: var(--sub); margin-right: 2px; }
+  .crange-sep { font-weight: 800; color: var(--sub); }
+  .crange select { font: inherit; font-weight: 700; font-size: 15px; padding: 5px 10px; border-radius: 10px;
+    border: 1.5px solid var(--line); background: var(--card); color: var(--ink); }
+  .crange button[aria-pressed="true"], #rareTabs button[aria-pressed="true"]:not(.rare-btn) { background: var(--ink); border-color: var(--ink); color: #fff; }
+  #rareTabs { align-items: center; }
   .search { width: 100%; margin-top: 12px; font: inherit; padding: 8px 14px; border-radius: 999px;
     border: 1.5px solid var(--line); background: var(--card); color: var(--ink); }
   .daterange { font-size: 12px; font-weight: 700; color: var(--sub); margin: 12px 2px 6px; }
@@ -129,7 +136,7 @@
 
   <div id="app" hidden>
     <div class="tabs snap-tabs" id="snapTabs" role="group" aria-label="データの時点"></div>
-    <div class="tabs" id="levelTabs" role="group" aria-label="レベル"></div>
+    <div class="crange" id="levelTabs" role="group" aria-label="譜面定数の範囲"></div>
     <div class="tabs diffs" id="diffTabs" role="group" aria-label="難易度"></div>
     <div class="tabs diffs" id="rareTabs" role="group" aria-label="希少ボーナス"></div>
     <input class="search" id="search" type="search" placeholder="曲名で絞り込み" aria-label="曲名で絞り込み">
@@ -265,14 +272,20 @@
   }
   let jackets = null;
   let jacketOverrides = {};
-  let currentLevel = null;
+  // 譜面定数の範囲（下限・上限。0.1刻み）で絞り込む
+  let cMin = null;
+  let cMax = null;
+  // 定数がわからない譜面は、レベル表記の下限（14+ なら 14.6）で扱う
+  const levelMinOf = (label) => parseInt(label, 10) + (String(label).endsWith('+') ? 0.6 : 0);
+  const constOf = (r) => (r.const !== null && r.const !== undefined ? Number(r.const) : levelMinOf(r.level));
+  const r1 = (x) => Math.round(x * 10) / 10;
   let currentDiffs = null; // null = すべて
   let query = '';
   let page = 1;
   let sortKey = 'avgPct';
   let sortDir = -1;
   const SORTS = { avgPct: '平均', maxCount: '☆7', star6Count: '☆6' };
-  let rareOnly = false; // 希少ボーナスの対象譜面だけを表示する
+  let rareMax = null; // 希少ボーナスの絞り込み：null＝すべて、20 / 10 / 3＝☆6以上がその人数以下の譜面だけ
   // 2fRATE の希少ボーナス：上位100人のうち☆6以上（☆6＋☆7）が少ない譜面は、☆6以上で達成すると
   // 「☆7まで」「☆6まで」の単曲レート値に加算される（20人以下 +0.05、10人以下 +0.10、3人以下 +0.15）
   const RARE_BONUS = [
@@ -326,8 +339,6 @@
       b.onclick = () => {
         currentSnap = d;
         all = rowsAt(d);
-        const levels = [...new Set(all.map((r) => r.level))];
-        if (currentLevel !== '*' && !levels.includes(currentLevel)) currentLevel = levels.sort((a, b) => levelOrder(b) - levelOrder(a))[0] ?? '*';
         page = 1;
         renderSnapTabs(); renderTabs(); renderList();
       };
@@ -530,16 +541,33 @@
   }
 
   function renderTabs() {
-    const levels = [...new Set(all.map((r) => r.level))].sort((a, b) => levelOrder(b) - levelOrder(a));
+    // 譜面定数の範囲：下限と上限を選ぶ（選べるのはデータにある定数の範囲。0.1刻み）
     const lt = $('levelTabs');
     lt.replaceChildren();
-    [...levels.map((lv) => [lv, `Lv${lv}`]), ['*', 'すべて']].forEach(([key, label]) => {
-      const b = el('button', '', label);
-      b.type = 'button';
-      b.setAttribute('aria-pressed', String(currentLevel === key));
-      b.onclick = () => { currentLevel = key; page = 1; renderTabs(); renderList(); };
-      lt.appendChild(b);
-    });
+    const cs = all.map(constOf).filter(Number.isFinite);
+    const lo = r1(Math.min(...cs));
+    const hi = r1(Math.max(...cs));
+    const opts = [];
+    for (let v = Math.round(lo * 10); v <= Math.round(hi * 10); v++) opts.push(v / 10);
+    const mkSel = (value, label, onChange) => {
+      const sel = el('select');
+      sel.setAttribute('aria-label', label);
+      opts.forEach((v) => {
+        const o = el('option', '', v.toFixed(1));
+        o.value = String(v);
+        sel.appendChild(o);
+      });
+      sel.value = String(Math.min(Math.max(value, lo), hi));
+      sel.onchange = () => { onChange(Number(sel.value)); page = 1; renderTabs(); renderList(); };
+      return sel;
+    };
+    const minSel = mkSel(cMin ?? lo, '譜面定数の下限', (v) => { cMin = v; if (cMax !== null && cMax < v) cMax = v; });
+    const maxSel = mkSel(cMax ?? hi, '譜面定数の上限', (v) => { cMax = v; if (cMin !== null && cMin > v) cMin = v; });
+    const allBtn = el('button', '', 'すべて');
+    allBtn.type = 'button';
+    allBtn.setAttribute('aria-pressed', String((cMin === null || cMin <= lo) && (cMax === null || cMax >= hi)));
+    allBtn.onclick = () => { cMin = null; cMax = null; page = 1; renderTabs(); renderList(); };
+    lt.append(el('span', 'crange-label', '譜面定数'), minSel, el('span', 'crange-sep', '〜'), maxSel, allBtn);
 
     const dt = $('diffTabs');
     dt.replaceChildren();
@@ -559,13 +587,17 @@
       };
       dt.appendChild(b);
     });
-    // 希少ボーナスの対象譜面だけに絞る切り替え
+    // 希少ボーナスの対象譜面を、☆6以上の人数（ボーナスの区切れ目）で絞り込む
     const rt = $('rareTabs');
-    const rb = el('button', 'rare-btn', '希少ボーナス対象のみ');
-    rb.type = 'button';
-    rb.setAttribute('aria-pressed', String(rareOnly));
-    rb.onclick = () => { rareOnly = !rareOnly; page = 1; renderTabs(); renderList(); };
-    rt.replaceChildren(rb);
+    rt.replaceChildren(el('span', 'crange-label', '希少ボーナス'));
+    [[null, 'すべて'], ...RARE_BONUS.slice().reverse().map((b) => [b.maxPeople, `${b.maxPeople}人以下（+${b.add.toFixed(2)}${b.maxPeople === 3 ? '' : '〜'}）`])]
+      .forEach(([v, label]) => {
+        const b = el('button', v === null ? '' : 'rare-btn', label);
+        b.type = 'button';
+        b.setAttribute('aria-pressed', String(rareMax === v));
+        b.onclick = () => { rareMax = v; page = 1; renderTabs(); renderList(); };
+        rt.appendChild(b);
+      });
   }
 
   function jacketEl(file) {
@@ -618,10 +650,18 @@
   function renderList() {
     const q = query.trim().toLowerCase();
     const items = all
-      .filter((r) => (currentLevel === '*' || r.level === currentLevel)
-        && (currentDiffs === null || currentDiffs.has(r.diff))
-        && (!q || r.name.toLowerCase().includes(q))
-        && (!rareOnly || rareOf(r)))
+      .filter((r) => {
+        const c = constOf(r);
+        if (cMin !== null && c < cMin - 1e-9) return false;
+        if (cMax !== null && c > cMax + 1e-9) return false;
+        if (currentDiffs !== null && !currentDiffs.has(r.diff)) return false;
+        if (q && !r.name.toLowerCase().includes(q)) return false;
+        if (rareMax !== null) {
+          const rare = rareOf(r);
+          if (!rare || rare.people > rareMax) return false;
+        }
+        return true;
+      })
       .sort(sortFn);
 
     const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
@@ -673,7 +713,7 @@
         el('span', `chip diff-${String(r.diff).replace(':', '').toUpperCase()}`, r.diff)
       );
       if (r.const !== null && r.const !== undefined) chips.appendChild(el('span', 'chip const', Number(r.const).toFixed(1)));
-      if (currentLevel === '*') chips.appendChild(el('span', 'chip lv', `Lv${r.level}`));
+      chips.appendChild(el('span', 'chip lv', `Lv${r.level}`));
       const rare = rareOf(r);
       if (rare) chips.appendChild(el('span', 'chip rare', `希少 +${rare.add.toFixed(2)}（☆6以上 ${rare.people}人）`));
       main.appendChild(chips);
@@ -744,8 +784,9 @@
       $('status').classList.add('error');
       return;
     }
+    // 最初は、いちばん上のレベル（Lv15 など）の定数の範囲を表示する
     const levels = [...new Set(all.map((r) => r.level))].sort((a, b) => levelOrder(b) - levelOrder(a));
-    currentLevel = levels[0];
+    if (levels.length) cMin = levelMinOf(levels[0]);
     $('status').textContent = `${all.length} 譜面のデータを読み込みました。`;
     $('app').hidden = false;
     // 入力のたびに描き直すと重いので、入力が止まってから絞り込む
