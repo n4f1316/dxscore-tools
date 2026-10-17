@@ -604,6 +604,13 @@
     .dxr-tab[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
     .dxr-fav-now { display: flex; align-items: center; gap: 10px; background: var(--bg); border-radius: 12px; padding: 10px 12px; margin: 6px 0 8px; }
     .dxr-picker { margin-top: 10px; }
+    .dxr-crange { align-items: center; }
+    .dxr-crange-label { font-size: 12px; font-weight: 800; color: var(--sub); margin-right: 2px; }
+    .dxr-crange-sep { font-weight: 800; color: var(--sub); }
+    .dxr-crange select { font: inherit; font-weight: 700; font-size: 15px; padding: 4px 8px; border-radius: 10px;
+      border: 1.5px solid var(--line); background: #fff; color: var(--ink); }
+    .dxr-order { margin-top: 6px; }
+    .dxr-tab-sm { font-size: 12px; padding: 4px 12px; }
     .dxr-ptabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
     .dxr-ptab { font: inherit; font-size: 12px; font-weight: 800; padding: 4px 11px; border-radius: 999px; cursor: pointer;
       border: 1.5px solid var(--line); background: #fff; color: var(--ink); }
@@ -1816,7 +1823,7 @@
   // ============================================================
 
   const GENRE_URL = (d) => `/maimai-mobile/record/musicGenre/search/?genre=99&diff=${d}`; // 全ジャンル（d：3=MASTER, 4=Re:MASTER）
-  const RARE_TOP = 10; // 少人数の譜面を何件出すか
+  const RARE_PAGE_SIZE = 20; // 達成人数の一覧を何件ずつ表示するか
   const FAV_DIFFS = ['BASIC', 'ADVANCED', 'EXPERT', 'MASTER', 'Re:MASTER'];
 
   // ランキングは上位100人までしか載らないので、100人目まで埋まっている譜面は「100人以上」の可能性がある（譜面データビューアと同じ扱い）
@@ -1824,13 +1831,13 @@
   const PEOPLE_METRICS = [
     {
       id: 'max', label: '☆7', need: 7,
-      desc: '自分が☆7（理論値）を達成した譜面のうち、全国ランキング上位100人で☆7の人数が少ない譜面',
+      desc: '自分が☆7（理論値）を達成した譜面と、全国ランキング上位100人で☆7を達成している人数',
       people: (r) => (r.maxCount === null || r.maxCount === undefined ? null : r.maxCount),
       plus: (r) => statFull(r) && r.row100 === r.max,
     },
     {
       id: 'star6', label: '☆6以上', need: 6,
-      desc: '自分が☆6以上を達成した譜面のうち、全国ランキング上位100人で☆6以上（☆7を含む）の人数が少ない譜面',
+      desc: '自分が☆6以上を達成した譜面と、全国ランキング上位100人で☆6以上（☆7を含む）を達成している人数',
       people: (r) => (r.star6Count === null || r.star6Count === undefined || r.maxCount === null || r.maxCount === undefined
         ? null : r.star6Count + r.maxCount),
       plus: (r) => statFull(r) && r.row100 * 100 >= r.max * 99,
@@ -1866,12 +1873,12 @@
       }
       // 人数の少ない順。同じ人数なら定数の高い順
       rows.sort((a, b) => a.sort - b.sort || (b.c ?? 0) - (a.c ?? 0) || a.name.localeCompare(b.name, 'ja'));
-      lists[m.id] = rows.slice(0, RARE_TOP);
+      lists[m.id] = rows; // 達成した譜面すべて（表示は20件ずつ）
     }
     return { lists, jackets, scanned: mine.length };
   }
 
-  function rareListEl(rows, metric, jackets) {
+  function rareListEl(rows, metric, jackets, start = 0) {
     const list = el('div', 'dxr-list');
     if (!rows.length) {
       list.appendChild(el('div', 'dxr-rec-empty', `${metric.label}を達成した譜面のうち、全国ランキングの集計がある譜面（Lv10+以上）はまだありません。`));
@@ -1905,17 +1912,41 @@
       main.append(nameEl, meta);
       const gain = el('div', 'dxr-rec-gain');
       gain.append(el('div', 'dxr-rec-plus', `${s.people}${s.plus ? '+' : ''}人`), el('div', 'dxr-rec-sub', `上位100人中の${metric.label}`));
-      row.append(el('div', 'dxr-rank', String(i + 1)), jacket, main, gain);
+      row.append(el('div', 'dxr-rank', String(start + i + 1)), jacket, main, gain);
       list.appendChild(row);
     });
     return list;
   }
 
-  // 希少譜面TOP10のカード
+  // ページ切り替え：« 前へ  1 … 4 5 [6] 7 8 … 20  次へ »（onGo にページ番号を渡す）
+  function pagerEl(page, total, onGo) {
+    const nav = el('div', 'dxr-pager');
+    if (total <= 1) return nav;
+    const btn = (label, n, opts = {}) => {
+      const b = el('button', opts.current ? 'is-on' : '', label);
+      b.type = 'button';
+      if (opts.disabled || opts.current) b.disabled = true;
+      else b.onclick = () => onGo(n);
+      return b;
+    };
+    nav.appendChild(btn('« 前へ', page - 1, { disabled: page === 1 }));
+    const nums = new Set([1, total]);
+    for (let n = page - 2; n <= page + 2; n++) if (n >= 1 && n <= total) nums.add(n);
+    let prev = 0;
+    [...nums].sort((a, b) => a - b).forEach((n) => {
+      if (n - prev > 1) nav.appendChild(el('span', 'gap', '…'));
+      nav.appendChild(btn(String(n), n, { current: n === page }));
+      prev = n;
+    });
+    nav.appendChild(btn('次へ »', page + 1, { disabled: page === total }));
+    return nav;
+  }
+
+  // 達成人数の一覧のカード（達成した譜面すべてを、人数の少ない順／多い順で20件ずつ）
   function rareCard() {
     const card = el('section', 'dxr-card');
-    card.append(el('h3', '', '達成人数が少ない譜面 TOP10'),
-      el('p', 'dxr-card-desc', '自分が達成した譜面のうち、全国ランキング上位100人で達成している人が少ない譜面を表示します。MASTER・Re:MASTER の全楽曲（2ページ）を読み込みます。人数は譜面データビューアと同じ集計（Lv10+以上）を使います。'));
+    card.append(el('h3', '', '達成人数で見る自分の達成譜面'),
+      el('p', 'dxr-card-desc', '自分が達成した譜面を、全国ランキング上位100人で同じく達成している人数の順に表示します。MASTER・Re:MASTER の全楽曲（2ページ）を読み込みます。人数は譜面データビューアと同じ集計（Lv10+以上）を使います。'));
     const btn = el('button', 'dxr-rank-open', '集計する');
     btn.type = 'button';
     btn.style.margin = '4px 0 0';
@@ -1930,22 +1961,42 @@
         const { lists, jackets, scanned } = await findRareCharts((t) => { msg.textContent = t; });
         msg.textContent = `${scanned} 譜面から集計しました。`;
         const tabs = el('div', 'dxr-tabs');
+        const order = el('div', 'dxr-tabs dxr-order');
         const desc = el('p', 'dxr-card-desc');
         const holder = el('div');
-        const show = (m) => {
-          [...tabs.children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === m.id)));
-          desc.textContent = m.desc;
-          holder.replaceChildren(rareListEl(lists[m.id], m, jackets));
+        let metric = PEOPLE_METRICS[0];
+        let asc = true; // true：少ない順、false：多い順
+        let page = 1;
+        const show = () => {
+          [...tabs.children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === metric.id)));
+          [...order.children].forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.asc === '1') === asc)));
+          // 多い順でも、同じ人数なら定数の高い順にする
+          const all = asc ? lists[metric.id]
+            : [...lists[metric.id]].sort((x, y) => y.sort - x.sort || (y.c ?? 0) - (x.c ?? 0) || x.name.localeCompare(y.name, 'ja'));
+          const total = Math.max(1, Math.ceil(all.length / RARE_PAGE_SIZE));
+          page = Math.min(Math.max(page, 1), total);
+          const start = (page - 1) * RARE_PAGE_SIZE;
+          const shown = all.slice(start, start + RARE_PAGE_SIZE);
+          desc.textContent = `${metric.desc}（${all.length} 譜面${all.length > RARE_PAGE_SIZE ? `中 ${start + 1}〜${start + shown.length} 件目` : ''}）`;
+          const go = (n) => { page = n; show(); desc.scrollIntoView({ block: 'start' }); };
+          holder.replaceChildren(pagerEl(page, total, go), rareListEl(shown, metric, jackets, start), pagerEl(page, total, go));
         };
         PEOPLE_METRICS.forEach((m) => {
           const b = el('button', 'dxr-tab', m.label);
           b.type = 'button';
           b.dataset.id = m.id;
-          b.onclick = () => show(m);
+          b.onclick = () => { metric = m; page = 1; show(); };
           tabs.appendChild(b);
         });
-        out.append(tabs, desc, holder);
-        show(PEOPLE_METRICS[0]);
+        [['1', '少ない順'], ['0', '多い順']].forEach(([v, label]) => {
+          const b = el('button', 'dxr-tab dxr-tab-sm', label);
+          b.type = 'button';
+          b.dataset.asc = v;
+          b.onclick = () => { asc = v === '1'; page = 1; show(); };
+          order.appendChild(b);
+        });
+        out.append(tabs, order, desc, holder);
+        show();
         btn.textContent = 'もう一度集計する';
       } catch (e) {
         msg.textContent = 'エラー: ' + e.message;
@@ -1965,7 +2016,6 @@
     const base = Math.floor(c + 1e-9);
     return base >= 7 && c - base >= 0.6 - 1e-9 ? `${base}+` : String(base);
   };
-  const levelSortOf = (label) => parseInt(label, 10) + (label.endsWith('+') ? 0.5 : 0);
   let favChartsPromise = null;
   function loadFavCharts() {
     if (!favChartsPromise) {
@@ -2011,12 +2061,14 @@
     loadFavCharts().then(({ list }) => {
       if (!list.length) { status.textContent = '譜面の一覧を読み込めませんでした。時間をおいてお試しください。'; return; }
       status.remove();
-      let level = '*';
+      // 譜面定数の範囲（下限・上限。0.1刻み）。null は制限なし
+      let cMin = null;
+      let cMax = null;
       let diffs = null; // null = すべて
       let query = '';
       let page = 1;
       let selected = null;
-      const levelTabs = el('div', 'dxr-ptabs');
+      const levelTabs = el('div', 'dxr-ptabs dxr-crange');
       const diffTabs = el('div', 'dxr-ptabs');
       const search = el('input', 'dxr-psearch');
       search.type = 'search';
@@ -2026,7 +2078,10 @@
       const listBox = el('div');
       box.append(levelTabs, diffTabs, search, info, listBox);
 
-      const levels = [...new Set(list.map((x) => x.level))].sort((a, b) => levelSortOf(b) - levelSortOf(a));
+      const lo = Math.min(...list.map((x) => x.c));
+      const hi = Math.max(...list.map((x) => x.c));
+      const cOpts = [];
+      for (let v = Math.round(lo * 10); v <= Math.round(hi * 10); v++) cOpts.push(v / 10);
       const diffsHere = FAV_DIFFS.filter((d) => list.some((x) => x.diff === d));
       const tab = (label, on, cls, onClick) => {
         const b = el('button', 'dxr-ptab' + (cls ? ' ' + cls : ''), label);
@@ -2036,8 +2091,23 @@
         return b;
       };
       const renderTabs = () => {
-        levelTabs.replaceChildren(...[['*', 'すべて'], ...levels.map((l) => [l, `Lv${l}`])].map(([v, label]) =>
-          tab(label, level === v, '', () => { level = v; page = 1; renderTabs(); renderList(); })));
+        const mkSel = (value, label, onChange) => {
+          const sel = el('select');
+          sel.setAttribute('aria-label', label);
+          cOpts.forEach((v) => {
+            const o = el('option', '', v.toFixed(1));
+            o.value = String(v);
+            sel.appendChild(o);
+          });
+          sel.value = String(value);
+          sel.onchange = () => { onChange(Number(sel.value)); page = 1; renderTabs(); renderList(); };
+          return sel;
+        };
+        levelTabs.replaceChildren(el('span', 'dxr-crange-label', '譜面定数'),
+          mkSel(cMin ?? lo, '譜面定数の下限', (v) => { cMin = v; if (cMax !== null && cMax < v) cMax = v; }),
+          el('span', 'dxr-crange-sep', '〜'),
+          mkSel(cMax ?? hi, '譜面定数の上限', (v) => { cMax = v; if (cMin !== null && cMin > v) cMin = v; }),
+          tab('すべて', cMin === null && cMax === null, '', () => { cMin = null; cMax = null; page = 1; renderTabs(); renderList(); }));
         diffTabs.replaceChildren(tab('すべての難易度', diffs === null, '', () => { diffs = null; page = 1; renderTabs(); renderList(); }),
           ...diffsHere.map((d) => tab(d, !!diffs?.has(d), `pd-${d.replace(':', '').toUpperCase()}`, () => {
             if (diffs === null) diffs = new Set([d]);
@@ -2045,31 +2115,10 @@
             page = 1; renderTabs(); renderList();
           })));
       };
-      const pager = (total) => {
-        const nav = el('div', 'dxr-pager');
-        if (total <= 1) return nav;
-        const btn = (label, n, opts = {}) => {
-          const b = el('button', opts.current ? 'is-on' : '', label);
-          b.type = 'button';
-          if (opts.disabled || opts.current) b.disabled = true;
-          else b.onclick = () => { page = n; renderList(); info.scrollIntoView({ block: 'start' }); };
-          return b;
-        };
-        nav.appendChild(btn('« 前へ', page - 1, { disabled: page === 1 }));
-        const nums = new Set([1, total]);
-        for (let n = page - 2; n <= page + 2; n++) if (n >= 1 && n <= total) nums.add(n);
-        let prev = 0;
-        [...nums].sort((a, b) => a - b).forEach((n) => {
-          if (n - prev > 1) nav.appendChild(el('span', 'gap', '…'));
-          nav.appendChild(btn(String(n), n, { current: n === page }));
-          prev = n;
-        });
-        nav.appendChild(btn('次へ »', page + 1, { disabled: page === total }));
-        return nav;
-      };
+      const pager = (total) => pagerEl(page, total, (n) => { page = n; renderList(); info.scrollIntoView({ block: 'start' }); });
       const renderList = () => {
         const q = query.trim().toLowerCase();
-        const items = list.filter((x) => (level === '*' || x.level === level)
+        const items = list.filter((x) => (cMin === null || x.c >= cMin - 1e-9) && (cMax === null || x.c <= cMax + 1e-9)
           && (diffs === null || diffs.has(x.diff)) && (!q || x.name.toLowerCase().includes(q)));
         const total = Math.max(1, Math.ceil(items.length / FAV_PAGE_SIZE));
         page = Math.min(Math.max(page, 1), total);
@@ -2318,7 +2367,7 @@
       menu.appendChild(b);
     };
     item('レート計算・ランキング登録', '2fRATE を計算して、レート対象曲の一覧・画像化・ランキング登録を行います', () => go('rating'), true);
-    item('マイページ', '達成人数が少ない譜面 TOP10・お気に入り譜面の登録・PINの変更', () => go('mypage'), false);
+    item('マイページ', '達成人数で見る自分の達成譜面・お気に入り譜面の登録・PINの変更', () => go('mypage'), false);
     ui.body.append(player, menu);
   }
 
