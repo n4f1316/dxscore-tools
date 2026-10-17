@@ -2480,19 +2480,33 @@
     const card = el('section', 'dxr-card');
     card.append(el('h3', '', 'おすすめ楽曲'),
       el('p', 'dxr-card-desc', '全国ランキングの達成率から、次に☆を伸ばすと 2fRATE（☆7まで）が上がりやすい譜面を提案します。'));
+    // 最初は閉じておき、「おすすめ楽曲を表示する」を押したときに中身を作る
+    const toggle = el('button', 'dxr-rank-open', 'おすすめ楽曲を表示する');
+    toggle.type = 'button';
+    toggle.style.margin = '4px 0 0';
+    const body = el('div');
+    body.hidden = true;
     const when = el('p', 'dxr-card-desc');
     const btn = el('button', 'dxr-rank-open', '最新のスコアで計算し直す');
     btn.type = 'button';
     btn.style.margin = '4px 0 0';
     const msg = el('p', 'dxr-status');
     const out = el('div');
-    card.append(when, out, btn, msg);
+    body.append(when, out, btn, msg);
+    card.append(toggle, body);
+    let opened = false;
+    toggle.onclick = () => {
+      body.hidden = !body.hidden;
+      toggle.textContent = body.hidden ? 'おすすめ楽曲を表示する' : 'おすすめ楽曲を閉じる';
+      if (!body.hidden && !opened) { opened = true; fill(); }
+    };
 
     const showRun = (run) => {
       const full = run.results.find((r) => r.mode.id === 'full');
       when.textContent = '最新のスコアから計算した結果です。';
       out.replaceChildren(recommendEl(run.scored, full.top, run.stats, run.jackets, full.rating));
     };
+    const fill = () => {
     const saved = loadJson(LAST_REC_KEY);
     if (ctx.getLastRun()) {
       showRun(ctx.getLastRun());
@@ -2503,6 +2517,7 @@
       when.textContent = 'まだ結果がありません。下のボタンで計算するか、レート計算を実行すると、次からはここにすぐ表示されます。';
       btn.textContent = 'おすすめ楽曲を計算する';
     }
+    };
     btn.onclick = async () => {
       btn.disabled = true;
       msg.classList.remove('is-error');
