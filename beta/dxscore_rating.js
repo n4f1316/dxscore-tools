@@ -396,6 +396,7 @@
       background: #EFECF9; box-shadow: 0 0 0 1.5px var(--line);
     }
     .dxr-profile-text { min-width: 0; }
+    .dxr-profile-caption { margin: 0 0 2px; font-weight: 700; }
     .dxr-trophy {
       display: inline-block; max-width: 100%; font-size: 12px; font-weight: 700; line-height: 1.4;
       padding: 3px 12px; border-radius: 999px; margin-bottom: 4px;
@@ -604,6 +605,10 @@
     .dxr-tab[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
     .dxr-fav-now { display: flex; align-items: center; gap: 10px; background: var(--bg); border-radius: 12px; padding: 10px 12px; margin: 6px 0 8px; }
     .dxr-picker { margin-top: 10px; }
+    .dxr-auto { margin: 4px 0 12px; padding: 10px 14px; border-radius: 14px; background: #E6F6EA; color: #23733A; font-weight: 700; font-size: 13px; }
+    .dxr-auto.is-error { background: #FDE8EA; color: #C0303A; }
+    .dxr-auto a { color: inherit; }
+    .dxr-auto-set { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: var(--bg); }
     .dxr-crange { align-items: center; }
     .dxr-crange-label { font-size: 12px; font-weight: 800; color: var(--sub); margin-right: 2px; }
     .dxr-crange-sep { font-weight: 800; color: var(--sub); }
@@ -899,6 +904,7 @@
 
   // 画像の注意書きに載せるツールのURL
   const TOOL_URL = 'https://github.com/n4f1316/dxscore-tools';
+  const COPYRIGHT = '© 2026 なふ（2fRATE）';
 
   const IMG = {
     cols: 5, rows: 10, pad: 32, gap: 12,
@@ -1178,6 +1184,7 @@
     ctx.textAlign = 'right';
     ctx.fillText(`作成日時 ${d.getFullYear()}/${p2(d.getMonth() + 1)}/${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`,
       W - pad, fy);
+    ctx.fillText(COPYRIGHT, W - pad, fy + 32);
 
     return canvas;
   }
@@ -1269,16 +1276,16 @@
     return r;
   }
 
-  function openRankingDialog(root, profile, results, counts) {
+  // ランキングに送る内容（ユーザー名・PIN／鍵 以外）。登録画面と自動登録の両方で使う
+  //   form: { displayName, anonymous, publicTop50 }
+  const iconFileOf = (profile) => (String(profile.icon || '').match(/\/Icon\/([0-9a-f]{16}\.png)/) || [])[1] || '';
+  // 送るアイコン：匿名なら空、通常のアイコンはファイル名、カメラで撮影したアイコン（通常のアイコンURLでないもの）は 'camera'
+  const iconValueOf = (profile, anonymous) => (anonymous ? '' : (iconFileOf(profile) || 'camera'));
+  function buildSubmitBody(profile, results, counts, form) {
     const full = results.find((r) => r.mode.id === 'full');
     const cap6 = results.find((r) => r.mode.id === 'cap6');
     const cap5 = results.find((r) => r.mode.id === 'cap5');
     const round3 = (v) => Math.round(v * 1000) / 1000;
-    const iconFile = (String(profile.icon || '').match(/\/Icon\/([0-9a-f]{16}\.png)/) || [])[1] || '';
-    const constVersion = (CONST_URL.match(/maimai_consts_([^/]+)\.json/) || [])[1] || '';
-    const rankName = rankOf(full.rating, 'full').name;
-    const rankCap6 = rankOf(cap6.rating, 'cap6').name;
-    const rankCap5 = rankOf(cap5.rating, 'cap5').name;
     // レート対象曲（上位50譜面）を送る形にする。value はそのレートでの単曲レート値
     const frameOf = (res) => res.top.map((t) => ({
       name: t.name,
@@ -1293,6 +1300,44 @@
       value: round3(t.values[res.mode.id]),
       rare: RARE_MODES.includes(res.mode.id) ? t.rareAdd || 0 : 0, // 希少ボーナス（value に含まれている）
     }));
+    return {
+      action: 'submit',
+      displayName: form.displayName,
+      anonymous: !!form.anonymous,
+      showIcon: !form.anonymous,
+      publicTop50: !!form.publicTop50,
+      icon: iconValueOf(profile, form.anonymous),
+      rateFull: round3(full.rating),
+      rateCap6: round3(cap6.rating),
+      rateCap5: round3(cap5.rating),
+      rank: rankOf(full.rating, 'full').name,
+      constVersion: (CONST_URL.match(/maimai_consts_([^/]+)\.json/) || [])[1] || '',
+      formulaVersion: FORMULA_VERSION,
+      rankCap6: rankOf(cap6.rating, 'cap6').name,
+      rankCap5: rankOf(cap5.rating, 'cap5').name,
+      // ☆7・☆6・☆5 を達成した MASTER / Re:MASTER の譜面数
+      counts: counts || null,
+      // レート対象曲（上位50譜面）：top50 は☆7まで、top50Cap6・top50Cap5 は☆6まで・☆5まで
+      top50: frameOf(full),
+      top50Cap6: frameOf(cap6),
+      top50Cap5: frameOf(cap5),
+    };
+  }
+
+  // このブラウザに保存する設定（maimaiでらっくすNET のサイト内だけ。サーバーには送らない）
+  //   FORM_KEY：表示名・匿名・ベスト枠の公開、AUTO_KEY：自動登録 { username, token }（PINは保存しない）
+  const AUTO_KEY = 'dxr-auto-upload';
+  const loadJson = (key) => { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch { return null; } };
+  const saveJson = (key, v) => { try { if (v === null) localStorage.removeItem(key); else localStorage.setItem(key, JSON.stringify(v)); } catch { /* 保存できない環境 */ } };
+
+  function openRankingDialog(root, profile, results, counts) {
+    const full = results.find((r) => r.mode.id === 'full');
+    const cap6 = results.find((r) => r.mode.id === 'cap6');
+    const cap5 = results.find((r) => r.mode.id === 'cap5');
+    const iconFile = iconFileOf(profile);
+    const rankName = rankOf(full.rating, 'full').name;
+    const rankCap6 = rankOf(cap6.rating, 'cap6').name;
+    const rankCap5 = rankOf(cap5.rating, 'cap5').name;
 
     const modal = el('div', 'dxr-modal');
     const dlg = el('div', 'dxr-dialog');
@@ -1463,29 +1508,9 @@
         err.textContent = '送信中…';
         try {
           const r = await callRanking({
-            action: 'submit',
+            ...buildSubmitBody(profile, results, counts, form),
             username: form.username,
             pin: form.pin,
-            displayName: form.displayName,
-            anonymous: form.anonymous,
-            showIcon: form.showIcon,
-            publicTop50: form.publicTop50,
-            // 通常のアイコンはファイル名、カメラで撮影したアイコン（通常のアイコンURLでないもの）は 'camera' を送る
-            icon: form.showIcon ? (iconFile || 'camera') : '',
-            rateFull: round3(full.rating),
-            rateCap6: round3(cap6.rating),
-            rateCap5: round3(cap5.rating),
-            rank: rankName,
-            constVersion,
-            formulaVersion: FORMULA_VERSION,
-            rankCap6,
-            rankCap5,
-            // ☆7・☆6・☆5 を達成した MASTER / Re:MASTER の譜面数
-            counts: counts || null,
-            // レート対象曲（上位50譜面）：top50 は☆7まで、top50Cap6・top50Cap5 は☆6まで・☆5まで
-            top50: frameOf(full),
-            top50Cap6: frameOf(cap6),
-            top50Cap5: frameOf(cap5),
           }, () => { err.textContent = '混み合っているため、送り直しています…'; });
           if (!r.ok) {
             err.textContent = r.error || '登録できませんでした。';
@@ -1624,7 +1649,30 @@
 
 
   function recommendEl(all, top, stats, jackets, rating) {
-    const recs = buildRecommendations(all, top, stats, rating);
+    return recommendListEl(buildRecommendations(all, top, stats, rating).slice(0, RECOMMEND_COUNT), jackets, rating);
+  }
+
+  // 前回のおすすめ楽曲をこのブラウザに保存しておく（次に起動したとき、計算する前にマイページで見られるように）
+  //   保存するのは表示に使う項目だけ（上位 RECOMMEND_COUNT 件）。プレイヤー名も残し、別のプレイヤーの結果は出さない
+  const LAST_REC_KEY = 'dxr-last-recommend';
+  function saveLastRecommend(profile, run) {
+    const full = run.results.find((r) => r.mode.id === 'full');
+    const recs = buildRecommendations(run.scored, full.top, run.stats, full.rating).slice(0, RECOMMEND_COUNT);
+    const d = new Date();
+    const p2 = (v) => String(v).padStart(2, '0');
+    saveJson(LAST_REC_KEY, {
+      player: profile.name || '',
+      date: `${d.getFullYear()}/${p2(d.getMonth() + 1)}/${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`,
+      rating: full.rating,
+      recs: recs.map((r) => ({
+        s: { name: r.s.name, kind: r.s.kind, diff: r.s.diff, level: r.s.level, max: r.s.max, cur: r.s.cur, c: r.s.c, estimated: !!r.s.estimated },
+        inTop: r.inTop, now: r.now, targetTenths: r.targetTenths, needScore: r.needScore, rest: r.rest,
+        newValue: r.newValue, gain: r.gain, ease: r.ease,
+      })),
+    });
+  }
+
+  function recommendListEl(recs, jackets, rating) {
     const box = el('div', 'dxr-rec');
     const head = el('div', 'dxr-rec-head');
     head.append(el('div', 'dxr-rec-title', 'おすすめ楽曲（☆7まで）'),
@@ -1639,7 +1687,7 @@
     box.appendChild(listBox);
 
     function render() {
-      const shown = recs.slice(0, RECOMMEND_COUNT);
+      const shown = recs;
       const list = el('div', 'dxr-list');
       if (!shown.length) list.appendChild(el('div', 'dxr-rec-empty', 'おすすめできる譜面が見つかりませんでした。'));
       shown.forEach((r, i) => {
@@ -1684,8 +1732,8 @@
   }
 
   // results: [{ mode, rating, top }, ...]
-  function renderResult(ui, profile, results, info, jackets, extras = {}) {
-    // プレイヤー情報：アイコン / 称号 / 名前
+  // プレイヤー情報（maimaiでらっくすNET のアイコン・称号・プレイヤー名）。caption は名前の上の小さな見出し（省略可）
+  function profileEl(ui, profile, caption) {
     const player = el('div', 'dxr-profile');
     if (profile.icon) {
       const icon = el('img', 'dxr-icon');
@@ -1695,13 +1743,18 @@
       player.appendChild(icon);
     }
     const text = el('div', 'dxr-profile-text');
+    if (caption) text.appendChild(el('div', 'dxr-card-desc dxr-profile-caption', caption));
     if (profile.trophy) {
+      const root = ui.body.getRootNode();
       const officialCss = profile.trophyEl ? extractOfficialCss(profile.trophyEl) : '';
       if (officialCss) {
-        // 公式の称号をそのまま複製し、取り出した公式CSSで表示する
-        const style = el('style');
-        style.textContent = officialCss;
-        ui.body.getRootNode().appendChild(style);
+        // 公式の称号をそのまま複製し、取り出した公式CSSで表示する（CSSは画面に1回だけ入れる）
+        if (!root.getElementById?.('dxr-trophy-css')) {
+          const style = el('style');
+          style.id = 'dxr-trophy-css';
+          style.textContent = officialCss;
+          root.appendChild(style);
+        }
         const clone = document.importNode(profile.trophyEl, true);
         [clone, ...clone.querySelectorAll('[id]')].forEach((e) => e.removeAttribute('id'));
         const holder = el('div', 'dxr-trophy-official');
@@ -1716,6 +1769,12 @@
     }
     text.appendChild(el('div', 'dxr-player', profile.name || 'プレイヤー名を取得できませんでした'));
     player.appendChild(text);
+    return player;
+  }
+
+  function renderResult(ui, profile, results, info, jackets, extras = {}) {
+    // プレイヤー情報：アイコン / 称号 / 名前
+    const player = profileEl(ui, profile);
 
     // レートの札（押すとそのレートのレート対象曲に切り替わる）
     const plates = el('div', 'dxr-plates');
@@ -1775,7 +1834,8 @@
       '「☆6まで」は☆7を☆6として、「☆5まで」は☆6以上を☆5として計算しています。' +
       'どのレートも、☆が上限（☆7・☆6・☆5）に達した譜面には +0.1 されます。' +
       '「☆7まで」「☆6まで」では、全国ランキング上位100人のうち☆6以上が20人以下の譜面を☆6以上で達成すると、希少ボーナス（20人以下 +0.05、10人以下 +0.10、3人以下 +0.15）が加わります。' +
-      (jackets ? '' : 'ジャケット画像の対応表を読み込めなかったため、画像は表示していません。'));
+      (jackets ? '' : 'ジャケット画像の対応表を読み込めなかったため、画像は表示していません。') +
+      `${COPYRIGHT}。2fRATE のプログラム・デザイン・ロゴの無断転載・無断使用を禁じます。`);
 
     // ランキングに登録（☆7まで・☆6まで・☆5まで の3つのレートを送る）
     const rankBtn = el('button', 'dxr-rank-open', 'ランキングに登録・更新する');
@@ -2178,7 +2238,7 @@
   };
 
   // ランキング登録者向けのカード（ログイン → お気に入り譜面・PINの変更）
-  function memberCard() {
+  function memberCard(profile) {
     const card = el('section', 'dxr-card');
     let savedUser = '';
     try { savedUser = localStorage.getItem(USER_KEY) || ''; } catch { /* なし */ }
@@ -2196,8 +2256,8 @@
     };
 
     function loginView() {
-      card.replaceChildren(el('h3', '', 'お気に入り譜面・PINの変更'),
-        el('p', 'dxr-card-desc', 'ランキングに登録したユーザー名とPINで入ります。お気に入り譜面は、ランキングページの「ベスト枠を見る」に表示されます。'));
+      card.replaceChildren(el('h3', '', 'ランキングの設定・お気に入り譜面・PINの変更'),
+        el('p', 'dxr-card-desc', 'ランキングに登録したユーザー名とPINで入ります。ランキングに載せる名前や自動登録の設定、お気に入り譜面（ランキングページに表示）、PINの変更ができます。'));
       const user = field(card, 'ユーザー名', 'text', savedUser, '', { autocomplete: 'username', autocapitalize: 'off', spellcheck: 'false' });
       const pin = field(card, 'PIN', 'password', '', '', { inputmode: 'numeric', autocomplete: 'current-password' });
       const err = el('div', 'dxr-err');
@@ -2236,6 +2296,88 @@
       head.appendChild(out);
       card.appendChild(head);
       card.appendChild(el('p', 'dxr-card-desc', `ユーザー名：${auth.username}`));
+
+      // ---- ランキングの設定（表示名・匿名・ベスト枠の公開・自動登録） ----
+      const setBox = el('div', 'dxr-sub');
+      card.appendChild(setBox);
+      setBox.appendChild(el('h4', '', 'ランキングの設定'));
+      setBox.appendChild(el('p', 'dxr-card-desc', 'ランキングに載せる内容です。保存するとすぐにランキングに反映され、次からの登録（自動登録を含む）でもこの内容を使います。'));
+      const local = loadJson(FORM_KEY) || {};
+      const dnInput = field(setBox, '表示名', 'text', info.displayName || local.displayName || profile.name || '', 'ランキングに表示する名前（20文字まで）', { maxlength: '20' });
+      const chk = (label, checked) => {
+        const lab = el('label', 'dxr-check');
+        const cb = el('input');
+        cb.type = 'checkbox';
+        cb.checked = checked;
+        lab.append(cb, document.createTextNode(label));
+        setBox.appendChild(lab);
+        return cb;
+      };
+      const anonCb = chk('匿名で掲載する（「匿名#記号」と初期アイコンで表示）', !!info.anonymous);
+      const pubCb = chk('ベスト枠をランキングで公開する', info.publicTop50 !== false);
+      const syncName = () => { dnInput.disabled = anonCb.checked; };
+      anonCb.onchange = syncName;
+      syncName();
+      const setErr = el('div', 'dxr-err');
+      const setActions = el('div', 'dxr-actions');
+      const setBtn = el('button', 'primary', '設定を保存');
+      setBtn.type = 'button';
+      setActions.appendChild(setBtn);
+      setBox.append(setErr, setActions);
+      setBtn.onclick = async () => {
+        const form = { displayName: dnInput.value.trim(), anonymous: anonCb.checked, publicTop50: pubCb.checked };
+        if (!form.anonymous && !form.displayName) { setErr.textContent = '表示名を入力するか、匿名で掲載を選んでください。'; return; }
+        setBtn.disabled = true;
+        setErr.textContent = '保存中…';
+        const r = await callRanking({ action: 'setProfile', username: auth.username, pin: auth.pin, ...form, icon: iconValueOf(profile, form.anonymous) },
+          () => { setErr.textContent = '混み合っています。送り直しています…'; })
+          .catch(() => ({ ok: false, error: '通信できませんでした。' }));
+        setBtn.disabled = false;
+        if (!r.ok) { setErr.textContent = r.error || '保存できませんでした。'; return; }
+        saveJson(FORM_KEY, form);
+        setErr.textContent = '';
+        setErr.replaceChildren(el('span', 'dxr-ok', '設定を保存しました。'));
+      };
+
+      // 自動登録：このブラウザに「自動登録用の鍵」を保存し、レート計算のあとに自動で登録・更新する（PINは保存しない）
+      const autoBox = el('div', 'dxr-auto-set');
+      const autoLab = el('label', 'dxr-check');
+      const autoCb = el('input');
+      autoCb.type = 'checkbox';
+      const savedAuto = loadJson(AUTO_KEY);
+      autoCb.checked = !!(savedAuto && savedAuto.token && savedAuto.username === auth.username);
+      autoLab.append(autoCb, document.createTextNode('レート計算のあとに、自動でランキングに登録・更新する'));
+      const autoNote = el('p', 'dxr-card-desc',
+        'このブラウザだけの設定です。PINは保存せず、自動登録専用の鍵を保存します（鍵でできるのはランキングの登録・更新だけです）。'
+        + '別のブラウザで設定すると、こちらの設定は無効になります。');
+      if (info.autoUpload && !autoCb.checked) {
+        autoNote.textContent += '（現在、別のブラウザで自動登録が設定されています）';
+      }
+      const autoErr = el('div', 'dxr-err');
+      autoBox.append(autoLab, autoNote, autoErr);
+      setBox.appendChild(autoBox);
+      autoCb.onchange = async () => {
+        const on = autoCb.checked;
+        autoCb.disabled = true;
+        autoErr.textContent = on ? '設定中…' : '解除中…';
+        const r = await callRanking({ action: on ? 'issueToken' : 'revokeToken', username: auth.username, pin: auth.pin })
+          .catch(() => ({ ok: false, error: '通信できませんでした。' }));
+        autoCb.disabled = false;
+        if (!r.ok) {
+          autoCb.checked = !on;
+          autoErr.textContent = r.error || '設定できませんでした。';
+          return;
+        }
+        if (on) {
+          saveJson(AUTO_KEY, { username: auth.username, token: r.token });
+          // 自動登録で使う表示名などが未保存なら、今の画面の内容を保存しておく
+          if (!loadJson(FORM_KEY)) saveJson(FORM_KEY, { displayName: dnInput.value.trim(), anonymous: anonCb.checked, publicTop50: pubCb.checked });
+        } else {
+          saveJson(AUTO_KEY, null);
+        }
+        autoErr.textContent = '';
+        autoErr.replaceChildren(el('span', 'dxr-ok', on ? '自動登録を設定しました。次のレート計算から自動で登録されます。' : '自動登録を解除しました。'));
+      };
 
       // ---- お気に入り譜面 ----
       const fav = el('div', 'dxr-sub');
@@ -2317,6 +2459,12 @@
         if (!r.ok) { pinErr.textContent = r.error || '変更できませんでした。'; return; }
         auth.pin = v;
         np1.value = np2.value = '';
+        // PINを変えると自動登録の鍵も無効になるので、このブラウザの設定も消す
+        const sa = loadJson(AUTO_KEY);
+        if (sa && sa.username === auth.username) {
+          saveJson(AUTO_KEY, null);
+          autoCb.checked = false;
+        }
         pinErr.textContent = '';
         pinErr.replaceChildren(Object.assign(el('span', 'dxr-ok', 'PINを変更しました。次からは新しいPINを使ってください。')));
       };
@@ -2326,20 +2474,88 @@
     return card;
   }
 
-  function renderMyPage(ui, profile) {
-    ui.status('');
-    const player = el('div', 'dxr-profile');
-    if (profile.icon) {
-      const icon = el('img', 'dxr-icon');
-      icon.src = profile.icon;
-      icon.alt = '';
-      icon.onerror = () => icon.remove();
-      player.appendChild(icon);
+  // おすすめ楽曲のカード
+  //   同じ起動の中でレート計算をしていればその結果、なければ前回のレート計算のときに保存した結果をすぐに表示する
+  function recommendCard(ctx, profile) {
+    const card = el('section', 'dxr-card');
+    card.append(el('h3', '', 'おすすめ楽曲'),
+      el('p', 'dxr-card-desc', '全国ランキングの達成率から、次に☆を伸ばすと 2fRATE（☆7まで）が上がりやすい譜面を提案します。'));
+    const when = el('p', 'dxr-card-desc');
+    const btn = el('button', 'dxr-rank-open', '最新のスコアで計算し直す');
+    btn.type = 'button';
+    btn.style.margin = '4px 0 0';
+    const msg = el('p', 'dxr-status');
+    const out = el('div');
+    card.append(when, out, btn, msg);
+
+    const showRun = (run) => {
+      const full = run.results.find((r) => r.mode.id === 'full');
+      when.textContent = '最新のスコアから計算した結果です。';
+      out.replaceChildren(recommendEl(run.scored, full.top, run.stats, run.jackets, full.rating));
+    };
+    const saved = loadJson(LAST_REC_KEY);
+    if (ctx.getLastRun()) {
+      showRun(ctx.getLastRun());
+    } else if (saved && Array.isArray(saved.recs) && saved.player === (profile.name || '')) {
+      when.textContent = `前回のレート計算（${saved.date}）のときの結果です。そのあとに更新したスコアは反映されていません。`;
+      loadJacketMap().then((jackets) => out.replaceChildren(recommendListEl(saved.recs, jackets, saved.rating)));
+    } else {
+      when.textContent = 'まだ結果がありません。下のボタンで計算するか、レート計算を実行すると、次からはここにすぐ表示されます。';
+      btn.textContent = 'おすすめ楽曲を計算する';
     }
-    const text = el('div', 'dxr-profile-text');
-    text.append(el('div', 'dxr-card-desc', 'マイページ'), el('div', 'dxr-player', profile.name || 'プレイヤー'));
-    player.appendChild(text);
-    ui.body.append(player, rareCard(), memberCard());
+    btn.onclick = async () => {
+      btn.disabled = true;
+      msg.classList.remove('is-error');
+      try {
+        const run = await ctx.computeRating((t) => { msg.textContent = t; });
+        if (!run) return;
+        msg.textContent = '';
+        showRun(run);
+        btn.textContent = '最新のスコアで計算し直す';
+      } catch (e) {
+        msg.textContent = 'エラー: ' + e.message;
+        msg.classList.add('is-error');
+        console.error(e);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+    return card;
+  }
+
+  // レート計算のあと、自動登録が設定されていればランキングに登録・更新する
+  async function autoUpload(ui, profile, results, counts) {
+    const auto = loadJson(AUTO_KEY);
+    if (!auto || !auto.token || !auto.username) return;
+    const form = loadJson(FORM_KEY) || {};
+    const settings = {
+      displayName: String(form.displayName || profile.name || '').slice(0, 20),
+      anonymous: form.anonymous === true,
+      publicTop50: form.publicTop50 !== false,
+    };
+    const box = el('div', 'dxr-auto', 'ランキングに自動で登録しています…');
+    ui.body.prepend(box);
+    const r = await callRanking({ ...buildSubmitBody(profile, results, counts, settings), username: auto.username, token: auto.token },
+      () => { box.textContent = '混み合っているため、送り直しています…'; })
+      .catch(() => ({ ok: false, error: '通信できませんでした。' }));
+    if (r.ok) {
+      box.textContent = `ランキングに自動で登録しました（${settings.anonymous ? `匿名#${r.anonCode}` : settings.displayName}）。`;
+      const a = el('a', '', 'ランキングを見る ›');
+      a.href = RANKING_PAGE;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      box.append(' ', a);
+    } else {
+      box.classList.add('is-error');
+      box.textContent = `自動登録できませんでした：${r.error || '不明なエラー'}`;
+      if (r.tokenInvalid) saveJson(AUTO_KEY, null);
+    }
+  }
+
+  function renderMyPage(ui, profile, ctx) {
+    ui.status('');
+    const player = profileEl(ui, profile, 'マイページ');
+    ui.body.append(player, recommendCard(ctx, profile), rareCard(), memberCard(profile));
   }
 
   // 起動時のメニュー（ログインを確認したあとに表示）
@@ -2347,17 +2563,7 @@
     ui.status('');
     ui.setBack(null);
     ui.body.replaceChildren();
-    const player = el('div', 'dxr-profile');
-    if (profile.icon) {
-      const icon = el('img', 'dxr-icon');
-      icon.src = profile.icon;
-      icon.alt = '';
-      icon.onerror = () => icon.remove();
-      player.appendChild(icon);
-    }
-    const text = el('div', 'dxr-profile-text');
-    text.append(el('div', 'dxr-card-desc', 'ログインを確認しました'), el('div', 'dxr-player', profile.name || 'プレイヤー'));
-    player.appendChild(text);
+    const player = profileEl(ui, profile, 'ログインを確認しました');
     const menu = el('div', 'dxr-menu');
     const item = (title, desc, onClick, primary) => {
       const b = el('button', 'dxr-menu-item' + (primary ? ' is-primary' : ''));
@@ -2367,7 +2573,7 @@
       menu.appendChild(b);
     };
     item('レート計算・ランキング登録', '2fRATE を計算して、レート対象曲の一覧・画像化・ランキング登録を行います', () => go('rating'), true);
-    item('マイページ', '達成人数で見る自分の達成譜面・お気に入り譜面の登録・PINの変更', () => go('mypage'), false);
+    item('マイページ', '達成人数で見る自分の達成譜面・おすすめ楽曲・ランキングの設定（自動登録）・お気に入り譜面・PINの変更', () => go('mypage'), false);
     ui.body.append(player, menu);
   }
 
@@ -2400,15 +2606,45 @@
     ui.body.replaceChildren();
     ui.status('');
     ui.setBack(() => { navId++; renderMenu(ui, profile, go); });
-    if (where === 'mypage') renderMyPage(ui, profile);
+    if (where === 'mypage') renderMyPage(ui, profile, { getLastRun: () => lastRun, computeRating: computeForMyPage });
     else runRating();
   };
   renderMenu(ui, profile, go);
 
+  // 最後に計算した結果（同じ起動の中で、マイページのおすすめ楽曲に使い回す）
+  let lastRun = null;
+
+  // マイページから計算する（状況は onStatus に出す。途中でメニューに戻ったら null）
+  async function computeForMyPage(onStatus) {
+    const myNav = navId;
+    const run = await computeRating(onStatus, () => myNav !== navId);
+    if (run) {
+      lastRun = run;
+      saveLastRecommend(profile, run);
+    }
+    return run;
+  }
+
   async function runRating() {
-  const myNav = navId;
-  const left = () => myNav !== navId; // メニューに戻った
-  try {
+    const myNav = navId;
+    const left = () => myNav !== navId; // メニューに戻った
+    try {
+      const run = await computeRating((t) => ui.status(t), left);
+      if (!run || left()) return;
+      lastRun = run;
+      saveLastRecommend(profile, run);
+      ui.status('');
+      renderResult(ui, profile, run.results, run.info, run.jackets, { all: run.scored, stats: run.stats, counts: run.counts });
+      autoUpload(ui, profile, run.results, run.counts);
+    } catch (e) {
+      if (left()) return;
+      ui.status('エラー: ' + e.message, true);
+      console.error(e);
+    }
+  }
+
+  // スコアを読み込んでレートを計算する（画面は作らない）。途中で left() が true になったら null
+  async function computeRating(status, left) {
     // 譜面定数表の読み込み（任意）
     let constTable = {};
     if (CONST_URL) {
@@ -2422,7 +2658,7 @@
           throw new Error('JSONとして読み込めませんでした（ファイルの中身が壊れている可能性があります）');
         }
       } catch (err) {
-        ui.status(`譜面定数表を読み込めませんでした：${err.message}／URL: ${CONST_URL}　概算値で計算します。`, true);
+        status(`譜面定数表を読み込めませんでした：${err.message}／URL: ${CONST_URL}　概算値で計算します。`, true);
         console.error('定数表の読み込みエラー', err);
         await sleep(4000);
       }
@@ -2440,7 +2676,7 @@
 
     for (let n = LEVEL_MAX; n >= 1; n--) {
       if (left()) return;
-      ui.status(`Lv${levelInfo(n).label} を取得中…（${++fetched}ページ目）` +
+      status(`Lv${levelInfo(n).label} を取得中…（${++fetched}ページ目）` +
         (rateLevel !== null ? '　☆5・☆6・☆7達成譜面数の集計のため、Lv10+ まで読み込みます' : ''));
       // レコードのページと、そのレベルの全国ランキング集計（GitHub。なくても続行）を同時に読み込む
       const [res, lvStats] = await Promise.all([
@@ -2477,23 +2713,16 @@
       return { mode, rating, top };
     });
 
-    ui.status('');
-    ui.status('ジャケット画像の対応表を確認中…');
+    status('ジャケット画像の対応表を確認中…');
     const jackets = await jacketPromise;
-    if (left()) return;
-    // おすすめ楽曲には、取得したレベルの全国ランキング集計（すでに読み込み済み）を使う
-    renderResult(
-      ui,
-      profile,
+    if (left()) return null;
+    return {
       results,
-      `Lv15〜Lv${levelInfo(lastLevel).label} の ${fetched} ページを取得し、${scored.length} 譜面から計算`,
+      scored,
+      stats,
       jackets,
-      { all: scored, stats, counts: countStars(scored) }
-    );
-  } catch (e) {
-    if (left()) return;
-    ui.status('エラー: ' + e.message, true);
-    console.error(e);
-  }
+      counts: countStars(scored),
+      info: `Lv15〜Lv${levelInfo(lastLevel).label} の ${fetched} ページを取得し、${scored.length} 譜面から計算`,
+    };
   }
 })();
