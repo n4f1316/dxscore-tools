@@ -823,6 +823,7 @@
 
   // 画像の注意書きに載せるツールのURL
   const TOOL_URL = 'https://github.com/n4f1316/dxscore-tools';
+  const COPYRIGHT = '© 2026 なふ（2fRATE）';
 
   const IMG = {
     cols: 5, rows: 10, pad: 32, gap: 12,
@@ -978,7 +979,7 @@
     ctx.textAlign = 'right';
     ctx.fillStyle = IMG.sub;
     ctx.font = `800 23px ${IMG.font}`;
-    ctx.fillText(`2fRATE（${result.mode.label}）`, rx, iy + 36);
+    ctx.fillText(`2fRATE${result.mode.label.replace("まで", "")}`, rx, iy + 36); // 例：2fRATE☆7
     ctx.font = `800 80px ${IMG.font}`;
     const rateText = result.rating.toFixed(3);
     if (RANK_MODES.includes(result.mode.id)) {
@@ -1102,6 +1103,7 @@
     ctx.textAlign = 'right';
     ctx.fillText(`作成日時 ${d.getFullYear()}/${p2(d.getMonth() + 1)}/${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`,
       W - pad, fy);
+    ctx.fillText(COPYRIGHT, W - pad, fy + 32);
 
     return canvas;
   }
@@ -1699,7 +1701,8 @@
       '「☆6まで」は☆7を☆6として、「☆5まで」は☆6以上を☆5として計算しています。' +
       'どのレートも、☆が上限（☆7・☆6・☆5）に達した譜面には +0.1 されます。' +
       '「☆7まで」「☆6まで」では、全国ランキング上位100人のうち☆6以上が20人以下の譜面を☆6以上で達成すると、希少ボーナス（20人以下 +0.05、10人以下 +0.10、3人以下 +0.15）が加わります。' +
-      (jackets ? '' : 'ジャケット画像の対応表を読み込めなかったため、画像は表示していません。'));
+      (jackets ? '' : 'ジャケット画像の対応表を読み込めなかったため、画像は表示していません。') +
+      `${COPYRIGHT}。2fRATE のプログラム・デザイン・ロゴの無断転載・無断使用を禁じます。`);
 
     // ランキングに登録（☆7まで・☆6まで・☆5まで の3つのレートを送る）
     const rankBtn = el('button', 'dxr-rank-open', 'ランキングに登録・更新する');
