@@ -358,7 +358,7 @@
     const box = el('div', 'bf-box');
     box.setAttribute('role', 'dialog');
     box.setAttribute('aria-modal', 'true');
-    box.setAttribute('aria-label', `${player.name} のベスト枠`);
+    box.setAttribute('aria-label', frames ? `${player.name} のベスト枠` : `${player.name} のお気に入り譜面`);
     ov.appendChild(box);
     const close = () => { ov.remove(); document.removeEventListener('keydown', onKey); };
     const onKey = (e) => { if (e.key === 'Escape') close(); };
@@ -414,7 +414,7 @@
     let list = null;
     function show(id) {
       const m = RATE_MODES.find((x) => x.id === id) || RATE_MODES[0];
-      const top50 = Array.isArray(frames[m.id]) ? frames[m.id] : null;
+      const top50 = frames && Array.isArray(frames[m.id]) ? frames[m.id] : null;
       // タブ
       tabs.replaceChildren(...RATE_MODES.map((x) => {
         const b = el('button', '', x.label);
@@ -437,6 +437,7 @@
         val.title = rank.name;
         rate.append(ic, val);
       }
+      if (!frames) { tabs.style.display = 'none'; return; } // ベスト枠を公開していない人：お気に入り譜面だけを表示
       const old = list;
       // 譜面の一覧（2fRATE 実行時の表と同じ形式）
       list = el('div', 'bf-list');
@@ -646,6 +647,20 @@
         bf.type = 'button';
         bf.onclick = () => showBestFrame(r, bf);
         main.appendChild(bf);
+      } else if (r.favorite && r.favorite.name) {
+        // ベスト枠を公開していない人は、お気に入り譜面だけを見られる（未登録なら何も出さない）
+        const fb = el('button', 'bf-open', 'お気に入り譜面を見る');
+        fb.type = 'button';
+        fb.onclick = async () => {
+          fb.disabled = true;
+          try {
+            openBestFrame({ name: r.name, icon: r.icon, rateFull: r.rateFull, rateCap6: r.rateCap6, rateCap5: r.rateCap5, favorite: r.favorite },
+              null, await loadJackets(), mode.id);
+          } finally {
+            fb.disabled = false;
+          }
+        };
+        main.appendChild(fb);
       }
       row.appendChild(main);
 
