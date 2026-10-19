@@ -120,6 +120,11 @@
   .ac-search { width: 100%; margin: 0 0 10px; font: inherit; font-size: 16px; padding: 7px 14px; border-radius: 999px;
     border: 1.5px solid var(--line); background: #fff; color: var(--ink); }
   .ac-info { font-size: 12px; font-weight: 700; color: var(--sub); margin: 0 2px 6px; }
+  .ac-crange { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px; }
+  .ac-crange-label { font-size: 12px; font-weight: 800; color: var(--sub); }
+  .ac-crange select { font: inherit; font-weight: 700; font-size: 15px; padding: 4px 8px; border-radius: 10px;
+    border: 1.5px solid var(--line); background: #fff; color: var(--ink); }
+  .ac-crange button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
   @media (max-width: 520px) {
     .bf-row { grid-template-columns: 22px 40px 1fr 54px 60px; gap: 7px; padding: 9px 10px; }
     .bf-row > .bf-maxcol { display: none; }
@@ -515,7 +520,6 @@
       level: levelOfConst(Number(x[3]) || 0), score: x[4], max: x[5], star: x[6] / 10,
     }));
     const n7 = all.filter((x) => x.star >= 7).length;
-    const n6 = all.length - n7;
     const ov = el('div', 'bf-overlay');
     const box = el('div', 'bf-box');
     box.setAttribute('role', 'dialog');
@@ -532,23 +536,32 @@
     const who = el('div', 'bf-who');
     const nm = el('div', 'bf-name', player.name);
     nm.title = player.name;
-    who.append(nm, el('div', 'bf-label', `達成譜面 ☆7 ${n7}・☆6 ${n6}`));
+    who.append(nm, el('div', 'bf-label', `達成譜面 ☆7 ${n7}・☆6以上 ${all.length}`));
     head.appendChild(who);
     const x = el('button', 'bf-close', '閉じる');
     x.type = 'button';
     x.onclick = close;
     const starTabs = el('div', 'bf-tabs');
     const diffTabs = el('div', 'bf-tabs');
+    const kindTabs = el('div', 'bf-tabs');
+    const crange = el('div', 'ac-crange');
     const search = el('input', 'ac-search');
     search.type = 'search';
     search.placeholder = '曲名で絞り込み';
     search.setAttribute('aria-label', '曲名で絞り込み');
     const info = el('div', 'ac-info');
     const listBox = el('div');
-    box.append(x, head, starTabs, diffTabs, search, info, listBox);
+    box.append(x, head, starTabs, diffTabs, kindTabs, crange, search, info, listBox);
 
-    let star = n7 ? 7 : 6; // 表示する☆（7 または 6）
+    let star = n7 ? 7 : 6; // 7：☆7だけ、6：☆6以上（☆7を含む）
     let diff = '*';        // '*'：すべて / 'MASTER' / 'Re:MASTER'
+    let kind = '*';        // '*'：すべて / 'DX' / 'ST'
+    // 譜面定数の範囲（下限・上限。0.1刻み。null は制限なし）
+    const cs = all.map((r) => r.c).filter((c) => c > 0);
+    const cLo = cs.length ? Math.min(...cs) : 1;
+    const cHi = cs.length ? Math.max(...cs) : 15;
+    let cMin = null;
+    let cMax = null;
     let q = '';
     let pg = 1;
     const tabs = (holder, items, cur, onPick) => holder.replaceChildren(...items.map(([v, label]) => {
@@ -581,11 +594,16 @@
       return nav;
     };
     function render() {
-      tabs(starTabs, [[7, `☆7（${n7}）`], [6, `☆6（${n6}）`]], star, (v) => { star = v; pg = 1; render(); });
-      tabs(diffTabs, [['*', 'すべて'], ['MASTER', 'MASTERのみ'], ['Re:MASTER', 'Re:MASTERのみ']], diff, (v) => { diff = v; pg = 1; render(); });
+      tabs(starTabs, [[7, `☆7（${n7}）`], [6, `☆6以上（${all.length}）`]], star, (v) => { star = v; pg = 1; render(); });
+      tabs(diffTabs, [['*', 'すべての難易度'], ['MASTER', 'MASTERのみ'], ['Re:MASTER', 'Re:MASTERのみ']], diff, (v) => { diff = v; pg = 1; render(); });
+      tabs(kindTabs, [['*', 'DX・ST'], ['DX', 'DXのみ'], ['ST', 'STのみ']], kind, (v) => { kind = v; pg = 1; render(); });
+      renderRange();
       const word = q.trim().toLowerCase();
       const items = all
-        .filter((r) => (star === 7 ? r.star >= 7 : r.star < 7) && (diff === '*' || r.diff === diff) && (!word || r.name.toLowerCase().includes(word)))
+        .filter((r) => (star === 7 ? r.star >= 7 : r.star >= 6)
+          && (diff === '*' || r.diff === diff) && (kind === '*' || r.kind === kind)
+          && (cMin === null || r.c >= cMin - 1e-9) && (cMax === null || r.c <= cMax + 1e-9)
+          && (!word || r.name.toLowerCase().includes(word)))
         .sort((a, b) => b.c - a.c || b.star - a.star || a.name.localeCompare(b.name, 'ja'));
       const total = Math.max(1, Math.ceil(items.length / AC_PAGE_SIZE));
       pg = Math.min(Math.max(pg, 1), total);
@@ -631,6 +649,28 @@
         list.appendChild(row);
       });
       listBox.replaceChildren(pagerEl(total), list, pagerEl(total));
+    }
+    // 譜面定数の範囲：下限と上限を選ぶ（下限が上限を超えたら上限も合わせる）
+    function renderRange() {
+      const opts = [];
+      for (let v = Math.round(cLo * 10); v <= Math.round(cHi * 10); v++) opts.push(v / 10);
+      const mk = (value, label, onChange) => {
+        const sel = el('select');
+        sel.setAttribute('aria-label', label);
+        opts.forEach((v) => { const o = el('option', '', v.toFixed(1)); o.value = String(v); sel.appendChild(o); });
+        sel.value = String(value);
+        sel.onchange = () => { onChange(Number(sel.value)); pg = 1; render(); };
+        return sel;
+      };
+      const reset = el('button', '', '定数の指定なし');
+      reset.type = 'button';
+      reset.setAttribute('aria-pressed', String(cMin === null && cMax === null));
+      reset.onclick = () => { cMin = null; cMax = null; pg = 1; render(); };
+      crange.replaceChildren(el('span', 'ac-crange-label', '譜面定数'),
+        mk(cMin ?? cLo, '譜面定数の下限', (v) => { cMin = v; if (cMax !== null && cMax < v) cMax = v; }),
+        el('span', 'ac-crange-label', '〜'),
+        mk(cMax ?? cHi, '譜面定数の上限', (v) => { cMax = v; if (cMin !== null && cMin > v) cMin = v; }),
+        reset);
     }
     let timer = null;
     search.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { q = search.value; pg = 1; render(); }, 250); });
