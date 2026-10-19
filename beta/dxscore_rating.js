@@ -615,6 +615,7 @@
     .dxr-crange select { font: inherit; font-weight: 700; font-size: 15px; padding: 4px 8px; border-radius: 10px;
       border: 1.5px solid var(--line); background: #fff; color: var(--ink); }
     .dxr-order { margin-top: 6px; }
+    .dxr-card .dxr-crange { margin: 8px 0 4px; }
     .dxr-tab-sm { font-size: 12px; padding: 4px 12px; }
     .dxr-ptabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
     .dxr-ptab { font: inherit; font-size: 12px; font-weight: 800; padding: 4px 11px; border-radius: 999px; cursor: pointer;
@@ -1947,7 +1948,10 @@
         const people = m.people(st);
         if (people === null) continue;
         const plus = m.plus(st);
-        rows.push({ ...s, level: st.level || s.level, c: st.const ?? null, stars, people, plus, sort: people + (plus ? 0.5 : 0) });
+        const lv = st.level || s.level;
+        // 定数（集計にないときはレベル表記の下限。14+ なら 14.6）
+        const cf = st.const ?? (parseInt(lv, 10) + (String(lv).endsWith('+') ? 0.6 : 0));
+        rows.push({ ...s, level: lv, c: st.const ?? null, cf, stars, people, plus, sort: people + (plus ? 0.5 : 0) });
       }
       // 人数の少ない順。同じ人数なら定数の高い順
       rows.sort((a, b) => a.sort - b.sort || (b.c ?? 0) - (a.c ?? 0) || a.name.localeCompare(b.name, 'ja'));
@@ -2040,6 +2044,35 @@
         msg.textContent = `${scanned} 譜面から集計しました。`;
         const tabs = el('div', 'dxr-tabs');
         const order = el('div', 'dxr-tabs dxr-order');
+        const kindTabs = el('div', 'dxr-tabs dxr-order');
+        const crange = el('div', 'dxr-ptabs dxr-crange');
+        let kind = '*'; // '*'：すべて / 'DX' / 'ST'
+        let cMin = null;
+        let cMax = null;
+        const allRows = [...lists.max, ...lists.star6].map((r) => r.cf).filter(Number.isFinite);
+        const cLo = allRows.length ? Math.min(...allRows) : 10;
+        const cHi = allRows.length ? Math.max(...allRows) : 15;
+        const cOpts = [];
+        for (let v = Math.round(cLo * 10); v <= Math.round(cHi * 10); v++) cOpts.push(v / 10);
+        const renderRange = () => {
+          const mk = (value, label, onChange) => {
+            const sel = el('select');
+            sel.setAttribute('aria-label', label);
+            cOpts.forEach((v) => { const o = el('option', '', v.toFixed(1)); o.value = String(v); sel.appendChild(o); });
+            sel.value = String(value);
+            sel.onchange = () => { onChange(Number(sel.value)); page = 1; show(); };
+            return sel;
+          };
+          const reset = el('button', 'dxr-ptab', '指定なし');
+          reset.type = 'button';
+          reset.setAttribute('aria-pressed', String(cMin === null && cMax === null));
+          reset.onclick = () => { cMin = null; cMax = null; page = 1; show(); };
+          crange.replaceChildren(el('span', 'dxr-crange-label', '譜面定数'),
+            mk(cMin ?? cLo, '譜面定数の下限', (v) => { cMin = v; if (cMax !== null && cMax < v) cMax = v; }),
+            el('span', 'dxr-crange-sep', '〜'),
+            mk(cMax ?? cHi, '譜面定数の上限', (v) => { cMax = v; if (cMin !== null && cMin > v) cMin = v; }),
+            reset);
+        };
         const desc = el('p', 'dxr-card-desc');
         const holder = el('div');
         let metric = PEOPLE_METRICS[0];
@@ -2048,9 +2081,14 @@
         const show = () => {
           [...tabs.children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === metric.id)));
           [...order.children].forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.asc === '1') === asc)));
+          [...kindTabs.children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.kind === kind)));
+          renderRange();
+          // DX/ST と譜面定数の範囲で絞り込む
+          const base = lists[metric.id].filter((r) => (kind === '*' || r.kind === kind)
+            && (cMin === null || r.cf >= cMin - 1e-9) && (cMax === null || r.cf <= cMax + 1e-9));
           // 多い順でも、同じ人数なら定数の高い順にする
-          const all = asc ? lists[metric.id]
-            : [...lists[metric.id]].sort((x, y) => y.sort - x.sort || (y.c ?? 0) - (x.c ?? 0) || x.name.localeCompare(y.name, 'ja'));
+          const all = asc ? base
+            : [...base].sort((x, y) => y.sort - x.sort || (y.c ?? 0) - (x.c ?? 0) || x.name.localeCompare(y.name, 'ja'));
           const total = Math.max(1, Math.ceil(all.length / RARE_PAGE_SIZE));
           page = Math.min(Math.max(page, 1), total);
           const start = (page - 1) * RARE_PAGE_SIZE;
@@ -2073,7 +2111,14 @@
           b.onclick = () => { asc = v === '1'; page = 1; show(); };
           order.appendChild(b);
         });
-        out.append(tabs, order, desc, holder);
+        [['*', 'DX・ST'], ['DX', 'DXのみ'], ['ST', 'STのみ']].forEach(([v, label]) => {
+          const b = el('button', 'dxr-tab dxr-tab-sm', label);
+          b.type = 'button';
+          b.dataset.kind = v;
+          b.onclick = () => { kind = v; page = 1; show(); };
+          kindTabs.appendChild(b);
+        });
+        out.append(tabs, order, kindTabs, crange, desc, holder);
         show();
         btn.textContent = 'もう一度集計する';
       } catch (e) {
@@ -2143,18 +2188,20 @@
       let cMin = null;
       let cMax = null;
       let diffs = null; // null = すべて
+      let kindF = '*';  // '*'：すべて / 'DX' / 'ST'
       let query = '';
       let page = 1;
       let selected = null;
       const levelTabs = el('div', 'dxr-ptabs dxr-crange');
       const diffTabs = el('div', 'dxr-ptabs');
+      const kindTabsP = el('div', 'dxr-ptabs');
       const search = el('input', 'dxr-psearch');
       search.type = 'search';
       search.placeholder = '曲名で絞り込み';
       search.setAttribute('aria-label', '曲名で絞り込み');
       const info = el('p', 'dxr-card-desc');
       const listBox = el('div');
-      box.append(levelTabs, diffTabs, search, info, listBox);
+      box.append(levelTabs, diffTabs, kindTabsP, search, info, listBox);
 
       const lo = Math.min(...list.map((x) => x.c));
       const hi = Math.max(...list.map((x) => x.c));
@@ -2192,12 +2239,14 @@
             else if (diffs.has(d)) { diffs.delete(d); if (!diffs.size) diffs = null; } else diffs.add(d);
             page = 1; renderTabs(); renderList();
           })));
+        kindTabsP.replaceChildren(...[['*', 'DX・ST'], ['DX', 'DXのみ'], ['ST', 'STのみ']].map(([v, label]) =>
+          tab(label, kindF === v, '', () => { kindF = v; page = 1; renderTabs(); renderList(); })));
       };
       const pager = (total) => pagerEl(page, total, (n) => { page = n; renderList(); info.scrollIntoView({ block: 'start' }); });
       const renderList = () => {
         const q = query.trim().toLowerCase();
         const items = list.filter((x) => (cMin === null || x.c >= cMin - 1e-9) && (cMax === null || x.c <= cMax + 1e-9)
-          && (diffs === null || diffs.has(x.diff)) && (!q || x.name.toLowerCase().includes(q)));
+          && (diffs === null || diffs.has(x.diff)) && (kindF === '*' || x.kind === kindF) && (!q || x.name.toLowerCase().includes(q)));
         const total = Math.max(1, Math.ceil(items.length / FAV_PAGE_SIZE));
         page = Math.min(Math.max(page, 1), total);
         const shown = items.slice((page - 1) * FAV_PAGE_SIZE, page * FAV_PAGE_SIZE);
