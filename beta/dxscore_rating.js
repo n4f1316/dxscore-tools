@@ -1277,11 +1277,21 @@
   }
 
   // ランキングに送る内容（ユーザー名・PIN／鍵 以外）。登録画面と自動登録の両方で使う
-  //   form: { displayName, anonymous, publicTop50 }
+  //   form: { displayName, anonymous, publicTop50, publicAchv }、scored：読み込んだ全譜面（☆6・☆7達成譜面を作るのに使う）
   const iconFileOf = (profile) => (String(profile.icon || '').match(/\/Icon\/([0-9a-f]{16}\.png)/) || [])[1] || '';
   // 送るアイコン：匿名なら空、通常のアイコンはファイル名、カメラで撮影したアイコン（通常のアイコンURLでないもの）は 'camera'
   const iconValueOf = (profile, anonymous) => (anonymous ? '' : (iconFileOf(profile) || 'camera'));
-  function buildSubmitBody(profile, results, counts, form) {
+  // ☆6・☆7を達成した MASTER・Re:MASTER の譜面（☆7と☆6は ☆×10 の値で見分ける：70 が☆7、60〜69 が☆6）
+  //   1譜面 = [曲名, DX/ST, 3（MASTER）/4（Re:MASTER）, 譜面定数, スコア, 最大値, ☆×10, 定数が概算なら1]
+  function achvOf(scored) {
+    const list = (scored || [])
+      .filter((s) => COUNT_DIFFS.includes(s.diff) && s.stars >= 6)
+      .map((s) => [s.name, s.kind === 'ST' ? 'ST' : 'DX', s.diff === 'Re:MASTER' ? 4 : 3, Math.round(s.c * 10) / 10,
+        s.cur, s.max, starTenths(s.cur, s.max), s.estimated ? 1 : 0]);
+    return { v: 2, list };
+  }
+
+  function buildSubmitBody(profile, results, counts, form, scored) {
     const full = results.find((r) => r.mode.id === 'full');
     const cap6 = results.find((r) => r.mode.id === 'cap6');
     const cap5 = results.find((r) => r.mode.id === 'cap5');
@@ -1306,6 +1316,7 @@
       anonymous: !!form.anonymous,
       showIcon: !form.anonymous,
       publicTop50: !!form.publicTop50,
+      publicAchv: form.publicAchv !== false,
       icon: iconValueOf(profile, form.anonymous),
       rateFull: round3(full.rating),
       rateCap6: round3(cap6.rating),
@@ -1321,6 +1332,8 @@
       top50: frameOf(full),
       top50Cap6: frameOf(cap6),
       top50Cap5: frameOf(cap5),
+      // ☆6・☆7達成譜面（公開するかは publicAchv）
+      achievements: achvOf(scored),
     };
   }
 
@@ -1330,7 +1343,7 @@
   const loadJson = (key) => { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch { return null; } };
   const saveJson = (key, v) => { try { if (v === null) localStorage.removeItem(key); else localStorage.setItem(key, JSON.stringify(v)); } catch { /* 保存できない環境 */ } };
 
-  function openRankingDialog(root, profile, results, counts) {
+  function openRankingDialog(root, profile, results, counts, scored) {
     const full = results.find((r) => r.mode.id === 'full');
     const cap6 = results.find((r) => r.mode.id === 'cap6');
     const cap5 = results.find((r) => r.mode.id === 'cap5');
@@ -1389,6 +1402,7 @@
       };
       const anon = check('匿名で掲載する（表示名の代わりに「匿名#記号」で表示し、アイコンも初期アイコンにします）', prev.anonymous ?? (savedForm.anonymous === true));
       const pub = check('ベスト枠（3種類のレートそれぞれのレート対象曲50譜面）をランキングで公開する', prev.publicTop50 ?? (typeof savedForm.publicTop50 === 'boolean' ? savedForm.publicTop50 : true));
+      const pubAchv = check('☆6・☆7達成譜面（MASTER・Re:MASTER のスコアと☆）をランキングで公開する', prev.publicAchv ?? (typeof savedForm.publicAchv === 'boolean' ? savedForm.publicAchv : true));
       const sync = () => { name.disabled = anon.cb.checked; };
       anon.cb.onchange = sync;
       sync();
@@ -1427,6 +1441,7 @@
           anonymous: anon.cb.checked,
           showIcon: !anon.cb.checked, // 匿名のときはアイコンも送らない（初期アイコンで表示）
           publicTop50: pub.cb.checked,
+          publicAchv: pubAchv.cb.checked,
         };
         if (!/^[a-z0-9_]{3,16}$/.test(form.username)) { err.textContent = 'ユーザー名は英数字とアンダーバーで3〜16文字にしてください。'; return; }
         if (!/^\d{4,8}$/.test(form.pin)) { err.textContent = 'PINは数字4〜8桁にしてください。'; return; }
@@ -1456,7 +1471,10 @@
       dlg.append(el('h3', '', check.exists ? '記録を更新します' : '新しく登録します'),
         el('p', '', form.publicTop50
           ? 'ランキングには次の内容と、ベスト枠（☆7まで・☆6まで・☆5まで それぞれのレート対象曲50譜面）が公開されます（匿名の場合、アイコンは初期アイコンで表示されます）。ユーザー名とPINは公開されません。'
-          : 'ランキングには次の内容が公開されます（匿名の場合、アイコンは初期アイコンで表示されます）。ベスト枠は管理者の確認用に送信されますが、公開はされません。ユーザー名とPINは公開されません。'));
+          : 'ランキングには次の内容が公開されます（匿名の場合、アイコンは初期アイコンで表示されます）。ベスト枠は管理者の確認用に送信されますが、公開はされません。ユーザー名とPINは公開されません。'),
+        el('p', '', form.publicAchv
+          ? '☆6・☆7を達成した MASTER・Re:MASTER の譜面（スコアと☆）も公開されます。'
+          : '☆6・☆7達成譜面は送信されますが、公開はされません（マイページの設定でいつでも公開に切り替えられます）。'));
 
       const pv = el('div', 'dxr-preview');
       if (form.showIcon && iconFile) {
@@ -1508,7 +1526,7 @@
         err.textContent = '送信中…';
         try {
           const r = await callRanking({
-            ...buildSubmitBody(profile, results, counts, form),
+            ...buildSubmitBody(profile, results, counts, form, scored),
             username: form.username,
             pin: form.pin,
           }, () => { err.textContent = '混み合っているため、送り直しています…'; });
@@ -1521,7 +1539,7 @@
           try {
             localStorage.setItem(USER_KEY, form.username);
             localStorage.setItem(FORM_KEY, JSON.stringify({
-              displayName: form.displayName, anonymous: form.anonymous, publicTop50: form.publicTop50,
+              displayName: form.displayName, anonymous: form.anonymous, publicTop50: form.publicTop50, publicAchv: form.publicAchv,
             }));
           } catch { /* 保存できない環境では何もしない */ }
           doneView(r, form);
@@ -1840,7 +1858,7 @@
     // ランキングに登録（☆7まで・☆6まで・☆5まで の3つのレートを送る）
     const rankBtn = el('button', 'dxr-rank-open', 'ランキングに登録・更新する');
     rankBtn.type = 'button';
-    rankBtn.onclick = () => openRankingDialog(ui.body.getRootNode(), profile, results, extras.counts);
+    rankBtn.onclick = () => openRankingDialog(ui.body.getRootNode(), profile, results, extras.counts, extras.all);
 
     // おすすめ楽曲（☆7まで）：ボタンで開閉
     const recBtn = el('button', 'dxr-rank-open', 'おすすめ楽曲を見る');
@@ -2315,6 +2333,7 @@
       };
       const anonCb = chk('匿名で掲載する（「匿名#記号」と初期アイコンで表示）', !!info.anonymous);
       const pubCb = chk('ベスト枠をランキングで公開する', info.publicTop50 !== false);
+      const achvCb = chk('☆6・☆7達成譜面（スコアと☆）をランキングで公開する', info.publicAchv !== false);
       const syncName = () => { dnInput.disabled = anonCb.checked; };
       anonCb.onchange = syncName;
       syncName();
@@ -2325,7 +2344,7 @@
       setActions.appendChild(setBtn);
       setBox.append(setErr, setActions);
       setBtn.onclick = async () => {
-        const form = { displayName: dnInput.value.trim(), anonymous: anonCb.checked, publicTop50: pubCb.checked };
+        const form = { displayName: dnInput.value.trim(), anonymous: anonCb.checked, publicTop50: pubCb.checked, publicAchv: achvCb.checked };
         if (!form.anonymous && !form.displayName) { setErr.textContent = '表示名を入力するか、匿名で掲載を選んでください。'; return; }
         setBtn.disabled = true;
         setErr.textContent = '保存中…';
@@ -2371,7 +2390,7 @@
         if (on) {
           saveJson(AUTO_KEY, { username: auth.username, token: r.token });
           // 自動登録で使う表示名などが未保存なら、今の画面の内容を保存しておく
-          if (!loadJson(FORM_KEY)) saveJson(FORM_KEY, { displayName: dnInput.value.trim(), anonymous: anonCb.checked, publicTop50: pubCb.checked });
+          if (!loadJson(FORM_KEY)) saveJson(FORM_KEY, { displayName: dnInput.value.trim(), anonymous: anonCb.checked, publicTop50: pubCb.checked, publicAchv: achvCb.checked });
         } else {
           saveJson(AUTO_KEY, null);
         }
@@ -2539,7 +2558,7 @@
   }
 
   // レート計算のあと、自動登録が設定されていればランキングに登録・更新する
-  async function autoUpload(ui, profile, results, counts) {
+  async function autoUpload(ui, profile, results, counts, scored) {
     const auto = loadJson(AUTO_KEY);
     if (!auto || !auto.token || !auto.username) return;
     const form = loadJson(FORM_KEY) || {};
@@ -2547,10 +2566,11 @@
       displayName: String(form.displayName || profile.name || '').slice(0, 20),
       anonymous: form.anonymous === true,
       publicTop50: form.publicTop50 !== false,
+      publicAchv: form.publicAchv !== false,
     };
     const box = el('div', 'dxr-auto', 'ランキングに自動で登録しています…');
     ui.body.prepend(box);
-    const r = await callRanking({ ...buildSubmitBody(profile, results, counts, settings), username: auto.username, token: auto.token },
+    const r = await callRanking({ ...buildSubmitBody(profile, results, counts, settings, scored), username: auto.username, token: auto.token },
       () => { box.textContent = '混み合っているため、送り直しています…'; })
       .catch(() => ({ ok: false, error: '通信できませんでした。' }));
     if (r.ok) {
@@ -2650,7 +2670,7 @@
       saveLastRecommend(profile, run);
       ui.status('');
       renderResult(ui, profile, run.results, run.info, run.jackets, { all: run.scored, stats: run.stats, counts: run.counts });
-      autoUpload(ui, profile, run.results, run.counts);
+      autoUpload(ui, profile, run.results, run.counts, run.scored);
     } catch (e) {
       if (left()) return;
       ui.status('エラー: ' + e.message, true);
