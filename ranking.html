@@ -115,9 +115,15 @@
   .bf-star.g7 { background: linear-gradient(90deg, #FF5E7E, #FFB347, #FFE66D, #7EE081, #5CC8FF, #A78BFA); }
   .bf-value { font-weight: 800; font-size: 15px; }
   .bf-empty { padding: 30px; text-align: center; color: var(--sub); }
+  /* ☆6・☆7達成譜面 */
+  .ac-row { grid-template-columns: 30px 44px 1fr 66px 76px 72px; }
+  .ac-search { width: 100%; margin: 0 0 10px; font: inherit; font-size: 16px; padding: 7px 14px; border-radius: 999px;
+    border: 1.5px solid var(--line); background: #fff; color: var(--ink); }
+  .ac-info { font-size: 12px; font-weight: 700; color: var(--sub); margin: 0 2px 6px; }
   @media (max-width: 520px) {
     .bf-row { grid-template-columns: 22px 40px 1fr 54px 60px; gap: 7px; padding: 9px 10px; }
     .bf-row > .bf-maxcol { display: none; }
+    .ac-row { grid-template-columns: 22px 40px 1fr 54px 64px; }
     .bf-maxinline { display: inline-block; }
     .bf-jk { width: 40px; height: 40px; }
     .bf-star { min-width: 0; padding: 3px 5px; font-size: 12px; }
@@ -125,7 +131,7 @@
     .bf-who { column-gap: 6px; } .bf-rate { gap: 3px; } .bf-rate-value { font-size: 32px; } .bf-rank-icon { width: 30px; height: 30px; }
     .bf-head .bf-icon { width: 44px; height: 44px; }
   }
-  .bf-open { margin-top: 4px; font-size: 11px; padding: 2px 10px; border-color: var(--pink); color: var(--pink); }
+  .bf-open { margin-top: 4px; margin-right: 4px; font-size: 11px; padding: 2px 10px; border-color: var(--pink); color: var(--pink); }
   .foot { margin-top: 18px; font-size: 12px; color: var(--sub); line-height: 1.8; }
   @media (max-width: 520px) {
     .r { grid-template-columns: 30px 40px 1fr auto; gap: 8px; padding: 9px 10px; }
@@ -498,6 +504,164 @@
     x.focus();
   }
 
+  // ☆6・☆7達成譜面（MASTER・Re:MASTER）を表示する
+  //   achv.list：[曲名, DX/ST, 3|4（MASTER|Re:MASTER）, 譜面定数, スコア, 最大値, ☆×10, 定数が概算なら1]
+  const AC_PAGE_SIZE = 50;
+  // 譜面定数 → レベル表記（14.6 → 14+）。ジャケットを探すとき（同名の別曲の見分け）に使う
+  const levelOfConst = (c) => { const b = Math.floor(c + 1e-9); return b >= 7 && c - b >= 0.6 - 1e-9 ? `${b}+` : String(b); };
+  function openAchv(player, achv, jk) {
+    const all = (achv && Array.isArray(achv.list) ? achv.list : []).map((x) => ({
+      name: x[0], kind: x[1], diff: x[2] === 4 ? 'Re:MASTER' : 'MASTER', c: Number(x[3]) || 0, est: x[7] === 1,
+      level: levelOfConst(Number(x[3]) || 0), score: x[4], max: x[5], star: x[6] / 10,
+    }));
+    const n7 = all.filter((x) => x.star >= 7).length;
+    const n6 = all.length - n7;
+    const ov = el('div', 'bf-overlay');
+    const box = el('div', 'bf-box');
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.setAttribute('aria-label', `${player.name} の☆6・☆7達成譜面`);
+    ov.appendChild(box);
+    const close = () => { ov.remove(); document.removeEventListener('keydown', onKey); };
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', onKey);
+    ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+
+    const head = el('div', 'bf-head');
+    head.appendChild(iconNode(player.icon, 'bf-icon'));
+    const who = el('div', 'bf-who');
+    const nm = el('div', 'bf-name', player.name);
+    nm.title = player.name;
+    who.append(nm, el('div', 'bf-label', `達成譜面 ☆7 ${n7}・☆6 ${n6}`));
+    head.appendChild(who);
+    const x = el('button', 'bf-close', '閉じる');
+    x.type = 'button';
+    x.onclick = close;
+    const starTabs = el('div', 'bf-tabs');
+    const diffTabs = el('div', 'bf-tabs');
+    const search = el('input', 'ac-search');
+    search.type = 'search';
+    search.placeholder = '曲名で絞り込み';
+    search.setAttribute('aria-label', '曲名で絞り込み');
+    const info = el('div', 'ac-info');
+    const listBox = el('div');
+    box.append(x, head, starTabs, diffTabs, search, info, listBox);
+
+    let star = n7 ? 7 : 6; // 表示する☆（7 または 6）
+    let diff = '*';        // '*'：すべて / 'MASTER' / 'Re:MASTER'
+    let q = '';
+    let pg = 1;
+    const tabs = (holder, items, cur, onPick) => holder.replaceChildren(...items.map(([v, label]) => {
+      const b = el('button', '', label);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(v === cur));
+      b.onclick = () => onPick(v);
+      return b;
+    }));
+    const pagerEl = (total) => {
+      const nav = el('nav', 'pager');
+      if (total <= 1) return nav;
+      const btn = (label, n, opts = {}) => {
+        const b = el('button', opts.current ? 'current' : '', label);
+        b.type = 'button';
+        if (opts.disabled || opts.current) b.disabled = !opts.current;
+        if (!opts.disabled && !opts.current) b.onclick = () => { pg = n; render(); info.scrollIntoView({ block: 'start' }); };
+        return b;
+      };
+      nav.appendChild(btn('« 前へ', pg - 1, { disabled: pg === 1 }));
+      const nums = new Set([1, total]);
+      for (let n = pg - 2; n <= pg + 2; n++) if (n >= 1 && n <= total) nums.add(n);
+      let prev = 0;
+      [...nums].sort((a, b) => a - b).forEach((n) => {
+        if (n - prev > 1) nav.appendChild(el('span', 'gap', '…'));
+        nav.appendChild(btn(String(n), n, { current: n === pg }));
+        prev = n;
+      });
+      nav.appendChild(btn('次へ »', pg + 1, { disabled: pg === total }));
+      return nav;
+    };
+    function render() {
+      tabs(starTabs, [[7, `☆7（${n7}）`], [6, `☆6（${n6}）`]], star, (v) => { star = v; pg = 1; render(); });
+      tabs(diffTabs, [['*', 'すべて'], ['MASTER', 'MASTERのみ'], ['Re:MASTER', 'Re:MASTERのみ']], diff, (v) => { diff = v; pg = 1; render(); });
+      const word = q.trim().toLowerCase();
+      const items = all
+        .filter((r) => (star === 7 ? r.star >= 7 : r.star < 7) && (diff === '*' || r.diff === diff) && (!word || r.name.toLowerCase().includes(word)))
+        .sort((a, b) => b.c - a.c || b.star - a.star || a.name.localeCompare(b.name, 'ja'));
+      const total = Math.max(1, Math.ceil(items.length / AC_PAGE_SIZE));
+      pg = Math.min(Math.max(pg, 1), total);
+      const start = (pg - 1) * AC_PAGE_SIZE;
+      const shown = items.slice(start, start + AC_PAGE_SIZE);
+      info.textContent = items.length > AC_PAGE_SIZE ? `${items.length} 譜面中 ${start + 1}〜${start + shown.length} 件目（譜面定数の高い順）` : `${items.length} 譜面（譜面定数の高い順）`;
+      const list = el('div', 'bf-list');
+      const hr = el('div', 'bf-row ac-row bf-hrow');
+      hr.append(el('div', 'bf-no', '#'), el('div'), el('div', '', '曲名'), el('div', 'bf-c', '☆'), el('div', 'bf-r', 'スコア'), el('div', 'bf-r bf-maxcol', 'MAX差'));
+      list.appendChild(hr);
+      if (!shown.length) list.appendChild(el('div', 'bf-empty', 'この条件の譜面はありません。'));
+      shown.forEach((t, i) => {
+        const row = el('div', 'bf-row ac-row');
+        const song = bfResolveSong(jk.map, jk.overrides, t.name, t.kind, t.diff, t.level, t.max);
+        let jacket;
+        if (song?.img) {
+          jacket = el('img', 'bf-jk');
+          let k = 0;
+          jacket.alt = '';
+          jacket.loading = 'lazy';
+          jacket.src = JACKET_BASES[0] + song.img;
+          jacket.onerror = () => { k++; if (k < JACKET_BASES.length) jacket.src = JACKET_BASES[k] + song.img; else jacket.replaceWith(el('div', 'bf-jk')); };
+        } else {
+          jacket = el('div', 'bf-jk');
+        }
+        const main = el('div');
+        const tn = el('div', 'bf-title', t.name);
+        if (song?.genre) tn.appendChild(el('span', 'bf-genre', `（${song.genre}）`));
+        const chips = el('div', 'bf-chips');
+        const d = el('span', 'bf-chip bf-diff', t.diff);
+        if (t.diff === 'Re:MASTER') d.classList.add('bf-remas');
+        else d.style.background = BF_DIFF_COLOR[t.diff] || '#999';
+        const isMax = t.score === t.max;
+        const maxText = isMax ? 'MAX' : `MAX-${(t.max - t.score).toLocaleString()}`;
+        chips.append(el('span', `bf-chip bf-kind-${t.kind === 'ST' ? 'ST' : 'DX'}`, t.kind), d,
+          el('span', 'bf-chip bf-const', `${t.c.toFixed(1)}${t.est ? '*' : ''}`), el('span', 'bf-maxinline' + (isMax ? ' is-max' : ''), maxText));
+        main.append(tn, chips);
+        const st = el('div', 'bf-c');
+        st.appendChild(el('span', `bf-star ${bfStarClass(Math.floor(t.star))}`, `☆${t.star.toFixed(1)}`));
+        row.append(el('div', 'bf-no', String(start + i + 1)), jacket, main, st,
+          el('div', 'bf-r bf-value', t.score.toLocaleString()),
+          el('div', 'bf-r bf-maxcol' + (isMax ? ' is-max' : ''), maxText));
+        list.appendChild(row);
+      });
+      listBox.replaceChildren(pagerEl(total), list, pagerEl(total));
+    }
+    let timer = null;
+    search.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { q = search.value; pg = 1; render(); }, 250); });
+    render();
+    document.body.appendChild(ov);
+    x.focus();
+  }
+
+  const achvCache = new Map();
+  async function showAchv(r, btn) {
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '読み込み中…';
+    try {
+      let achv = achvCache.get(r.id);
+      if (!achv) {
+        const res = await fetch(RANKING_API + '?achv=' + encodeURIComponent(r.id) + '&t=' + Date.now());
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || '読み込めませんでした。');
+        achv = data.achv;
+        achvCache.set(r.id, achv);
+      }
+      openAchv({ name: r.name, icon: r.icon }, achv, await loadJackets());
+    } catch (e) {
+      alert(e.message || '☆6・☆7達成譜面を読み込めませんでした。');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = label;
+    }
+  }
+
   // ジャケットの対応表は、最初にベスト枠を開いたときに読み込む
   let jkPromise = null;
   const loadJackets = () => (jkPromise ??= Promise.all([
@@ -661,6 +825,13 @@
           }
         };
         main.appendChild(fb);
+      }
+      // ☆6・☆7達成譜面（公開している人だけ）
+      if (r.hasAchv && r.id) {
+        const ab = el('button', 'bf-open', '☆6・☆7達成譜面を見る');
+        ab.type = 'button';
+        ab.onclick = () => showAchv(r, ab);
+        main.appendChild(ab);
       }
       row.appendChild(main);
 
