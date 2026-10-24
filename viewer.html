@@ -143,7 +143,7 @@
     <div class="daterange" id="daterange"></div>
     <div id="listBox"></div>
     <p class="foot">
-      「平均」は上位100人のでらっくスコア取得率の平均と、その☆換算です。「☆7」は理論値の人数、「☆6」は取得率99%以上（理論値を除く）の人数です。
+      「平均」は上位100人のでらっくスコア取得率の平均と、その☆換算です。「☆7」は理論値の人数、「☆6」は取得率99%以上（理論値の人を含む）の人数です。
       見出しの「平均」「☆7」「☆6」を押すと並び替えられます。<br>
       上の「時点」で過去の集計に切り替えられます（レベルごとに、その日までで最後に集計したデータを表示）。各譜面の「推移を見る」で、☆7・☆6以上（理論値を含む）の人数と平均取得率の変化をグラフで確認できます。<br>
       ランキングには上位100人までしか載らないため、100人目まで☆6以上で埋まっている譜面は、☆6の欄を「100+」（☆7を含めて☆6を達成した人が100人以上）と表示しています。全員が☆7の譜面は、☆7の欄も「100+」になります。<br>
@@ -307,7 +307,10 @@
   const sat7 = (r) => isFull(r) && r.row100 === r.max;             // 100人全員が☆7
   const sat6 = (r) => isFull(r) && r.row100 * 100 >= r.max * 99;   // 100人目まで☆6以上
   function countCell(r, key) {
-    const v = r[key];
+    // ☆6の欄は「☆6以上」（☆6＋☆7）の人数を出す（集計データの star6Count は☆7を含まないため、maxCount を足す）
+    const v = key === 'star6Count'
+      ? (r.star6Count === null || r.star6Count === undefined || r.maxCount === null || r.maxCount === undefined ? null : r.star6Count + r.maxCount)
+      : r[key];
     // 100人目まで☆6以上で埋まっている譜面は、☆6の欄を「100+」（☆6以上の人数が100人を超える）とする
     if (key === 'star6Count' && sat6(r)) return { text: '100+', sort: 100.5 };
     if (v === null || v === undefined) return { text: '-', sort: null };
