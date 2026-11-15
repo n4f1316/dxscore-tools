@@ -8,8 +8,8 @@
 <link rel="icon" href="logo/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="logo/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="logo/apple-touch-icon.png">
-<link rel="stylesheet" href="2frate.css?v=20261116e">
-<script src="2frate-theme.js?v=20261116e"></script>
+<link rel="stylesheet" href="2frate.css?v=20261116f">
+<script src="2frate-theme.js?v=20261116f"></script>
 </head>
 <body class="pg-ranking">
 <div class="wrap">
@@ -315,7 +315,7 @@
         const rank = rankOf(v, m.shift);
         const ic = el('span', 'bf-rank-icon');
         ic.innerHTML = rankIconSvg(rank.name); // ページ内で作る固定のSVGのみ
-        const val = el('span', 'bf-rate-value', v.toFixed(3));
+        const val = tnum(el('span', 'bf-rate-value', v.toFixed(3)));
         paintRank(val, rank);
         val.title = rank.name;
         rate.append(ic, val);
@@ -370,7 +370,7 @@
           main,
           star,
           el('div', 'bf-r bf-maxcol' + (isMax ? ' is-max' : ''), maxText),
-          el('div', 'bf-r bf-value', Number(t.value).toFixed(3))
+          tnum(el('div', 'bf-r bf-value', Number(t.value).toFixed(3)))
         );
         list.appendChild(row);
       });
@@ -751,12 +751,12 @@
       const rate = el('div', 'rate');
       const v = valueOf(r, mode);
       if (mode.count) {
-        const val = el('span', 'rate-value', String(v));
+        const val = tnum(el('span', 'rate-value', String(v)));
         val.appendChild(el('span', 'count-unit', '譜面'));
         rate.appendChild(val);
         right.append(rate, el('div', 'rank-name', `MAS ${r.counts[mode.mas]} ／ Re:MAS ${r.counts[mode.re]}`));
       } else {
-      const val = el('span', 'rate-value', v.toFixed(3));
+      const val = tnum(el('span', 'rate-value', v.toFixed(3)));
         const rank = rankOf(v, mode.shift);
         const ic = el('span', 'rank-icon');
         ic.innerHTML = rankIconSvg(rank.name); // ページ内で作る固定のSVGのみ

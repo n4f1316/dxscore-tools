@@ -8,8 +8,8 @@
 <link rel="icon" href="logo/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="logo/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="logo/apple-touch-icon.png">
-<link rel="stylesheet" href="2frate.css?v=20261116e">
-<script src="2frate-theme.js?v=20261116e"></script>
+<link rel="stylesheet" href="2frate.css?v=20261116f">
+<script src="2frate-theme.js?v=20261116f"></script>
 </head>
 <body class="pg-calc">
 <div class="wrap">
@@ -250,7 +250,7 @@
       results.replaceChildren(...MODES.map((m, i) => {
         const card = el('div', 'res' + (i === 0 ? ' main' : ''));
         const v = rateOf(s.c, starTenths, m.cap, rareAdd);
-        const val = el('div', 'res-value', v.toFixed(3));
+        const val = tnum(el('div', 'res-value', v.toFixed(3)));
         paintRank(val, v, m.shift); // ランクの色で表示（レートの種類ごとの区切り）
         card.append(el('div', 'res-label', m.label), val);
         return card;
@@ -264,7 +264,7 @@
         const tr = body.insertRow();
         if (t === starTenths) tr.className = 'on';
         tr.insertCell().textContent = `☆${(t / 10).toFixed(1)}`;
-        MODES.forEach((m) => { tr.insertCell().textContent = rateOf(s.c, t, m.cap, rareAdd).toFixed(3); });
+        MODES.forEach((m) => { const td = tr.insertCell(); td.textContent = rateOf(s.c, t, m.cap, rareAdd).toFixed(3); tnum(td); });
       });
     }
     input.addEventListener('input', () => update(false));

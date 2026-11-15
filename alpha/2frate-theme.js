@@ -2,6 +2,22 @@
    - 選んだ表示はブラウザ（localStorage）に保存し、次に開いたときもその表示にする
    - まだ選んでいないときは、ライトで表示する
    - ページ内の class="theme-toggle" のボタンを切り替えボタンにする */
+// 数字を1文字ずつ同じ幅の枠に入れる（使っている書体は数字ごとに幅が違うため、桁の位置をそろえる）
+//   例：tnum(要素) … 要素の文字を <span class="dg"> に分ける。小数点は細い枠（dg-dot）
+window.tnum = (node) => {
+  const text = node.textContent;
+  node.textContent = '';
+  node.setAttribute('aria-label', text); // 読み上げでは元の数値として読む
+  for (const ch of text) {
+    const s = document.createElement('span');
+    s.className = /[0-9]/.test(ch) ? 'dg' : (ch === '.' ? 'dg dg-dot' : 'dg-other');
+    s.setAttribute('aria-hidden', 'true');
+    s.textContent = ch;
+    node.appendChild(s);
+  }
+  return node;
+};
+
 (() => {
   'use strict';
   const KEY = '2frate-theme';
