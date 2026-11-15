@@ -59,7 +59,7 @@
     `--g: linear-gradient(90deg, ${rank.colors.join(', ')});` +
     ` --gd: linear-gradient(90deg, ${(rank.dark || rank.colors).join(', ')});`;
 
-  // 表示（ダーク／ライト）。選んだ表示はブラウザに保存する（まだ選んでいないときは端末の設定に合わせる）
+  // 表示（ダーク／ライト）。選んだ表示はブラウザに保存する（まだ選んでいないときはライト）
   const THEME_KEY = '2frate-theme';
   const THEME_COLORS = {
     light: { bg: '#F4F5F7', panel: '#E6E7EC', line: '#D5D6DE', ink: '#12101F', sub: '#55516E',
@@ -69,9 +69,8 @@
   };
   const loadTheme = () => {
     let saved = null;
-    try { saved = localStorage.getItem(THEME_KEY); } catch { /* 読めない環境では端末の設定に合わせる */ }
-    if (saved === 'dark' || saved === 'light') return saved;
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    try { saved = localStorage.getItem(THEME_KEY); } catch { /* 読めない環境ではライトにする */ }
+    return saved === 'dark' ? 'dark' : 'light';
   };
   let theme = loadTheme();
   const themeColors = () => THEME_COLORS[theme];
@@ -2759,7 +2758,7 @@
   //  保存済みのデータから表示（α版・検証用）
   //   maimaiでらっくすNET にログインできないとき（メンテナンス中など）に、ランキングに保存されている
   //   ベスト枠（公開している人のみ）からレート対象曲の一覧と画像を作る。スコアの読み込みや登録は行わない。
-  //   称号はランキングに保存していないので載らない。
+  //   称号はランキングに保存していないので、画面で入力した文字と色を画像に載せる。
   // ============================================================
   const ICON_BASE = 'https://maimaidx.jp/maimai-mobile/img/Icon/';
   const RATE_FIELD = { full: 'rateFull', cap6: 'rateCap6', cap5: 'rateCap5' };
@@ -2769,7 +2768,7 @@
     card.append(
       el('h3', '', '保存済みのデータから表示（検証用）'),
       el('p', 'dxr-card-desc', 'ランキングに保存されているベスト枠（公開している人のみ）から、レート対象曲の一覧と画像を作ります。' +
-        'ログインは不要です。称号は保存していないため表示されません。'));
+        'ログインは不要です。称号は保存していないため、画像に載せたい場合は下の欄に入力してください。'));
     const msg = el('p', 'dxr-card-desc', 'ランキングを読み込み中…');
     card.appendChild(msg);
     ui.body.replaceChildren(card);
@@ -2815,9 +2814,23 @@
         select.appendChild(o);
       });
       field.appendChild(select);
+      // 称号（ランキングには保存していないので、画像に載せる文字と色を自分で入れる）
+      const trophyField = el('label', 'dxr-field', '画像に載せる称号（空なら称号なし）');
+      const trophyInput = el('input');
+      trophyInput.type = 'text';
+      trophyInput.maxLength = 40;
+      trophyField.appendChild(trophyInput);
+      const rankField = el('label', 'dxr-field', '称号の色');
+      const rankSelect = el('select', 'dxr-off-select');
+      [['Normal', 'ノーマル'], ['Bronze', 'ブロンズ'], ['Silver', 'シルバー'], ['Gold', 'ゴールド'], ['Rainbow', 'レインボー']].forEach(([v, t]) => {
+        const o = el('option', '', t);
+        o.value = v;
+        rankSelect.appendChild(o);
+      });
+      rankField.appendChild(rankSelect);
       const out = el('div');
       msg.textContent = '';
-      card.append(tabs, field, out);
+      card.append(tabs, field, trophyField, rankField, out);
 
       const show = async () => {
         const my = ++showId;
@@ -2863,8 +2876,11 @@
           const check = el('input');
           check.type = 'checkbox';
           check.checked = true;
-          opt.append(check, document.createTextNode('画像にプレイヤー名を載せる'));
-          share.onclick = () => openShareImage(profile, result, jackets, share, { hideProfile: !check.checked });
+          opt.append(check, document.createTextNode('画像にプレイヤー名と称号を載せる'));
+          // 称号は、押した時点で入力されている文字と色を使う
+          share.onclick = () => openShareImage(
+            { ...profile, trophy: trophyInput.value.trim(), trophyRank: rankSelect.value },
+            result, jackets, share, { hideProfile: !check.checked });
 
           out.replaceChildren(rateRow, share, opt, buildList(result.top, mode, jackets));
         } catch (e) {

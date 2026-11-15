@@ -59,7 +59,7 @@
     `--g: linear-gradient(90deg, ${rank.colors.join(', ')});` +
     ` --gd: linear-gradient(90deg, ${(rank.dark || rank.colors).join(', ')});`;
 
-  // 表示（ダーク／ライト）。選んだ表示はブラウザに保存する（まだ選んでいないときは端末の設定に合わせる）
+  // 表示（ダーク／ライト）。選んだ表示はブラウザに保存する（まだ選んでいないときはライト）
   const THEME_KEY = '2frate-theme';
   const THEME_COLORS = {
     light: { bg: '#F4F5F7', panel: '#E6E7EC', line: '#D5D6DE', ink: '#12101F', sub: '#55516E',
@@ -69,9 +69,8 @@
   };
   const loadTheme = () => {
     let saved = null;
-    try { saved = localStorage.getItem(THEME_KEY); } catch { /* 読めない環境では端末の設定に合わせる */ }
-    if (saved === 'dark' || saved === 'light') return saved;
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    try { saved = localStorage.getItem(THEME_KEY); } catch { /* 読めない環境ではライトにする */ }
+    return saved === 'dark' ? 'dark' : 'light';
   };
   let theme = loadTheme();
   const themeColors = () => THEME_COLORS[theme];
