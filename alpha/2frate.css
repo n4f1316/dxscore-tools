@@ -337,8 +337,8 @@ kbd { font: 700 12px ui-monospace, Menlo, Consolas, monospace; background: var(-
 .formula { background: var(--panel); color: var(--ink); border: 1px solid var(--line); padding: 14px 18px; font-weight: 700; line-height: 1.9; }
 .formula .v { color: var(--accent); }
 .formula .bonus { color: var(--accent); }
-/* 希少ボーナス：画像のラベルと同じ配色（濃い地に黄色の文字。ダーク・ライト共通） */
-.formula .rare { background: #0E0B1F; color: #FFD86B; border: 1px solid #FFD86B; padding: 2px 8px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+/* 希少ボーナス：画像のラベルと同じ黄色の文字（背景・枠なし。ダーク・ライト共通） */
+.formula .rare { color: #FFD86B; }
 .tblw { overflow-x: auto; }
 .pg-about table { font-variant-numeric: tabular-nums; }
 .pg-about th, .pg-about td { padding: 7px 10px; text-align: center; white-space: nowrap; vertical-align: middle; }
