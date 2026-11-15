@@ -6,7 +6,7 @@
   // ============================================================
 
   // 版の表示（β版では 'β版'、正式版では空にする）
-  const EDITION = 'β版';
+  const EDITION = 'α版';
 
   // でらっくスコア取得率(%) → 星の数（上から順に判定）
   const STAR_THRESHOLDS = [
@@ -691,6 +691,12 @@
       border: 1px solid var(--line); color: var(--ink); background: var(--bg);
     }
     .dxr-card .dxr-actions button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+    /* 保存済みのデータから表示（検証用） */
+    .dxr-off-select { display: block; width: 100%; margin-top: 4px; font: inherit; font-size: 16px; padding: 8px 10px;
+      border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+    .dxr-off-rate { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; }
+    .dxr-off-rate .dxr-plate-value { font-size: 30px; }
+    .dxr-off-rate .dxr-plate-label { margin-right: auto; }
     .dxr-diffmax-inline { display: none; background: transparent; color: var(--sub); padding-left: 2px; }
     .dxr-diffmax-inline.is-max { color: var(--gold); }
   `;
@@ -837,7 +843,7 @@
       );
       if (s.rareAdd > 0 && RARE_MODES.includes(mode.id)) {
         const rare = el('span', 'dxr-chip dxr-rare', `希少 +${s.rareAdd.toFixed(2)}`);
-        rare.title = `全国ランキング上位100人のうち☆6以上は ${s.rarePeople} 人`;
+        if (s.rarePeople !== undefined) rare.title = `全国ランキング上位100人のうち☆6以上は ${s.rarePeople} 人`;
         meta.appendChild(rare);
       }
       main.appendChild(meta);
@@ -988,10 +994,12 @@
   const RAINBOW = ['#FF7A93', '#FFB347', '#FFE66D', '#7EE081', '#7CC8FF', '#B79BFA'];
 
   // 画像を読み込む（失敗や時間切れなら null）。maimaiでらっくすNET 上で実行しているので同じサイトの画像は描ける
-  function loadImage(src, ms = 8000) {
+  //   cors が true のときは、別サイトからでも書き出せる形（CORS）での読み込みを試す（検証ページ用）
+  function loadImage(src, ms = 8000, cors = false) {
     return new Promise((resolve) => {
       if (!src) return resolve(null);
       const img = new Image();
+      if (cors) img.crossOrigin = 'anonymous';
       const t = setTimeout(() => resolve(null), ms);
       img.onload = () => { clearTimeout(t); resolve(img); };
       img.onerror = () => { clearTimeout(t); resolve(null); };
@@ -1070,9 +1078,16 @@
     const files = top.map((s) => resolveSong(jackets, s.name, s.kind, s.diff, s.level, s.max)?.img);
     const ranked = RANK_MODES.includes(result.mode.id);
     const rankImg = ranked ? await loadImage(rankIconUrl(rankOf(result.rating, result.mode.id).name)) : null;
+    // 検証ページ用：options.noImages なら画像を読み込まない（灰色の枠）。
+    //   options.cors なら書き出せる形での読み込みを試し、だめなら通常の読み込み（表示のみ）にする
+    const load = async (src) => {
+      if (options.noImages) return null;
+      if (!options.cors) return loadImage(src);
+      return (await loadImage(src, 8000, true)) ?? loadImage(src);
+    };
     const [iconImg, ...jacketImgs] = await Promise.all([
-      loadImage(profile.icon),
-      ...files.map((f) => loadImage(f ? JACKET_BASE + f : null)),
+      load(profile.icon),
+      ...files.map((f) => load(f ? JACKET_BASE + f : null)),
     ]);
 
     // 背景
@@ -2740,6 +2755,142 @@
   //  メイン処理
   // ============================================================
 
+  // ============================================================
+  //  保存済みのデータから表示（α版・検証用）
+  //   maimaiでらっくすNET にログインできないとき（メンテナンス中など）に、ランキングに保存されている
+  //   ベスト枠（公開している人のみ）からレート対象曲の一覧と画像を作る。スコアの読み込みや登録は行わない。
+  //   称号はランキングに保存していないので載らない。
+  // ============================================================
+  const ICON_BASE = 'https://maimaidx.jp/maimai-mobile/img/Icon/';
+  const RATE_FIELD = { full: 'rateFull', cap6: 'rateCap6', cap5: 'rateCap5' };
+
+  function renderOffline(ui) {
+    const card = el('div', 'dxr-card');
+    card.append(
+      el('h3', '', '保存済みのデータから表示（検証用）'),
+      el('p', 'dxr-card-desc', 'ランキングに保存されているベスト枠（公開している人のみ）から、レート対象曲の一覧と画像を作ります。' +
+        'ログインは不要です。称号は保存していないため表示されません。'));
+    const msg = el('p', 'dxr-card-desc', 'ランキングを読み込み中…');
+    card.appendChild(msg);
+    ui.body.replaceChildren(card);
+
+    // 保存されているベスト枠の1譜面 → 一覧・画像を作る処理が使う形
+    const toSong = (t, modeId) => ({
+      name: String(t.name ?? ''), kind: t.kind === 'ST' || t.kind === 'DX' ? t.kind : '?', diff: String(t.diff ?? ''), level: t.level,
+      cur: Number(t.score) || 0, max: Number(t.max) || 0,
+      c: Number(t.const) || 0, estimated: !!t.estimated,
+      stars: Math.floor(Number(t.star) || 0),
+      rareAdd: Number(t.rare) || 0,
+      values: { [modeId]: Number(t.value) || 0 },
+    });
+
+    (async () => {
+      let users, jackets;
+      try {
+        const [data, map] = await Promise.all([
+          fetch(RANKING_API + '?t=' + Date.now()).then((r) => r.json()),
+          loadJacketMap(),
+        ]);
+        if (!data.ok) throw new Error(data.error || 'ランキングを取得できませんでした。');
+        users = (data.list || []).filter((r) => r.hasTop50).sort((a, b) => (b.rateFull || 0) - (a.rateFull || 0));
+        if (!users.length) throw new Error('ベスト枠を公開している記録がありません。');
+        jackets = map;
+      } catch (e) {
+        msg.textContent = 'エラー: ' + e.message;
+        msg.className = 'dxr-err';
+        console.error(e);
+        return;
+      }
+
+      let modeId = RATE_MODES[0].id;
+      const cache = new Map(); // 公開ID → ベスト枠
+      let showId = 0;
+
+      const tabs = el('div', 'dxr-tabs');
+      const field = el('label', 'dxr-field', 'ユーザー（☆7まで のレートが高い順）');
+      const select = el('select', 'dxr-off-select');
+      users.forEach((u) => {
+        const o = el('option', '', `${(Number(u.rateFull) || 0).toFixed(3)}　${u.name}`);
+        o.value = u.id;
+        select.appendChild(o);
+      });
+      field.appendChild(select);
+      const out = el('div');
+      msg.textContent = '';
+      card.append(tabs, field, out);
+
+      const show = async () => {
+        const my = ++showId;
+        const u = users.find((x) => x.id === select.value);
+        const mode = RATE_MODES.find((m) => m.id === modeId);
+        out.replaceChildren(el('p', 'dxr-card-desc', 'ベスト枠を読み込み中…'));
+        try {
+          let data = cache.get(u.id);
+          if (!data) {
+            data = await fetch(RANKING_API + '?top50=' + encodeURIComponent(u.id) + '&t=' + Date.now()).then((r) => r.json());
+            if (!data.ok) throw new Error(data.error || 'ベスト枠を取得できませんでした。');
+            cache.set(u.id, data);
+          }
+          if (my !== showId) return;
+          // 以前の版で登録された記録は、☆7まで の配列だけが入っている
+          const frames = Array.isArray(data.top50) ? { full: data.top50 } : (data.top50 || {});
+          const list = frames[modeId];
+          if (!Array.isArray(list) || !list.length) {
+            out.replaceChildren(el('p', 'dxr-card-desc', `この記録には「${mode.label}」のレート対象曲がありません（以前の版で登録された記録です）。`));
+            return;
+          }
+          const profile = {
+            name: u.name, trophy: '', trophyRank: '',
+            icon: /^[0-9a-f]{16}\.png$/i.test(u.icon || '') ? ICON_BASE + u.icon : '',
+          };
+          const result = { mode, rating: Number(u[RATE_FIELD[modeId]]) || 0, top: list.map((t) => toSong(t, modeId)) };
+
+          // レート値（ランクの色・アイコンつき）
+          const rateRow = el('div', 'dxr-off-rate');
+          const rank = rankOf(result.rating, modeId);
+          const value = el('span', 'dxr-plate-value dxr-ranked', result.rating.toFixed(3));
+          value.style.cssText = rankCss(rank);
+          value.title = rank.name;
+          const icon = el('span', 'dxr-rank-icon');
+          icon.innerHTML = rankIconSvg(rank.name); // ツール内で作った固定のSVGのみ
+          rateRow.append(el('span', 'dxr-plate-label', `${u.name} ／ 2fRATE${mode.label.replace('まで', '')}`), icon, value);
+
+          const share = el('button', 'dxr-share', `「${mode.label}」のレート対象曲を画像にする`);
+          share.type = 'button';
+          share.style.margin = '12px 0 8px';
+          const opt = el('label', 'dxr-share-opt');
+          opt.style.margin = '0 0 12px';
+          const check = el('input');
+          check.type = 'checkbox';
+          check.checked = true;
+          opt.append(check, document.createTextNode('画像にプレイヤー名を載せる'));
+          share.onclick = () => openShareImage(profile, result, jackets, share, { hideProfile: !check.checked });
+
+          out.replaceChildren(rateRow, share, opt, buildList(result.top, mode, jackets));
+        } catch (e) {
+          if (my !== showId) return;
+          const err = el('p', 'dxr-err', 'エラー: ' + e.message);
+          out.replaceChildren(err);
+          console.error(e);
+        }
+      };
+
+      RATE_MODES.forEach((m) => {
+        const b = el('button', 'dxr-tab', m.label);
+        b.type = 'button';
+        b.setAttribute('aria-pressed', String(m.id === modeId));
+        b.onclick = () => {
+          modeId = m.id;
+          tabs.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+          show();
+        };
+        tabs.appendChild(b);
+      });
+      select.onchange = show;
+      show();
+    })();
+  }
+
   // 画像の検証用：検証ページ（image_test.html）から読み込まれたときは、画面を作らずに
   // 画像を描く関数だけを渡して終わる（スコアの読み込みや登録は行わない）
   if (typeof window.__2fRATE_PREVIEW__ === 'function') {
@@ -2768,6 +2919,7 @@
   } catch (e) {
     ui.status('エラー: ' + e.message, true);
     console.error(e);
+    renderOffline(ui); // α版：ログインできないときは、保存済みのデータからの表示（検証用）を出す
     return;
   }
 
