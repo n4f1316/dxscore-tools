@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2fRATE 画像の検証（α版）</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="2frate.css?v=20261115b">
+<script src="2frate-theme.js?v=20261115b"></script>
+<style>
+  /* このページだけの部品（検証用） */
+  .it-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 12px; font-size: 13px; }
+  .it-row label { display: inline-flex; align-items: center; gap: 6px; color: var(--sub); font-weight: 700; }
+  .it-row select, .it-row input[type="text"] { font: inherit; font-size: 16px; padding: 6px 10px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--ink); border-radius: 0; max-width: 100%; }
+  .it-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); }
+  #user { flex: 1 1 260px; min-width: 0; }
+  #out { margin-top: 16px; }
+  #out canvas { display: block; max-width: 100%; height: auto; border: 1px solid var(--line); }
+</style>
+</head>
+<body class="pg-viewer">
+<div class="wrap">
+  <header class="site-head">
+    <a class="site-logo" href="./" aria-label="2fRATE トップへ">2fRATE</a>
+    <button type="button" class="theme-toggle"></button>
+  </header>
+  <div class="page-title"><h1>IMAGE TEST</h1><span>画像の検証（α版）</span></div>
+  <p class="lead">ランキングに保存されているベスト枠（公開している人のみ）から、ブックマークレット（β版）と同じ処理でレート対象曲の画像を描きます。右上の「表示」を切り替えると、画像もその配色で描き直します。</p>
+
+  <div class="tabs" id="modeTabs" role="group" aria-label="レートの種類"></div>
+  <div class="it-row">
+    <label for="user">ユーザー</label>
+    <select id="user" disabled><option>読み込み中…</option></select>
+  </div>
+  <div class="it-row">
+    <label><input type="checkbox" id="hide"> 名前と称号を載せない</label>
+    <label>称号（テスト用）<input type="text" id="trophy" placeholder="空なら称号なし" maxlength="40"></label>
+    <label>称号の色
+      <select id="trophyRank">
+        <option>Normal</option><option>Bronze</option><option>Silver</option><option>Gold</option><option>Rainbow</option>
+      </select>
+    </label>
+  </div>
+  <div class="status" id="status">読み込み中…</div>
+  <div id="out"></div>
+
+  <p class="foot">
+    検証用のページです。称号はデータベースに保存していないため、上の欄に入れた文字で表示を確認します。<br>
+    ジャケット画像・アイコン画像は公式サイトの画像を表示しています（公式サイトがメンテナンス中のときは、灰色の枠になります）。このページの画像は保存できません（実際の保存は、ブックマークレットから行います）。<br>
+    非公式のファンメイドツールです。株式会社セガおよび関連会社とは一切関係ありません。楽曲・ジャケット画像・アイコン画像の著作権は、株式会社セガおよび各権利者に帰属します。<br>
+    © 2026 なふ（2fRATE）。2fRATE のプログラム・デザイン・ロゴの無断転載・無断使用を禁じます。
+  </p>
+</div>
+
+<script>
+(async () => {
+  'use strict';
+  const RANKING_API = 'https://2frate.want131611.workers.dev/';
+  const ICON_BASE = 'https://maimaidx.jp/maimai-mobile/img/Icon/';
+  const BOOKMARKLET = '../beta/dxscore_rating.js'; // 画像を描く処理はここから借りる（同じコードで検証するため）
+
+  const $ = (id) => document.getElementById(id);
+  const status = (t, isError = false) => {
+    $('status').textContent = t;
+    $('status').classList.toggle('error', isError);
+  };
+  const RATE_KEY = { full: 'rateFull', cap6: 'rateCap6', cap5: 'rateCap5' };
+
+  // ブックマークレットを読み込み、画像を描く関数だけを受け取る（スコアの読み込みや登録は行われない）
+  const loadTool = () => new Promise((resolve, reject) => {
+    window.__2fRATE_PREVIEW__ = resolve;
+    const s = document.createElement('script');
+    s.src = BOOKMARKLET + '?' + Date.now();
+    s.onerror = () => reject(new Error('ブックマークレット（β版）を読み込めませんでした。'));
+    document.head.appendChild(s);
+    setTimeout(() => reject(new Error('ブックマークレット（β版）が検証用の読み込みに対応していません（古い版の可能性があります）。')), 15000);
+  });
+
+  let tool, jackets, users = [], modeId = 'full';
+  const cache = new Map(); // 公開ID → ベスト枠
+  let drawId = 0;
+
+  // 保存されているベスト枠の1譜面 → 画像を描く処理が使う形
+  const toSong = (t, mode) => ({
+    name: String(t.name ?? ''), kind: t.kind, diff: t.diff, level: t.level,
+    cur: Number(t.score) || 0, max: Number(t.max) || 0,
+    c: Number(t.const) || 0, estimated: !!t.estimated,
+    stars: Math.floor(Number(t.star) || 0),
+    rareAdd: Number(t.rare) || 0,
+    values: { [mode]: Number(t.value) || 0 },
+  });
+
+  async function draw() {
+    const my = ++drawId;
+    const u = users.find((x) => x.id === $('user').value);
+    if (!u) return;
+    try {
+      status('ベスト枠を読み込み中…');
+      let data = cache.get(u.id);
+      if (!data) {
+        const res = await fetch(RANKING_API + '?top50=' + encodeURIComponent(u.id) + '&t=' + Date.now());
+        data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'ベスト枠を取得できませんでした。');
+        cache.set(u.id, data);
+      }
+      // 以前の版で登録された記録は、☆7まで の配列だけが入っている
+      const frames = Array.isArray(data.top50) ? { full: data.top50 } : (data.top50 || {});
+      const list = frames[modeId];
+      if (my !== drawId) return;
+      if (!Array.isArray(list) || !list.length) {
+        $('out').replaceChildren();
+        status('この記録には、選んだ種類のレート対象曲がありません（以前の版で登録された記録です）。', true);
+        return;
+      }
+      status('画像を作成中…');
+      const mode = tool.modes.find((m) => m.id === modeId);
+      const icon = /^[0-9a-f]{16}\.png$/i.test(u.icon || '') ? ICON_BASE + u.icon : '';
+      const profile = { name: u.name, icon, trophy: $('trophy').value.trim(), trophyRank: $('trophyRank').value };
+      const result = { mode, rating: Number(u[RATE_KEY[modeId]]) || 0, top: list.map((t) => toSong(t, modeId)) };
+      tool.setTheme(document.documentElement.dataset.theme);
+      const canvas = await tool.buildShareImage(profile, result, jackets, { hideProfile: $('hide').checked });
+      if (my !== drawId) return;
+      $('out').replaceChildren(canvas);
+      status(`${u.name} ／ ${mode.label} ／ ${list.length}譜面（${canvas.width}×${canvas.height}px）`);
+    } catch (e) {
+      if (my !== drawId) return;
+      $('out').replaceChildren();
+      status('エラー: ' + e.message, true);
+      console.error(e);
+    }
+  }
+
+  try {
+    tool = await loadTool();
+    const [listData, map] = await Promise.all([
+      fetch(RANKING_API + '?t=' + Date.now()).then((r) => r.json()),
+      tool.loadJacketMap(),
+    ]);
+    jackets = map;
+    if (!listData.ok) throw new Error(listData.error || 'ランキングを取得できませんでした。');
+    users = (listData.list || []).filter((r) => r.hasTop50)
+      .sort((a, b) => (b.rateFull || 0) - (a.rateFull || 0));
+    if (!users.length) throw new Error('ベスト枠を公開している記録がありません。');
+
+    // レートの種類
+    tool.modes.forEach((m) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = m.label;
+      b.setAttribute('aria-pressed', String(m.id === modeId));
+      b.onclick = () => {
+        modeId = m.id;
+        $('modeTabs').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        draw();
+      };
+      $('modeTabs').appendChild(b);
+    });
+
+    // ユーザー（☆7まで のレートが高い順）
+    const sel = $('user');
+    sel.replaceChildren(...users.map((u) => {
+      const o = document.createElement('option');
+      o.value = u.id;
+      o.textContent = `${(Number(u.rateFull) || 0).toFixed(3)}　${u.name}`;
+      return o;
+    }));
+    sel.disabled = false;
+    sel.onchange = draw;
+    $('hide').onchange = draw;
+    $('trophy').onchange = draw;
+    $('trophyRank').onchange = draw;
+    // 表示（ダーク／ライト）を切り替えたら描き直す
+    new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    draw();
+  } catch (e) {
+    status('エラー: ' + e.message, true);
+    console.error(e);
+  }
+})();
+</script>
+</body>
+</html>

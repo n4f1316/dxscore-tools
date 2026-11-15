@@ -6,7 +6,7 @@
   // ============================================================
 
   // 版の表示（β版では 'β版'、正式版では空にする）
-  const EDITION = 'α版';
+  const EDITION = 'β版';
 
   // でらっくスコア取得率(%) → 星の数（上から順に判定）
   const STAR_THRESHOLDS = [
@@ -21,38 +21,60 @@
   const MAX_STARS = STAR_THRESHOLDS[0].stars;
 
   // 計算するレートの種類（capStars: この☆を上限として計算。☆6以上を☆5扱いにするなら 5）
+  //   rankShift: ランクの区切りを「☆7まで」からどれだけ下げるか（☆6まで は LEGEND 11.500、☆5まで は LEGEND 10.500）
   const RATE_MODES = [
-    { id: 'full', label: '☆7まで', capStars: MAX_STARS },
-    { id: 'cap6', label: '☆6まで', capStars: 6 },
-    { id: 'cap5', label: '☆5まで', capStars: 5 },
+    { id: 'full', label: '☆7まで', capStars: MAX_STARS, rankShift: 0 },
+    { id: 'cap6', label: '☆6まで', capStars: 6, rankShift: 0.5 },
+    { id: 'cap5', label: '☆5まで', capStars: 5, rankShift: 1.5 },
   ];
 
-  // ランク（今は「☆7まで」のレートだけに適用）。min 以上でそのランク。上から順に判定する
-  //   LEGEND は 12.000 以上、それより下は 0.500 刻み（RAINBOW PLUS 11.500、RAINBOW 11.000 …、WAKABA は 7.000 未満）
-  //   colors: 文字色のグラデーション（1色なら単色）。glow: 文字のまわりの光（PLUS のランクと LEGEND）
-  const RANK_MODES = ['full'];
+  // ランク（3種類のレートすべてに適用）。min 以上でそのランク。上から順に判定する
+  //   min は「☆7まで」の区切り：LEGEND は 12.000 以上、それより下は 0.500 刻み（RAINBOW PLUS 11.500 …、WAKABA は 7.000 未満）
+  //   「☆6まで」「☆5まで」は、RATE_MODES の rankShift だけ区切りを下げて判定する
+  //   colors: 文字色のグラデーション（ライト表示）。dark: ダーク表示のときのグラデーション（明るめの同系色）
+  const RANK_MODES = RATE_MODES.map((m) => m.id);
   const RANKS = [
-    { name: 'LEGEND',       min: 12, colors: ['#6A1BD8', '#D6246E', '#F2A007'], glow: 'rgba(242,160,7,.55)' },
-    { name: 'RAINBOW PLUS', min: 11.5, colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'], glow: 'rgba(255,196,0,.6)' },
-    { name: 'RAINBOW',      min: 11, colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'] },
-    { name: 'PLATINUM PLUS', min: 10.5, colors: ['#4F8AA6', '#8FBED4', '#4F8AA6'], glow: 'rgba(120,190,225,.65)' },
-    { name: 'PLATINUM',      min: 10,   colors: ['#4F8AA6', '#8FBED4', '#4F8AA6'] },
-    { name: 'GOLD PLUS',     min: 9.5, colors: ['#B8860B', '#E0B32E', '#B8860B'], glow: 'rgba(240,190,40,.6)' },
-    { name: 'GOLD',          min: 9,   colors: ['#B8860B', '#E0B32E', '#B8860B'] },
-    { name: 'SILVER PLUS',   min: 8.5, colors: ['#6F7C8B', '#A7B2BE', '#6F7C8B'], glow: 'rgba(150,165,185,.7)' },
-    { name: 'SILVER',        min: 8,   colors: ['#6F7C8B', '#A7B2BE', '#6F7C8B'] },
-    { name: 'BRONZE PLUS',   min: 7.5, colors: ['#8E4E22', '#C07A45', '#8E4E22'], glow: 'rgba(205,125,65,.55)' },
-    { name: 'BRONZE',        min: 7,   colors: ['#8E4E22', '#C07A45', '#8E4E22'] },
-    { name: 'WAKABA',       min: -Infinity, colors: ['#3E9B3A', '#7CBF3F'] },
+    { name: 'LEGEND',       min: 12, colors: ['#6A1BD8', '#D6246E', '#F2A007'], dark: ['#B98CFF', '#FF6FA8', '#FFC247'] },
+    { name: 'RAINBOW PLUS', min: 11.5, colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'], dark: ['#FF6B8E', '#FFA640', '#F2CE3A', '#4FD9B0', '#6FA4FF', '#B58CFF'] },
+    { name: 'RAINBOW',      min: 11, colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'], dark: ['#FF6B8E', '#FFA640', '#F2CE3A', '#4FD9B0', '#6FA4FF', '#B58CFF'] },
+    { name: 'PLATINUM PLUS', min: 10.5, colors: ['#4F8AA6', '#8FBED4', '#4F8AA6'], dark: ['#8FC4DC', '#D5EEF8', '#8FC4DC'] },
+    { name: 'PLATINUM',      min: 10,   colors: ['#4F8AA6', '#8FBED4', '#4F8AA6'], dark: ['#8FC4DC', '#D5EEF8', '#8FC4DC'] },
+    { name: 'GOLD PLUS',     min: 9.5, colors: ['#B8860B', '#E0B32E', '#B8860B'], dark: ['#E0B32E', '#FFE58A', '#E0B32E'] },
+    { name: 'GOLD',          min: 9,   colors: ['#B8860B', '#E0B32E', '#B8860B'], dark: ['#E0B32E', '#FFE58A', '#E0B32E'] },
+    { name: 'SILVER PLUS',   min: 8.5, colors: ['#6F7C8B', '#A7B2BE', '#6F7C8B'], dark: ['#A7B2BE', '#E3E8EE', '#A7B2BE'] },
+    { name: 'SILVER',        min: 8,   colors: ['#6F7C8B', '#A7B2BE', '#6F7C8B'], dark: ['#A7B2BE', '#E3E8EE', '#A7B2BE'] },
+    { name: 'BRONZE PLUS',   min: 7.5, colors: ['#8E4E22', '#C07A45', '#8E4E22'], dark: ['#C98A58', '#F0BE98', '#C98A58'] },
+    { name: 'BRONZE',        min: 7,   colors: ['#8E4E22', '#C07A45', '#8E4E22'], dark: ['#C98A58', '#F0BE98', '#C98A58'] },
+    { name: 'WAKABA',       min: -Infinity, colors: ['#3E9B3A', '#7CBF3F'], dark: ['#6FCB6A', '#B4E36C'] },
   ];
   // 表示している値（小数第3位で四捨五入）でランクを決める（表示と判定をそろえるため）
-  const rankOf = (rating) => {
+  //   modeId: 'full' / 'cap6' / 'cap5'（省略時は「☆7まで」）
+  const rankOf = (rating, modeId = 'full') => {
     const v = Math.round(rating * 1000) / 1000;
-    return RANKS.find((r) => v >= r.min);
+    const shift = RATE_MODES.find((m) => m.id === modeId)?.rankShift ?? 0;
+    return RANKS.find((r) => v >= r.min - shift);
   };
+  // ランクの色は CSS 変数で渡す（--g：ライト用、--gd：ダーク用。どちらを使うかはスタイル側で決める）
   const rankCss = (rank) =>
-    `background-image: linear-gradient(90deg, ${rank.colors.join(', ')});` +
-    (rank.glow ? ` filter: drop-shadow(0 0 3px ${rank.glow});` : '');
+    `--g: linear-gradient(90deg, ${rank.colors.join(', ')});` +
+    ` --gd: linear-gradient(90deg, ${(rank.dark || rank.colors).join(', ')});`;
+
+  // 表示（ダーク／ライト）。選んだ表示はブラウザに保存する（まだ選んでいないときは端末の設定に合わせる）
+  const THEME_KEY = '2frate-theme';
+  const THEME_COLORS = {
+    light: { bg: '#F4F5F7', panel: '#E6E7EC', line: '#D5D6DE', ink: '#12101F', sub: '#55516E',
+      accent: '#007A99', onAccent: '#F4F5F7', pink: '#C2185B', ph: '#D5D6DE', ring: '#DCDDE4' },
+    dark: { bg: '#0E0B1F', panel: '#16122E', line: '#2E2858', ink: '#F2F0FF', sub: '#A9A3D6',
+      accent: '#4DE1FF', onAccent: '#0E0B1F', pink: '#FF5CA8', ph: '#2A2550', ring: '#2A2550' },
+  };
+  const loadTheme = () => {
+    let saved = null;
+    try { saved = localStorage.getItem(THEME_KEY); } catch { /* 読めない環境では端末の設定に合わせる */ }
+    if (saved === 'dark' || saved === 'light') return saved;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  };
+  let theme = loadTheme();
+  const themeColors = () => THEME_COLORS[theme];
 
   // ランクのアイコン（SVG）。デフォルメ調：太めの角丸の線、ベタ塗り（ツヤなし）
   function rankIconSvg(rankName) {
@@ -125,15 +147,29 @@
   //   ☆は小数第一位まで。最大は 15.0 × 15.0 × 7 ÷ 100 = 15.75
   const RATE_DIVISOR = 100;
   const FRACTION_WEIGHT = 0.5; // ☆の小数部分にかける係数
-  const MAX_BONUS = 0.1;       // ☆7（理論値）の譜面だけに加える値
+  const MAX_BONUS = 0.1;       // ☆がそのレートの上限（☆7まで は☆7、☆6まで は☆6、☆5まで は☆5）に達した譜面に加える値
+  // 希少ボーナス：全国ランキング（上位100人）で☆6以上の達成者が少ない譜面を☆6以上で達成していると加算する
+  //   人数は ranking/lv○○.json の star6Count（☆6）＋ maxCount（☆7）。集計データがない譜面は加算しない
+  //   「☆7まで」「☆6まで」のレートだけに適用（☆5まで には加算しない）
+  const RARE_BONUS = [
+    { maxPeople: 3, add: 0.15 },
+    { maxPeople: 10, add: 0.10 },
+    { maxPeople: 20, add: 0.05 },
+  ];
+  const RARE_BONUS_MAX = 0.15;
+  const RARE_MODES = ['full', 'cap6'];
 
   const TOP_N = 50;          // 平均を取る曲数
   const WAIT_MS = 1500;      // ページ取得の間隔（サーバー負荷対策）
   const LEVEL_MAX = 23;      // level=23 が Lv15
+  // ☆5・☆6・☆7達成譜面数の集計（MASTER・Re:MASTER のみ）。MASTER の最低難易度が 10+ なので、
+  // レート対象曲が決まっていても、少なくともこのレベルまでは取得する（level=14 が 10+）
+  const COUNT_DIFFS = ['MASTER', 'Re:MASTER'];
+  const COUNT_MIN_LEVEL = 14;
   const PLAYER_URL = '/maimai-mobile/home/';
 
   // ジャケット画像：「曲名 → 画像ファイル名」の対応表（collect_jackets.js で作成）を読み、
-  // maimai DX NET 上の画像をそのまま表示する（画像そのものはコピーしない）
+  // maimaiでらっくすNET 上の画像をそのまま表示する（画像そのものはコピーしない）
   const JACKETS_URL = 'https://n4f1316.github.io/dxscore-tools/maimai_jackets.json';
   const OVERRIDES_URL = 'https://n4f1316.github.io/dxscore-tools/jacket_overrides.json'; // 同名曲の手動対応表
   let jacketOverrides = {};
@@ -145,14 +181,15 @@
   const CONST_URL = 'https://n4f1316.github.io/dxscore-tools/maimai_consts_magical.json';
 
   // ランキング（Google Apps Script の受け取り口と、ランキングのページ）
-  const RANKING_API = 'https://script.google.com/macros/s/AKfycbwqrv0xH7D4dhWA9M-76pGmjyT3I3SADQ-yAguIQXHJgCyBm5aGGjI33HWiUcYAVYpb/exec';
+  const RANKING_API = 'https://2frate.want131611.workers.dev/';
   const RANKING_PAGE = 'https://n4f1316.github.io/dxscore-tools/ranking.html';
-  const FORMULA_VERSION = 'v1'; // 計算式の版（計算式を変えたら上げる）
+  const FORMULA_VERSION = 'v3'; // 計算式の版（計算式を変えたら上げる）。v2：☆6まで・☆5まで でも上限到達で +0.1、v3：希少ボーナス
   const USER_KEY = 'dxr-ranking-user'; // このブラウザで最後に使ったユーザー名（PINは保存しない）
+  const FORM_KEY = 'dxr-ranking-form'; // このブラウザで最後に登録したときの表示名・匿名・ベスト枠公開の選択
 
   // おすすめ楽曲：ランキング集計のデータ（譜面ごとの取りやすさ）の置き場所
   const RANKING_STATS_DIR = 'https://n4f1316.github.io/dxscore-tools/ranking/';
-  const SHOW_RECOMMEND = true; // おすすめ楽曲のボタンを出すか（α版・β版は true。正式版に入れるまでは正式版で false）
+  const SHOW_RECOMMEND = true; // おすすめ楽曲のボタンを出すか
   const RECOMMEND_COUNT = 30; // 表示するおすすめ楽曲の数
   const RECOMMEND_MAX_FROM = 11.5; // ☆7まで のレートがこれ以上の人にだけ、理論値（☆7）を目標にした譜面もおすすめする
   const RECOMMEND_LOW_BELOW = 10.0; // ☆7まで のレートがこれ未満の人は「初中級向け」のおすすめにする
@@ -198,9 +235,19 @@
       : { label: String(base), min: base, max: base + 0.5 };
   }
 
-  // そのレベルの譜面が取りうる値の上限（☆上限・定数最大のとき）
+  // そのレベルの譜面が取りうる値の上限（☆上限・定数最大のとき。上限に達しているので +0.1 も含む。☆6以上のレートは希少ボーナスの最大も含む）
   const upperBound = (n, capStars) =>
-    (levelInfo(n).max ** 2 * capStars) / RATE_DIVISOR + (capStars >= 7 ? MAX_BONUS : 0);
+    (levelInfo(n).max ** 2 * capStars) / RATE_DIVISOR + MAX_BONUS + (capStars >= 6 ? RARE_BONUS_MAX : 0);
+
+  // 全国ランキングの集計（1譜面分）から、☆6以上の達成者数と希少ボーナスを出す（わからなければ人数 null・加算 0）
+  function rareOf(st) {
+    if (!st || st.star6Count === null || st.star6Count === undefined || st.maxCount === null || st.maxCount === undefined) {
+      return { people: null, add: 0 };
+    }
+    const people = st.star6Count + st.maxCount;
+    const hit = RARE_BONUS.find((b) => people <= b.maxPeople);
+    return { people, add: hit ? hit.add : 0 };
+  }
 
   // 小数の誤差を避けるため整数同士で比較する（cur/max >= pct% と同じ意味）
   function starsOf(cur, max) {
@@ -291,7 +338,7 @@
     return list;
   }
 
-  function score(s, constTable) {
+  function score(s, constTable, stats) {
     const key = `${s.name}|${s.kind}|${s.diff}`;
     const keyMax = `${key}|${s.max}`; // 同名の別曲はでらっくスコア最大値つきのキーで登録されている
     const hitKey = keyMax in constTable ? keyMax : key in constTable ? key : null;
@@ -302,14 +349,31 @@
     const values = {};
     // ☆は小数第一位まで反映（6.4なら6.4で計算）。レートの種類ごとの上限（☆5まで等）で切り詰める
     const tenths = starTenths(s.cur, s.max);
+    // 希少ボーナス：自分が☆6以上を達成している譜面だけ
+    const rare = rareOf(stats?.get(`${s.name}|${s.kind}|${s.diff}|${s.max}`));
+    const rareAdd = stars >= 6 ? rare.add : 0;
     for (const m of RATE_MODES) {
       const t = Math.min(tenths, m.capStars * 10); // ☆×10 の整数（6.4 → 64）
       const whole = Math.floor(t / 10);             // ☆の整数部分（6）
       const frac = (t % 10) / 10;                   // ☆の小数部分（0.4）
       values[m.id] = (c * c * whole + c * c * frac * FRACTION_WEIGHT) / RATE_DIVISOR
-        + (t >= 70 ? MAX_BONUS : 0); // ☆7として計算される譜面だけ +0.1
+        + (t >= m.capStars * 10 ? MAX_BONUS : 0) // ☆がそのレートの上限に達した譜面は +0.1
+        + (RARE_MODES.includes(m.id) ? rareAdd : 0); // 希少ボーナス（☆7まで・☆6まで のみ）
     }
-    return { ...s, c, estimated: !inTable, stars, values };
+    return { ...s, c, estimated: !inTable, stars, values, rareAdd, rarePeople: rare.people };
+  }
+
+  // ☆7・☆6・☆5 を達成した MASTER / Re:MASTER の譜面数（☆6達成は☆7を、☆5達成は☆6・☆7を含む）
+  function countStars(scored) {
+    const c = { star7Mas: 0, star7Remas: 0, star6Mas: 0, star6Remas: 0, star5Mas: 0, star5Remas: 0 };
+    for (const s of scored) {
+      if (!COUNT_DIFFS.includes(s.diff)) continue;
+      const re = s.diff === 'Re:MASTER';
+      for (const n of [7, 6, 5]) {
+        if (s.stars >= n) c[`star${n}${re ? 'Remas' : 'Mas'}`]++;
+      }
+    }
+    return c;
   }
 
   // ============================================================
@@ -317,137 +381,173 @@
   // ============================================================
 
   const STYLE = `
+    /* ---- デザイン：直線的な枠（角丸・光彩なし）、罫線の表、ダーク／ライト（Web のページと共通の色） ---- */
     :host {
       all: initial; display: block;
-      --ink: #2B2350; --sub: #6E6892; --line: #E4DFF3; --bg: #F6F4FC; --card: #FFFFFF;
-      --pink: #E0348C; --cyan: #1FA9C9; --gold: #C98A00;
-      --basic: #2E9E5B; --advanced: #D98E04; --expert: #E0434B; --master: #8E44D6; --remaster: #B68BE0;
+      --bg: #F4F5F7; --panel: #E6E7EC; --line: #D5D6DE; --ink: #12101F; --sub: #55516E;
+      --accent: #007A99; --on-accent: #F4F5F7; --pink: #C2185B; --ph: #D5D6DE;
+      --gold: #8A5A00; --err: #C0303A; --ok: #1E7A3C; --dx: #B8460B; --st: #1565B0; --remas: #6B2FB3;
+      --basic: #23804A; --advanced: #A86B00; --expert: #D0343D; --master: #8A3FD1;
+      --card: var(--bg); --cyan: var(--accent);
+      --num: "Chakra Petch", "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+      --jp: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+      --rings: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' fill='none' stroke='%23DCDDE4'%3E%3Ccircle cx='400' cy='0' r='60'/%3E%3Ccircle cx='400' cy='0' r='100'/%3E%3Ccircle cx='400' cy='0' r='140'/%3E%3Ccircle cx='400' cy='0' r='180' stroke='%23007A99' stroke-opacity='.6'/%3E%3Ccircle cx='400' cy='0' r='220'/%3E%3Ccircle cx='400' cy='0' r='260'/%3E%3Ccircle cx='400' cy='0' r='300'/%3E%3Ccircle cx='400' cy='0' r='340'/%3E%3Ccircle cx='400' cy='0' r='380'/%3E%3C/svg%3E");
+      --rings2: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260' fill='none' stroke='%23DCDDE4'%3E%3Ccircle cx='0' cy='260' r='70'/%3E%3Ccircle cx='0' cy='260' r='110'/%3E%3Ccircle cx='0' cy='260' r='150'/%3E%3Ccircle cx='0' cy='260' r='190'/%3E%3Ccircle cx='0' cy='260' r='230'/%3E%3C/svg%3E");
       position: fixed; inset: 0; z-index: 99999; overflow: auto;
       background: var(--bg); color: var(--ink);
-      font: 14px/1.6 "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
+      font: 14px/1.6 var(--jp);
       -webkit-text-size-adjust: 100%;
     }
-    * { box-sizing: border-box; }
+    :host([data-theme="dark"]) {
+      --bg: #0E0B1F; --panel: #16122E; --line: #2E2858; --ink: #F2F0FF; --sub: #A9A3D6;
+      --accent: #4DE1FF; --on-accent: #0E0B1F; --pink: #FF5CA8; --ph: #2A2550;
+      --gold: #FFD86B; --err: #FF7A85; --ok: #6FD98C; --dx: #FFB37A; --st: #7CC4FF; --remas: #D9B8FF;
+      --rings: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' fill='none' stroke='%232A2550'%3E%3Ccircle cx='400' cy='0' r='60'/%3E%3Ccircle cx='400' cy='0' r='100'/%3E%3Ccircle cx='400' cy='0' r='140'/%3E%3Ccircle cx='400' cy='0' r='180' stroke='%234DE1FF' stroke-opacity='.6'/%3E%3Ccircle cx='400' cy='0' r='220'/%3E%3Ccircle cx='400' cy='0' r='260'/%3E%3Ccircle cx='400' cy='0' r='300'/%3E%3Ccircle cx='400' cy='0' r='340'/%3E%3Ccircle cx='400' cy='0' r='380'/%3E%3C/svg%3E");
+      --rings2: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260' fill='none' stroke='%232A2550'%3E%3Ccircle cx='0' cy='260' r='70'/%3E%3Ccircle cx='0' cy='260' r='110'/%3E%3Ccircle cx='0' cy='260' r='150'/%3E%3Ccircle cx='0' cy='260' r='190'/%3E%3Ccircle cx='0' cy='260' r='230'/%3E%3C/svg%3E");
+    }
+    * { box-sizing: border-box; border-radius: 0; }
+    /* 背景のリング（枠の背面に見える軽いアクセント） */
+    .dxr-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background: var(--rings) top right no-repeat, var(--rings2) bottom left no-repeat; }
     .dxr-wrap {
       max-width: 760px; margin: 0 auto; padding: 16px 14px 40px;
-      font: 14px/1.6 "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
+      font: 14px/1.6 var(--jp);
       color: var(--ink); text-align: left;
     }
-    .dxr-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    .dxr-title { font-size: 13px; color: var(--sub); font-weight: 700; }
+    .dxr-top { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding-bottom: 10px; border-bottom: 2px solid var(--ink); }
+    .dxr-title { font: 700 15px/1.2 var(--num); letter-spacing: .08em; color: var(--ink); }
     .dxr-close {
-      font: inherit; font-weight: 700; color: var(--ink); background: var(--card);
-      border: 1.5px solid var(--line); border-radius: 999px; padding: 6px 16px; cursor: pointer;
+      font: inherit; font-size: 12px; font-weight: 700; color: var(--ink); background: var(--bg);
+      border: 1px solid var(--line); padding: 6px 12px; cursor: pointer;
     }
-    button:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+    .dxr-theme { color: var(--sub); }
+    button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     .dxr-status { margin: 10px 0 0; color: var(--sub); font-size: 13px; }
-    .dxr-status.is-error { color: var(--expert); font-weight: 700; }
+    .dxr-status.is-error { color: var(--err); font-weight: 700; }
+    a { color: var(--accent); }
 
     /* プレイヤー情報（アイコン・称号・名前） */
     .dxr-profile { display: flex; align-items: center; gap: 14px; margin: 18px 0 14px; }
     .dxr-icon {
-      width: 64px; height: 64px; flex: none; border-radius: 14px; object-fit: cover;
-      background: #EFECF9; box-shadow: 0 0 0 1.5px var(--line);
+      width: 64px; height: 64px; flex: none; object-fit: cover;
+      background: var(--ph); border: 1px solid var(--line);
     }
     .dxr-profile-text { min-width: 0; }
+    .dxr-profile-caption { margin: 0 0 2px; font-weight: 700; }
     .dxr-trophy {
       display: inline-block; max-width: 100%; font-size: 12px; font-weight: 700; line-height: 1.4;
-      padding: 3px 12px; border-radius: 999px; margin-bottom: 4px;
+      padding: 3px 12px; margin-bottom: 4px;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-      background: #F1F1F4; color: #4A4A57; box-shadow: inset 0 0 0 1px #D9D9E2;
+      background: #F1F1F4; color: #4A4A57; border: 1px solid #D9D9E2;
     }
-    .dxr-trophy.t-Bronze { background: #F4E3D3; color: #7A4A1E; box-shadow: inset 0 0 0 1px #D9AC82; }
-    .dxr-trophy.t-Silver { background: #ECEFF3; color: #4B5563; box-shadow: inset 0 0 0 1px #B8C0CC; }
-    .dxr-trophy.t-Gold { background: #FFF1C7; color: #7A5600; box-shadow: inset 0 0 0 1px #E3B63A; }
+    .dxr-trophy.t-Bronze { background: #F4E3D3; color: #7A4A1E; border-color: #D9AC82; }
+    .dxr-trophy.t-Silver { background: #ECEFF3; color: #4B5563; border-color: #B8C0CC; }
+    .dxr-trophy.t-Gold { background: #FFF1C7; color: #7A5600; border-color: #E3B63A; }
     .dxr-trophy.t-Rainbow {
-      color: #2B2350; box-shadow: none;
+      color: #12101F; border-color: transparent;
       background: linear-gradient(90deg, #FFD1DC, #FFE9B8, #D6F5C9, #C9EBFF, #E3D4FF);
     }
     .dxr-trophy-official { max-width: 100%; margin-bottom: 4px; }
     .dxr-trophy-official > * { max-width: 100%; margin-left: 0 !important; }
     .dxr-player { font-size: 22px; font-weight: 800; letter-spacing: .02em; line-height: 1.3; word-break: break-all; }
 
-    /* レート表示：押すと表が切り替わる */
-    .dxr-plates { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
+    /* レート表示：押すと表が切り替わる（3つをつなげた枠） */
+    .dxr-plates { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin-bottom: 18px; }
     .dxr-plate {
-      font: inherit; text-align: left; cursor: pointer; color: var(--ink);
-      background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 12px 16px;
+      font: inherit; text-align: left; cursor: pointer; color: var(--ink); position: relative;
+      background: var(--bg); border: 1px solid var(--line); margin-left: -1px; padding: 12px 16px;
     }
-    .dxr-plate[aria-pressed="true"] { border-color: var(--pink); box-shadow: 0 0 0 3px rgba(224,52,140,.15); }
-    .dxr-plate-label { display: block; font-size: 12px; color: var(--sub); font-weight: 700; }
-    .dxr-plate-value { display: block; font-size: 34px; font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
+    .dxr-plate:first-child { margin-left: 0; }
+    .dxr-plate[aria-pressed="true"] { border-color: var(--accent); z-index: 1; box-shadow: inset 0 3px 0 var(--accent); }
+    .dxr-plate-label { display: block; font: 700 12px/1.4 var(--num); letter-spacing: .04em; color: var(--sub); }
+    .dxr-plate[aria-pressed="true"] .dxr-plate-label { color: var(--accent); }
+    .dxr-plate-value { display: block; font: 700 34px/1.2 var(--num); font-variant-numeric: tabular-nums; }
     .dxr-plate[aria-pressed="true"] .dxr-plate-value { color: var(--pink); }
-    /* ランクの色（グラデーションの文字）。選択中のピンクより優先する */
+    /* ランクの色（グラデーションの文字）。--g がライト用、--gd がダーク用 */
     .dxr-plate-value.dxr-ranked, .dxr-plate[aria-pressed="true"] .dxr-plate-value.dxr-ranked {
       color: transparent; -webkit-background-clip: text; background-clip: text; display: inline-block;
+      background-image: var(--g);
     }
+    :host([data-theme="dark"]) .dxr-plate-value.dxr-ranked { background-image: var(--gd); }
     .dxr-plate-rate { display: flex; align-items: center; gap: 6px; }
     .dxr-rank-icon { display: inline-flex; flex: none; width: 38px; height: 38px; }
     .dxr-rank-icon svg { width: 100%; height: 100%; }
     .dxr-plate-hint { display: block; font-size: 11px; color: var(--sub); }
 
-    /* 譜面の一覧 */
-    .dxr-list { background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; overflow: hidden; }
+    /* ☆6・☆7達成譜面数 */
+    .dxr-counts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin: -6px 0 18px; }
+    .dxr-count { background: var(--bg); border: 1px solid var(--line); margin-left: -1px; padding: 10px 16px; }
+    .dxr-count:first-child { margin-left: 0; }
+    .dxr-count-head { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--sub); }
+    .dxr-count-head .dxr-star-pill { min-width: 0; }
+    .dxr-count-num { font: 700 28px/1.2 var(--num); font-variant-numeric: tabular-nums; }
+    .dxr-count-num small { font: 700 13px/1 var(--jp); color: var(--sub); margin-left: 4px; }
+    .dxr-count-sub { font-size: 12px; font-weight: 700; color: var(--sub); font-variant-numeric: tabular-nums; }
+
+    /* 譜面の一覧（罫線の表） */
+    .dxr-list { background: var(--bg); border: 1px solid var(--line); overflow: hidden; }
     .dxr-row {
       display: grid; grid-template-columns: 30px 44px 1fr 66px 72px 72px; align-items: center; gap: 10px;
       padding: 9px 14px; border-top: 1px solid var(--line);
     }
-    .dxr-row:nth-child(even) { background: #FBFAFE; }
-    .dxr-head { border-top: 0; background: var(--ink) !important; color: #fff; font-size: 11px; font-weight: 700; padding-top: 7px; padding-bottom: 7px; }
-    .dxr-rank { font-weight: 800; color: var(--sub); text-align: center; font-variant-numeric: tabular-nums; }
+    .dxr-head { border-top: 0; background: var(--panel); color: var(--sub); font: 700 11px/1.6 var(--num); letter-spacing: .04em;
+      padding-top: 7px; padding-bottom: 7px; }
+    .dxr-rank { font: 700 14px/1.2 var(--num); color: var(--sub); text-align: center; font-variant-numeric: tabular-nums; }
     .dxr-name { font-weight: 700; line-height: 1.35; word-break: break-word; }
     .dxr-genre { font-size: 11px; font-weight: 700; color: var(--sub); margin-left: 2px; }
     .dxr-meta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
     .dxr-chip {
-      display: inline-block; font-size: 11px; font-weight: 700; line-height: 1; padding: 4px 7px;
-      border-radius: 6px; color: #fff; white-space: nowrap;
+      display: inline-block; font: 700 11px/1 var(--num); padding: 3px 6px;
+      border: 1px solid transparent; color: #fff; white-space: nowrap;
     }
-    .dxr-kind-DX { background: linear-gradient(90deg, var(--pink), #F29A2E); }
-    .dxr-kind-ST { background: #3B82C4; }
-    .dxr-kind-unknown { background: #999; }
-    .dxr-diff-BASIC { background: var(--basic); }
-    .dxr-diff-ADVANCED { background: var(--advanced); }
-    .dxr-diff-EXPERT { background: var(--expert); }
-    .dxr-diff-MASTER { background: var(--master); }
-    .dxr-diff-REMASTER { background: #fff; color: var(--master); box-shadow: inset 0 0 0 1.5px var(--remaster); }
-    .dxr-const { background: #EFECF9; color: var(--ink); }
+    .dxr-rare { background: transparent; color: var(--gold); border-color: var(--gold); }
+    .dxr-kind-DX { background: transparent; color: var(--dx); border-color: var(--dx); }
+    .dxr-kind-ST { background: transparent; color: var(--st); border-color: var(--st); }
+    .dxr-kind-unknown { background: transparent; color: var(--sub); border-color: var(--line); }
+    .dxr-diff-BASIC { background: var(--basic); border-color: var(--basic); }
+    .dxr-diff-ADVANCED { background: var(--advanced); border-color: var(--advanced); }
+    .dxr-diff-EXPERT { background: var(--expert); border-color: var(--expert); }
+    .dxr-diff-MASTER { background: var(--master); border-color: var(--master); }
+    .dxr-diff-REMASTER { background: transparent; color: var(--remas); border-color: var(--remas); }
+    .dxr-const { background: transparent; color: var(--ink); border-color: var(--line); }
     .dxr-const.is-est { color: var(--sub); }
     .dxr-diffmax { text-align: right; font-variant-numeric: tabular-nums; }
     .dxr-val { text-align: right; font-variant-numeric: tabular-nums; }
     .dxr-head .dxr-val { text-align: center; }
     .dxr-star { text-align: center; font-variant-numeric: tabular-nums; }
-    /* ☆の色分け（Discordアイコンと共通）：☆1・2 黄緑 / ☆3・4 オレンジ / ☆5・6 黄色 / ☆7 虹色 */
+    /* ☆の色分け：☆1・2 黄緑 / ☆3・4 オレンジ / ☆5・6 黄色 / ☆7 虹色（ダーク・ライト共通） */
     .dxr-star-pill {
-      display: inline-block; min-width: 3.6em; padding: 3px 7px; border-radius: 999px; text-align: center;
-      font-size: 13px; font-weight: 800; line-height: 1.3; color: #2B2350; background: #EFECF9;
+      display: inline-block; min-width: 3.6em; padding: 3px 7px; text-align: center;
+      font: 700 13px/1.3 var(--num); color: #0E0B1F; background: var(--panel);
     }
     .dxr-star-pill.g12 { background: #B5E05A; }
-    .dxr-star-pill.g34 { background: #FF8C2E; }
-    .dxr-star-pill.g56 { background: #FFE066; }
-    .dxr-star-pill.g7 { background: linear-gradient(90deg, #FF5E7E, #FFB347, #FFE66D, #7EE081, #5CC8FF, #A78BFA); }
+    .dxr-star-pill.g34 { background: #FF9A4A; }
+    .dxr-star-pill.g56 { background: #FFD86B; }
+    .dxr-star-pill.g7 { background: linear-gradient(90deg, #FF7A93, #FFB347, #FFE66D, #7EE081, #7CC8FF, #B79BFA); }
     .dxr-star-pill.g0 { color: var(--sub); }
-    .dxr-diffmax { font-size: 12px; color: var(--sub); }
-    .dxr-diffmax.is-max { color: var(--gold); font-weight: 800; }
-    .dxr-val { font-weight: 800; font-size: 15px; }
-    .dxr-head .dxr-star, .dxr-head .dxr-diffmax, .dxr-head .dxr-val { color: #fff; font-size: 11px; }
+    .dxr-diffmax { font: 500 12px/1.4 var(--num); color: var(--sub); }
+    .dxr-diffmax.is-max { color: var(--gold); font-weight: 700; }
+    .dxr-val { font: 700 15px/1.4 var(--num); }
+    .dxr-head .dxr-star, .dxr-head .dxr-diffmax, .dxr-head .dxr-val { color: var(--sub); font-size: 11px; }
 
     .dxr-jacket {
-      width: 44px; height: 44px; border-radius: 8px; object-fit: cover; display: block;
-      background: #EFECF9; box-shadow: 0 0 0 1px var(--line);
+      width: 44px; height: 44px; object-fit: cover; display: block;
+      background: var(--ph); border: 1px solid var(--line);
     }
     .dxr-share {
-      display: block; width: 100%; margin: -6px 0 16px; padding: 10px 16px; border-radius: 999px;
-      font: inherit; font-weight: 800; color: #fff; background: var(--pink); border: 0; cursor: pointer;
+      display: block; width: 100%; margin: -6px 0 16px; padding: 10px 16px;
+      font: inherit; font-weight: 800; color: var(--on-accent); background: var(--accent); border: 1px solid var(--accent); cursor: pointer;
     }
     .dxr-share:disabled { opacity: .6; cursor: default; }
     .dxr-share-opt {
       display: flex; align-items: center; justify-content: center; gap: 6px;
       margin: -8px 0 16px; font-size: 13px; font-weight: 700; color: var(--sub); cursor: pointer;
     }
-    .dxr-share-opt input { width: 16px; height: 16px; accent-color: var(--pink); }
+    .dxr-share-opt input { width: 16px; height: 16px; accent-color: var(--accent); }
     .dxr-rank-open {
-      display: block; width: 100%; margin: -6px 0 16px; padding: 9px 16px; border-radius: 999px;
-      font: inherit; font-weight: 800; color: var(--ink); background: var(--card); border: 2px solid var(--pink); cursor: pointer;
+      display: block; width: 100%; margin: -6px 0 16px; padding: 9px 16px;
+      font: inherit; font-weight: 800; color: var(--accent); background: var(--bg); border: 1px solid var(--accent); cursor: pointer;
     }
     /* おすすめ楽曲 */
     .dxr-rec { margin: -6px 0 18px; }
@@ -457,66 +557,140 @@
     .dxr-rec-row { display: grid; grid-template-columns: 30px 44px 1fr auto; gap: 10px; align-items: center;
       padding: 9px 14px; border-top: 1px solid var(--line); }
     .dxr-rec-row:first-child { border-top: 0; }
-    .dxr-rec-row:nth-child(even) { background: #FBFAFE; }
     .dxr-rec-goal { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 4px; }
     .dxr-rec-goal .dxr-star-pill { min-width: 0; }
     .dxr-rec-arrow { color: var(--sub); font-weight: 800; }
     .dxr-rec-rest { font-size: 12px; font-weight: 700; color: var(--ink); margin-left: 4px; }
     .dxr-rec-ease { font-size: 11px; color: var(--sub); margin-top: 2px; }
     .dxr-rec-gain { text-align: right; }
-    .dxr-rec-plus { font-weight: 800; font-size: 17px; color: var(--pink); font-variant-numeric: tabular-nums; }
-    .dxr-rec-sub { font-size: 11px; color: var(--sub); font-variant-numeric: tabular-nums; }
+    .dxr-rec-plus { font: 700 17px/1.3 var(--num); color: var(--pink); font-variant-numeric: tabular-nums; }
+    .dxr-rec-sub { font: 500 11px/1.4 var(--num); color: var(--sub); font-variant-numeric: tabular-nums; }
     .dxr-rec-empty { padding: 20px; text-align: center; color: var(--sub); }
     @media (max-width: 520px) {
       .dxr-rec-row { grid-template-columns: 22px 40px 1fr auto; gap: 7px; padding: 9px 10px; }
       .dxr-rec-plus { font-size: 15px; }
     }
     /* ランキング登録の画面 */
-    .dxr-modal { position: fixed; inset: 0; background: rgba(43,35,80,.45); display: flex; align-items: flex-start;
-      font: 14px/1.6 "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif; color: var(--ink);
+    .dxr-modal { position: fixed; inset: 0; background: rgba(14,11,31,.6); display: flex; align-items: flex-start;
+      font: 14px/1.6 var(--jp); color: var(--ink);
       justify-content: center; padding: 24px 12px; overflow: auto; z-index: 2; }
-    .dxr-dialog { width: min(100%, 460px); background: var(--card); border-radius: 20px; padding: 18px; }
+    .dxr-dialog { width: min(100%, 460px); background: var(--bg); border: 1px solid var(--line); border-top: 3px solid var(--accent); padding: 18px; }
     .dxr-dialog h3 { margin: 0 0 4px; font-size: 18px; }
     .dxr-dialog p { margin: 4px 0 12px; font-size: 12px; color: var(--sub); }
     .dxr-field { display: block; margin: 10px 0; font-weight: 700; font-size: 13px; }
     .dxr-field input[type="text"], .dxr-field input[type="password"] {
       display: block; width: 100%; margin-top: 4px; font: inherit; font-size: 16px; padding: 8px 12px;
-      border-radius: 10px; border: 1.5px solid var(--line); color: var(--ink); background: #fff;
+      border: 1px solid var(--line); color: var(--ink); background: var(--bg);
     }
     .dxr-field small { display: block; font-weight: 500; color: var(--sub); font-size: 11px; margin-top: 2px; }
     .dxr-check { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-weight: 700; font-size: 13px; }
-    .dxr-check input { width: 18px; height: 18px; accent-color: var(--pink); }
+    .dxr-check input { width: 18px; height: 18px; accent-color: var(--accent); }
     .dxr-check.off { opacity: .45; }
-    .dxr-preview { display: flex; align-items: center; gap: 12px; padding: 12px; margin: 12px 0; background: var(--bg); border-radius: 14px; }
-    .dxr-preview img, .dxr-preview .ph { width: 52px; height: 52px; border-radius: 10px; object-fit: cover; background: #EFECF9; flex: none; }
+    .dxr-preview { display: flex; align-items: center; gap: 12px; padding: 12px; margin: 12px 0; background: var(--panel); border: 1px solid var(--line); }
+    .dxr-preview img, .dxr-preview .ph { width: 52px; height: 52px; object-fit: cover; background: var(--ph); flex: none; }
     .dxr-preview .nm { font-weight: 800; font-size: 16px; word-break: break-all; }
     .dxr-preview .rt { font-size: 12px; color: var(--sub); }
-    .dxr-err { color: #E0434B; font-weight: 700; font-size: 13px; min-height: 1.4em; }
-    .dxr-ok { color: #2E8B3A; font-weight: 700; font-size: 14px; }
+    .dxr-err { color: var(--err); font-weight: 700; font-size: 13px; min-height: 1.4em; }
+    .dxr-ok { color: var(--ok); font-weight: 700; font-size: 14px; }
     .dxr-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; flex-wrap: wrap; }
-    .dxr-actions button { font: inherit; font-weight: 800; padding: 8px 16px; border-radius: 999px; cursor: pointer;
-      border: 1.5px solid var(--line); background: #fff; color: var(--ink); }
-    .dxr-actions button.primary { background: var(--pink); border-color: var(--pink); color: #fff; }
+    .dxr-actions button { font: inherit; font-weight: 800; padding: 8px 16px; cursor: pointer;
+      border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+    .dxr-actions button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
     .dxr-actions button:disabled { opacity: .5; cursor: default; }
-    .dxr-actions a { font-weight: 800; color: var(--pink); align-self: center; }
+    .dxr-actions a { font-weight: 800; color: var(--accent); align-self: center; }
     .dxr-note { margin-top: 14px; font-size: 12px; color: var(--sub); line-height: 1.7; }
 
     /* スマホ幅：MAX差を曲名の下へ回す */
     @media (max-width: 520px) {
-      .dxr-plates { gap: 6px; }
-      .dxr-plate { padding: 10px 10px; border-radius: 14px; }
+      .dxr-count { padding: 8px 10px; }
+      .dxr-count-num { font-size: 22px; }
+      .dxr-count-sub { font-size: 11px; }
+      .dxr-plate { padding: 10px 10px; }
       .dxr-plate-value { font-size: 22px; }
       .dxr-rank-icon { width: 24px; height: 24px; }
       .dxr-plate-rate { gap: 3px; }
       .dxr-plate-hint { display: none; }
-      .dxr-icon { width: 56px; height: 56px; border-radius: 12px; }
+      .dxr-icon { width: 56px; height: 56px; }
       .dxr-player { font-size: 20px; }
       .dxr-star-pill { min-width: 0; padding: 3px 5px; font-size: 12px; }
       .dxr-row { grid-template-columns: 22px 40px 1fr 54px 60px; gap: 7px; padding: 9px 10px; }
       .dxr-jacket { width: 40px; height: 40px; }
       .dxr-row > .dxr-diffmax { display: none; }
       .dxr-meta .dxr-diffmax-inline { display: inline-block; }
+      .dxr-close { padding: 6px 8px; }
     }
+    /* 起動時のメニュー・マイページ */
+    .dxr-top-btns { display: flex; gap: 6px; }
+    .dxr-close[hidden] { display: none; }
+    .dxr-menu { display: grid; gap: 12px; }
+    .dxr-menu-item {
+      display: block; width: 100%; text-align: left; font: inherit; color: var(--ink); cursor: pointer;
+      background: var(--bg); border: 1px solid var(--line); border-left: 4px solid var(--line); padding: 16px 18px;
+    }
+    .dxr-menu-item.is-primary { border-color: var(--accent); }
+    .dxr-menu-title { display: block; font-size: 18px; font-weight: 800; }
+    .dxr-menu-item.is-primary .dxr-menu-title { color: var(--accent); }
+    .dxr-menu-desc { display: block; font-size: 12px; font-weight: 700; color: var(--sub); margin-top: 2px; }
+    .dxr-card { background: var(--bg); border: 1px solid var(--line); padding: 16px; margin-bottom: 16px; }
+    .dxr-card h3 { margin: 0 0 4px; font-size: 17px; }
+    .dxr-card h4 { margin: 0 0 4px; font-size: 15px; }
+    .dxr-card-desc { margin: 2px 0 8px; font-size: 12px; color: var(--sub); }
+    .dxr-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .dxr-card .dxr-list { margin-top: 4px; }
+    .dxr-sub { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
+    .dxr-mini { font: inherit; font-size: 12px; font-weight: 700; color: var(--sub); background: var(--bg);
+      border: 1px solid var(--line); padding: 4px 12px; cursor: pointer; }
+    /* タブ：つなげたセル。選択中はアクセント色で塗る */
+    .dxr-tabs { display: flex; gap: 0; margin: 12px 0 4px; }
+    .dxr-tab { font: inherit; font-weight: 800; padding: 6px 16px; cursor: pointer; margin: 0 -1px -1px 0; position: relative;
+      border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+    .dxr-tab[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); z-index: 1; }
+    .dxr-fav-now { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--line); padding: 10px 12px; margin: 6px 0 8px; }
+    .dxr-picker { margin-top: 10px; }
+    .dxr-auto { margin: 4px 0 12px; padding: 10px 14px; background: var(--panel); border-left: 3px solid var(--ok); color: var(--ok); font-weight: 700; font-size: 13px; }
+    .dxr-auto.is-error { border-left-color: var(--err); color: var(--err); }
+    .dxr-auto a { color: inherit; }
+    .dxr-auto-set { margin-top: 12px; padding: 10px 12px; background: var(--panel); border: 1px solid var(--line); }
+    .dxr-crange { align-items: center; }
+    .dxr-crange-label { font-size: 12px; font-weight: 800; color: var(--sub); margin-right: 6px; }
+    .dxr-crange-sep { font-weight: 800; color: var(--sub); margin: 0 6px; }
+    .dxr-crange select { font: 700 15px/1.4 var(--num); padding: 4px 8px;
+      border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+    .dxr-order { margin-top: 6px; }
+    .dxr-card .dxr-crange { margin: 8px 0 4px; }
+    .dxr-tab-sm { font-size: 12px; padding: 4px 12px; }
+    .dxr-ptabs { display: flex; flex-wrap: wrap; gap: 0; margin: 8px 0 0; }
+    .dxr-ptab { font: inherit; font-size: 12px; font-weight: 800; padding: 4px 11px; cursor: pointer; margin: 0 -1px -1px 0; position: relative;
+      border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+    .dxr-ptab[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); z-index: 1; }
+    .dxr-ptab.pd-BASIC[aria-pressed="true"] { background: var(--basic); border-color: var(--basic); color: #fff; }
+    .dxr-ptab.pd-ADVANCED[aria-pressed="true"] { background: var(--advanced); border-color: var(--advanced); color: #fff; }
+    .dxr-ptab.pd-EXPERT[aria-pressed="true"] { background: var(--expert); border-color: var(--expert); color: #fff; }
+    .dxr-ptab.pd-MASTER[aria-pressed="true"] { background: var(--master); border-color: var(--master); color: #fff; }
+    .dxr-ptab.pd-REMASTER[aria-pressed="true"] { background: var(--bg); color: var(--remas); border-color: var(--remas); }
+    .dxr-psearch { display: block; width: 100%; margin-top: 10px; font: inherit; font-size: 16px; padding: 8px 14px;
+      border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+    .dxr-prow { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; align-items: center; width: 100%;
+      text-align: left; font: inherit; color: var(--ink); background: var(--bg); border: 0; border-top: 1px solid var(--line);
+      padding: 8px 12px; cursor: pointer; }
+    .dxr-prow:first-child { border-top: 0; }
+    .dxr-prow.is-on { background: var(--panel) !important; box-shadow: inset 3px 0 0 var(--accent); }
+    .dxr-pconfirm { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; padding: 8px 12px 12px; background: var(--panel);
+      box-shadow: inset 3px 0 0 var(--accent); }
+    .dxr-pconfirm button { font: inherit; font-weight: 800; padding: 7px 14px; cursor: pointer;
+      border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+    .dxr-pconfirm button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+    .dxr-pager { display: flex; flex-wrap: wrap; justify-content: center; gap: 0; margin: 8px 0; }
+    .dxr-pager button { font: 700 12px/1.6 var(--num); min-width: 32px; padding: 4px 9px; margin: 0 -1px -1px 0; position: relative;
+      border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+    .dxr-pager button.is-on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); opacity: 1; z-index: 1; }
+    .dxr-pager button:disabled:not(.is-on) { opacity: .4; cursor: default; }
+    .dxr-pager .gap { align-self: center; color: var(--sub); padding: 0 6px; }
+    .dxr-card .dxr-field input[type="text"], .dxr-card .dxr-field input[type="password"] {
+      display: block; width: 100%; margin-top: 4px; font: inherit; font-size: 16px; padding: 8px 12px;
+      border: 1px solid var(--line); color: var(--ink); background: var(--bg);
+    }
+    .dxr-card .dxr-actions button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
     .dxr-diffmax-inline { display: none; background: transparent; color: var(--sub); padding-left: 2px; }
     .dxr-diffmax-inline.is-max { color: var(--gold); }
   `;
@@ -536,7 +710,7 @@
       const font = document.createElement('link');
       font.id = 'dxr-font';
       font.rel = 'stylesheet';
-      font.href = 'https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap';
+      font.href = 'https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Noto+Sans+JP:wght@400;500;700;800&display=swap';
       document.head.appendChild(font);
     }
 
@@ -544,9 +718,14 @@
     const host = el('div');
     host.id = 'dxr-panel';
     // 外枠だけはページ側のCSSに上書きされないよう直接指定する
-    host.style.cssText =
-      'all:initial;position:fixed;inset:0;z-index:99999;display:block;' +
-      'overflow:auto;background:#F6F4FC;color:#2B2350;font-size:14px;line-height:1.6;';
+    const hostCss = () => {
+      const c = themeColors();
+      host.dataset.theme = theme;
+      host.style.cssText =
+        'all:initial;position:fixed;inset:0;z-index:99999;display:block;' +
+        `overflow:auto;background:${c.bg};color:${c.ink};font-size:14px;line-height:1.6;`;
+    };
+    hostCss();
     const root = host.attachShadow({ mode: 'open' });
     const style = el('style');
     style.textContent = STYLE;
@@ -557,16 +736,41 @@
     const close = el('button', 'dxr-close', '閉じる');
     close.type = 'button';
     close.onclick = () => host.remove();
-    top.append(title, close);
+    // メニューに戻るボタン（メニュー以外の画面で表示）
+    const back = el('button', 'dxr-close', '← メニュー');
+    back.type = 'button';
+    back.hidden = true;
+    // 表示（ダーク／ライト）の切り替え
+    const themeBtn = el('button', 'dxr-close dxr-theme');
+    themeBtn.type = 'button';
+    const paintTheme = () => {
+      const label = theme === 'dark' ? '表示：ダーク' : '表示：ライト';
+      themeBtn.textContent = label;
+      themeBtn.setAttribute('aria-label', `${label}（押すと切り替え）`);
+    };
+    themeBtn.onclick = () => {
+      theme = theme === 'dark' ? 'light' : 'dark';
+      try { localStorage.setItem(THEME_KEY, theme); } catch { /* 保存できない環境では、この画面の間だけ切り替える */ }
+      hostCss();
+      paintTheme();
+    };
+    paintTheme();
+    const btns = el('div', 'dxr-top-btns');
+    btns.append(back, themeBtn, close);
+    top.append(title, btns);
 
     const status = el('p', 'dxr-status');
     const body = el('div');
     wrap.append(top, status, body);
-    root.append(style, wrap);
+    root.append(style, el('div', 'dxr-bg'), wrap);
     document.body.appendChild(host);
 
     return {
       body,
+      setBack: (fn) => {
+        back.hidden = !fn;
+        back.onclick = fn;
+      },
       status: (t, isError = false) => {
         status.textContent = t;
         status.classList.toggle('is-error', isError);
@@ -631,6 +835,11 @@
         el('span', `dxr-chip dxr-const${s.estimated ? ' is-est' : ''}`, `${s.c.toFixed(1)}${s.estimated ? '*' : ''}`),
         el('span', `dxr-chip dxr-diffmax-inline${isMax ? ' is-max' : ''}`, diffText)
       );
+      if (s.rareAdd > 0 && RARE_MODES.includes(mode.id)) {
+        const rare = el('span', 'dxr-chip dxr-rare', `希少 +${s.rareAdd.toFixed(2)}`);
+        rare.title = `全国ランキング上位100人のうち☆6以上は ${s.rarePeople} 人`;
+        meta.appendChild(rare);
+      }
       main.appendChild(meta);
 
       // ジャケット画像（見つからない・読み込めない場合は空の枠）
@@ -699,11 +908,11 @@
     const here = readProfile(document);
     if (here.name) return here;
     const res = await fetch(PLAYER_URL, { credentials: 'same-origin' });
-    if (!res.ok) throw new Error(`maimai DX NET に接続できませんでした（HTTP ${res.status}）。`);
+    if (!res.ok) throw new Error(`maimaiでらっくすNET に接続できませんでした（HTTP ${res.status}）。`);
     const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
     const got = readProfile(doc);
     if ((res.redirected && !res.url.includes('/home')) || !got.name) {
-      throw new Error('maimai DX NET にログインしていないようです。ログインしてから、もう一度実行してください。');
+      throw new Error('maimaiでらっくすNET にログインしていないようです。ログインしてから、もう一度実行してください。');
     }
     return got;
   }
@@ -758,21 +967,27 @@
 
   // 画像の注意書きに載せるツールのURL
   const TOOL_URL = 'https://github.com/n4f1316/dxscore-tools';
+  const COPYRIGHT = '© 2026 なふ（2fRATE）';
 
   const IMG = {
     cols: 5, rows: 10, pad: 32, gap: 12,
     cellW: 240, jacket: 224, cellH: 320, headH: 204, footH: 110,
-    font: '"M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif',
-    ink: '#2B2350', sub: '#6E6892', line: '#E4DFF3', bg: '#F6F4FC', pink: '#E0348C',
+    font: '"Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif',
+    num: '"Chakra Petch", "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif', // 数字・英字ラベル用
+    // 色は表示（ダーク／ライト）に合わせる
+    get ink() { return themeColors().ink; }, get sub() { return themeColors().sub; }, get line() { return themeColors().line; },
+    get bg() { return themeColors().bg; }, get panel() { return themeColors().panel; }, get pink() { return themeColors().pink; },
+    get accent() { return themeColors().accent; }, get ph() { return themeColors().ph; }, get ring() { return themeColors().ring; },
   };
-  const DIFF_COLOR = { BASIC: '#2E9E5B', ADVANCED: '#D98E04', EXPERT: '#E0434B', MASTER: '#8E44D6', 'Re:MASTER': '#8E44D6' };
+  const DARK_INK = '#0E0B1F'; // 色つきラベルの上の文字（ダーク・ライト共通）
+  const DIFF_COLOR = { BASIC: '#23804A', ADVANCED: '#A86B00', EXPERT: '#D0343D', MASTER: '#8A3FD1', 'Re:MASTER': '#8A3FD1' };
   const TROPHY_COLOR = {
     Normal: ['#F1F1F4', '#4A4A57'], Bronze: ['#F4E3D3', '#7A4A1E'], Silver: ['#ECEFF3', '#4B5563'],
-    Gold: ['#FFF1C7', '#7A5600'], Rainbow: [null, '#2B2350'],
+    Gold: ['#FFF1C7', '#7A5600'], Rainbow: [null, '#12101F'],
   };
-  const RAINBOW = ['#FF5E7E', '#FFB347', '#FFE66D', '#7EE081', '#5CC8FF', '#A78BFA'];
+  const RAINBOW = ['#FF7A93', '#FFB347', '#FFE66D', '#7EE081', '#7CC8FF', '#B79BFA'];
 
-  // 画像を読み込む（失敗や時間切れなら null）。maimai DX NET 上で実行しているので同じサイトの画像は描ける
+  // 画像を読み込む（失敗や時間切れなら null）。maimaiでらっくすNET 上で実行しているので同じサイトの画像は描ける
   function loadImage(src, ms = 8000) {
     return new Promise((resolve) => {
       if (!src) return resolve(null);
@@ -784,13 +999,10 @@
     });
   }
 
-  function roundRect(ctx, x, y, w, h, r) {
+  // 枠はすべて直角（角丸なし）
+  function roundRect(ctx, x, y, w, h) {
     ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
+    ctx.rect(x, y, w, h);
     ctx.closePath();
   }
 
@@ -808,9 +1020,9 @@
     return t + '…';
   }
 
-  // 角丸のラベル（塗り＋文字）。幅を返す
-  function pill(ctx, x, y, text, { bg, fg, h = 24, size = 13, padX = 9, border = null, align = 'left' }) {
-    ctx.font = `800 ${size}px ${IMG.font}`;
+  // 四角のラベル（塗り＋文字）。幅を返す
+  function pill(ctx, x, y, text, { bg, fg, h = 24, size = 13, padX = 9, border = null, align = 'left', font = IMG.num }) {
+    ctx.font = `700 ${size}px ${font}`;
     const w = Math.ceil(ctx.measureText(text).width) + padX * 2;
     const left = align === 'right' ? x - w : x;
     roundRect(ctx, left, y, w, h, h / 2 > 8 ? 8 : h / 2);
@@ -826,10 +1038,10 @@
 
   function starPillColor(stars) {
     if (stars >= 7) return (x, w) => null;
-    if (stars >= 5) return '#FFE066';
-    if (stars >= 3) return '#FF8C2E';
+    if (stars >= 5) return '#FFD86B';
+    if (stars >= 3) return '#FF9A4A';
     if (stars >= 1) return '#B5E05A';
-    return '#EFECF9';
+    return IMG.panel;
   }
 
   // options.hideProfile が true なら、プレイヤー名と称号を載せない（アイコンとレートは載せる）
@@ -844,11 +1056,12 @@
     canvas.height = H;
     const ctx = canvas.getContext('2d');
 
-    // 丸ゴシックの読み込みを待つ（読めなければ端末のフォントで描く）
+    // フォントの読み込みを待つ（読めなければ端末のフォントで描く）
     try {
       await Promise.all([
-        document.fonts.load(`800 20px "M PLUS Rounded 1c"`),
-        document.fonts.load(`700 20px "M PLUS Rounded 1c"`),
+        document.fonts.load(`800 20px "Noto Sans JP"`, 'あ'),
+        document.fonts.load(`700 20px "Noto Sans JP"`, 'あ'),
+        document.fonts.load(`700 20px "Chakra Petch"`, '2fRATE 0123'),
       ]);
     } catch { /* そのまま */ }
 
@@ -856,7 +1069,7 @@
     const top = result.top.slice(0, cols * rows);
     const files = top.map((s) => resolveSong(jackets, s.name, s.kind, s.diff, s.level, s.max)?.img);
     const ranked = RANK_MODES.includes(result.mode.id);
-    const rankImg = ranked ? await loadImage(rankIconUrl(rankOf(result.rating).name)) : null;
+    const rankImg = ranked ? await loadImage(rankIconUrl(rankOf(result.rating, result.mode.id).name)) : null;
     const [iconImg, ...jacketImgs] = await Promise.all([
       loadImage(profile.icon),
       ...files.map((f) => loadImage(f ? JACKET_BASE + f : null)),
@@ -865,15 +1078,29 @@
     // 背景
     ctx.fillStyle = IMG.bg;
     ctx.fillRect(0, 0, W, H);
+    // 背景のリング（右上と左下。枠の背面に見える軽いアクセント）
+    ctx.save();
+    ctx.lineWidth = 2;
+    for (let r = 120, k = 0; r <= 760; r += 80, k++) {
+      ctx.strokeStyle = k === 3 ? IMG.accent : IMG.ring;
+      ctx.globalAlpha = k === 3 ? 0.6 : 1;
+      ctx.beginPath(); ctx.arc(W, 0, r, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = IMG.ring;
+    for (let r = 140; r <= 460; r += 80) { ctx.beginPath(); ctx.arc(0, H, r, 0, Math.PI * 2); ctx.stroke(); }
+    ctx.restore();
 
     // ---- 上部：アイコン・称号・名前・レート ----
     const hx = pad, hy = pad;
-    roundRect(ctx, hx, hy, W - pad * 2, headH - 20, 22);
-    ctx.fillStyle = '#FFFFFF';
+    roundRect(ctx, hx, hy, W - pad * 2, headH - 20);
+    ctx.fillStyle = IMG.bg;
     ctx.fill();
     ctx.lineWidth = 2;
     ctx.strokeStyle = IMG.line;
     ctx.stroke();
+    ctx.fillStyle = IMG.accent; // 上辺のアクセント線
+    ctx.fillRect(hx, hy, W - pad * 2, 5);
 
     const iconSize = 136;
     const ix = hx + 18, iy = hy + (headH - 20 - iconSize) / 2;
@@ -881,7 +1108,7 @@
     roundRect(ctx, ix, iy, iconSize, iconSize, 18);
     ctx.clip();
     if (iconImg) ctx.drawImage(iconImg, ix, iy, iconSize, iconSize);
-    else { ctx.fillStyle = '#EFECF9'; ctx.fillRect(ix, iy, iconSize, iconSize); }
+    else { ctx.fillStyle = IMG.ph; ctx.fillRect(ix, iy, iconSize, iconSize); }
     ctx.restore();
 
     const tx = ix + iconSize + 20;
@@ -899,7 +1126,7 @@
         ctx.font = `800 21px ${IMG.font}`;
         const [tbg, tfg] = TROPHY_COLOR[profile.trophyRank] ?? TROPHY_COLOR.Normal;
         pill(ctx, tx, iy + 8, fitText(ctx, profile.trophy, textMax - 36), {
-          bg: tbg ?? ((x, w) => rainbow(ctx, x, w)), fg: tfg, h: 40, size: 21, padX: 18,
+          bg: tbg ?? ((x, w) => rainbow(ctx, x, w)), fg: tfg, h: 40, size: 21, padX: 18, font: IMG.font,
         });
       }
       ctx.font = `800 50px ${IMG.font}`;
@@ -912,18 +1139,18 @@
     const rx = W - pad - 24;
     ctx.textAlign = 'right';
     ctx.fillStyle = IMG.sub;
-    ctx.font = `800 23px ${IMG.font}`;
-    ctx.fillText(`2fRATE（${result.mode.label}）`, rx, iy + 36);
-    ctx.font = `800 80px ${IMG.font}`;
+    ctx.font = `700 23px ${IMG.num}`;
+    ctx.fillText(`2fRATE${result.mode.label.replace("まで", "")}`, rx, iy + 36); // 例：2fRATE☆7
+    ctx.font = `700 80px ${IMG.num}`;
     const rateText = result.rating.toFixed(3);
     if (RANK_MODES.includes(result.mode.id)) {
-      // ランクの色で描く（グラデーション・光）
-      const rank = rankOf(result.rating);
+      // ランクの色で描く（グラデーション。ダーク表示では明るめの同系色）
+      const rank = rankOf(result.rating, result.mode.id);
       const tw = ctx.measureText(rateText).width;
       const g = ctx.createLinearGradient(rx - tw, 0, rx, 0);
-      rank.colors.forEach((c, i) => g.addColorStop(rank.colors.length > 1 ? i / (rank.colors.length - 1) : 0, c));
+      const rc = theme === 'dark' ? (rank.dark || rank.colors) : rank.colors;
+      rc.forEach((c, i) => g.addColorStop(rc.length > 1 ? i / (rc.length - 1) : 0, c));
       ctx.save();
-      if (rank.glow) { ctx.shadowColor = rank.glow; ctx.shadowBlur = 14; }
       ctx.fillStyle = g;
       ctx.fillText(rateText, rx, iy + 120);
       ctx.restore();
@@ -944,8 +1171,8 @@
       const x = pad + col * (cellW + gap);
       const y = gy + row * (cellH + gap);
 
-      roundRect(ctx, x, y, cellW, cellH, 16);
-      ctx.fillStyle = '#FFFFFF';
+      roundRect(ctx, x, y, cellW, cellH);
+      ctx.fillStyle = IMG.bg;
       ctx.fill();
       ctx.lineWidth = 1.5;
       ctx.strokeStyle = IMG.line;
@@ -957,11 +1184,11 @@
       roundRect(ctx, jx, jy, J, J, 12);
       ctx.clip();
       if (jacketImgs[i]) ctx.drawImage(jacketImgs[i], jx, jy, J, J);
-      else { ctx.fillStyle = '#EFECF9'; ctx.fillRect(jx, jy, J, J); }
+      else { ctx.fillStyle = IMG.ph; ctx.fillRect(jx, jy, J, J); }
       ctx.restore();
 
       // 順位（ジャケット左上）
-      pill(ctx, jx + 6, jy + 6, `#${i + 1}`, { bg: 'rgba(43,35,80,.88)', fg: '#FFFFFF', h: 32, size: 18, padX: 11 });
+      pill(ctx, jx + 6, jy + 6, `#${i + 1}`, { bg: 'rgba(14,11,31,.9)', fg: '#FFFFFF', h: 32, size: 18, padX: 11 });
 
       // ジャケット下部：DX/ST・難易度（左）、譜面定数（右）
       // 文字が絵柄に埋もれないよう、下側を暗くしてからラベルを置く
@@ -969,29 +1196,31 @@
       roundRect(ctx, jx, jy, J, J, 12);
       ctx.clip();
       const shade = ctx.createLinearGradient(0, jy + J - 68, 0, jy + J);
-      shade.addColorStop(0, 'rgba(20,16,40,0)');
-      shade.addColorStop(1, 'rgba(20,16,40,.72)');
+      shade.addColorStop(0, 'rgba(14,11,31,0)');
+      shade.addColorStop(1, 'rgba(14,11,31,.75)');
       ctx.fillStyle = shade;
       ctx.fillRect(jx, jy + J - 68, J, 68);
       ctx.restore();
 
       const r1 = jy + J - 36;
+      // DX/ST・難易度の1つ上の行（左詰め）：希少ボーナス（☆7まで・☆6まで のときだけ）
+      if (s.rareAdd > 0 && RARE_MODES.includes(result.mode.id)) {
+        pill(ctx, jx + 6, r1 - 32, `希少 +${s.rareAdd.toFixed(2)}`, {
+          bg: DARK_INK, fg: '#FFD86B', border: '#FFD86B', h: 28, size: 15, padX: 9, font: IMG.font,
+        });
+      }
       let px = jx + 6;
       px += pill(ctx, px, r1, s.kind, {
-        bg: s.kind === 'ST' ? '#3B82C4' : (lx, w) => {
-          const g = ctx.createLinearGradient(lx, 0, lx + w, 0);
-          g.addColorStop(0, '#E0348C'); g.addColorStop(1, '#F29A2E');
-          return g;
-        },
+        bg: s.kind === 'ST' ? '#1565B0' : '#B8460B',
         fg: '#FFFFFF', h: 30, size: 15, padX: 8,
       }) + 4;
       const isRe = s.diff === 'Re:MASTER';
       pill(ctx, px, r1, s.diff, {
-        bg: isRe ? '#FFFFFF' : DIFF_COLOR[s.diff] ?? '#999', fg: isRe ? '#8E44D6' : '#FFFFFF',
-        border: isRe ? '#B68BE0' : null, h: 30, size: 15, padX: 8,
+        bg: isRe ? '#FFFFFF' : DIFF_COLOR[s.diff] ?? '#999', fg: isRe ? '#6B2FB3' : '#FFFFFF',
+        border: isRe ? '#6B2FB3' : null, h: 30, size: 15, padX: 8,
       });
       pill(ctx, jx + J - 6, r1, `${s.c.toFixed(1)}${s.estimated ? '*' : ''}`, {
-        bg: 'rgba(255,255,255,.95)', fg: IMG.ink, h: 30, size: 18, padX: 9, align: 'right',
+        bg: '#FFFFFF', fg: DARK_INK, h: 30, size: 18, padX: 9, align: 'right',
       });
 
       // 1段目：楽曲名（長い場合は末尾を「…」で省略）
@@ -1006,9 +1235,9 @@
       const r2 = r0 + 36;
       const sc = starPillColor(s.stars);
       pill(ctx, jx, r2, `☆${starDisplay(s.cur, s.max)}`, {
-        bg: s.stars >= 7 ? (lx, w) => rainbow(ctx, lx, w) : sc, fg: IMG.ink, h: 34, size: 19, padX: 12,
+        bg: s.stars >= 7 ? (lx, w) => rainbow(ctx, lx, w) : sc, fg: s.stars >= 1 ? DARK_INK : IMG.sub, h: 34, size: 19, padX: 12,
       });
-      ctx.font = `800 29px ${IMG.font}`;
+      ctx.font = `700 29px ${IMG.num}`;
       ctx.fillStyle = IMG.ink;
       ctx.textAlign = 'right';
       ctx.textBaseline = 'middle';
@@ -1022,15 +1251,16 @@
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = IMG.ink;
-    ctx.font = `800 20px ${IMG.font}`;
+    ctx.font = `700 20px ${IMG.num}`;
     ctx.fillText(`Generated by 2fRATE（${TOOL_URL}）`, pad, fy);
     ctx.fillStyle = IMG.sub;
     ctx.font = `700 17px ${IMG.font}`;
-    ctx.fillText('楽曲のジャケット画像の著作権は、各権利者に帰属します。', pad, fy + 32);
+    ctx.fillText('楽曲・ジャケット画像・アイコン画像の著作権は、株式会社セガおよび各権利者に帰属します。', pad, fy + 32);
     ctx.fillText('2fRATE は非公式のファンメイドツールであり、株式会社セガおよび関連会社とは一切関係ありません。', pad, fy + 60);
     ctx.textAlign = 'right';
     ctx.fillText(`作成日時 ${d.getFullYear()}/${p2(d.getMonth() + 1)}/${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`,
       W - pad, fy);
+    ctx.fillText(COPYRIGHT, W - pad, fy + 32);
 
     return canvas;
   }
@@ -1041,7 +1271,7 @@
     const win = window.open('', '_blank');
     if (win) {
       win.document.title = '2fRATE 画像を作成中…';
-      win.document.body.style.cssText = 'font-family:sans-serif;padding:20px;color:#2B2350;';
+      win.document.body.style.cssText = `font-family:sans-serif;padding:20px;background:${themeColors().bg};color:${themeColors().ink};`;
       win.document.body.textContent = '画像を作成しています…';
     }
     const label = button.textContent;
@@ -1057,7 +1287,7 @@
         const doc = win.document;
         doc.title = '2fRATE レート対象曲';
         doc.head.innerHTML = '<meta name="viewport" content="width=device-width, initial-scale=1">';
-        doc.body.style.cssText = 'margin:0;padding:12px;background:#F6F4FC;color:#2B2350;font-family:sans-serif;text-align:center;';
+        doc.body.style.cssText = `margin:0;padding:12px;background:${themeColors().bg};color:${themeColors().ink};font-family:sans-serif;text-align:center;`;
         doc.body.textContent = '';
         const msg = doc.createElement('p');
         msg.style.cssText = 'margin:4px 0 10px;font-size:14px;';
@@ -1066,11 +1296,11 @@
         a.href = url;
         a.download = fileName;
         a.textContent = '画像をダウンロード';
-        a.style.cssText = 'display:inline-block;margin-bottom:12px;padding:8px 18px;border-radius:999px;background:#E0348C;color:#fff;font-weight:bold;text-decoration:none;';
+        a.style.cssText = `display:inline-block;margin-bottom:12px;padding:8px 18px;background:${themeColors().accent};color:${themeColors().onAccent};font-weight:bold;text-decoration:none;`;
         const img = doc.createElement('img');
         img.src = url;
         img.alt = '2fRATE レート対象曲';
-        img.style.cssText = 'max-width:100%;height:auto;border-radius:12px;box-shadow:0 4px 20px rgba(43,35,80,.15);';
+        img.style.cssText = `max-width:100%;height:auto;border:1px solid ${themeColors().line};`;
         doc.body.append(msg, a, doc.createElement('br'), img);
       } else {
         // 別タブが開けなかった場合は、その場でダウンロード
@@ -1122,14 +1352,81 @@
     return r;
   }
 
-  function openRankingDialog(root, profile, results) {
+  // ランキングに送る内容（ユーザー名・PIN／鍵 以外）。登録画面と自動登録の両方で使う
+  //   form: { displayName, anonymous, publicTop50, publicAchv }、scored：読み込んだ全譜面（☆6・☆7達成譜面を作るのに使う）
+  const iconFileOf = (profile) => (String(profile.icon || '').match(/\/Icon\/([0-9a-f]{16}\.png)/) || [])[1] || '';
+  // 送るアイコン：匿名なら空、通常のアイコンはファイル名、カメラで撮影したアイコン（通常のアイコンURLでないもの）は 'camera'
+  const iconValueOf = (profile, anonymous) => (anonymous ? '' : (iconFileOf(profile) || 'camera'));
+  // ☆6・☆7を達成した MASTER・Re:MASTER の譜面（☆7と☆6は ☆×10 の値で見分ける：70 が☆7、60〜69 が☆6）
+  //   1譜面 = [曲名, DX/ST, 3（MASTER）/4（Re:MASTER）, 譜面定数, スコア, 最大値, ☆×10, 定数が概算なら1]
+  function achvOf(scored) {
+    const list = (scored || [])
+      .filter((s) => COUNT_DIFFS.includes(s.diff) && s.stars >= 6)
+      .map((s) => [s.name, s.kind === 'ST' ? 'ST' : 'DX', s.diff === 'Re:MASTER' ? 4 : 3, Math.round(s.c * 10) / 10,
+        s.cur, s.max, starTenths(s.cur, s.max), s.estimated ? 1 : 0]);
+    return { v: 2, list };
+  }
+
+  function buildSubmitBody(profile, results, counts, form, scored) {
     const full = results.find((r) => r.mode.id === 'full');
     const cap6 = results.find((r) => r.mode.id === 'cap6');
     const cap5 = results.find((r) => r.mode.id === 'cap5');
     const round3 = (v) => Math.round(v * 1000) / 1000;
-    const iconFile = (String(profile.icon || '').match(/\/Icon\/([0-9a-f]{16}\.png)/) || [])[1] || '';
-    const constVersion = (CONST_URL.match(/maimai_consts_([^/]+)\.json/) || [])[1] || '';
-    const rankName = rankOf(full.rating).name;
+    // レート対象曲（上位50譜面）を送る形にする。value はそのレートでの単曲レート値
+    const frameOf = (res) => res.top.map((t) => ({
+      name: t.name,
+      kind: t.kind,
+      diff: t.diff,
+      level: t.level,
+      const: t.c,
+      estimated: !!t.estimated,
+      score: t.cur,
+      max: t.max,
+      star: Math.round(starTenths(t.cur, t.max)) / 10,
+      value: round3(t.values[res.mode.id]),
+      rare: RARE_MODES.includes(res.mode.id) ? t.rareAdd || 0 : 0, // 希少ボーナス（value に含まれている）
+    }));
+    return {
+      action: 'submit',
+      displayName: form.displayName,
+      anonymous: !!form.anonymous,
+      showIcon: !form.anonymous,
+      publicTop50: !!form.publicTop50,
+      publicAchv: form.publicAchv !== false,
+      icon: iconValueOf(profile, form.anonymous),
+      rateFull: round3(full.rating),
+      rateCap6: round3(cap6.rating),
+      rateCap5: round3(cap5.rating),
+      rank: rankOf(full.rating, 'full').name,
+      constVersion: (CONST_URL.match(/maimai_consts_([^/]+)\.json/) || [])[1] || '',
+      formulaVersion: FORMULA_VERSION,
+      rankCap6: rankOf(cap6.rating, 'cap6').name,
+      rankCap5: rankOf(cap5.rating, 'cap5').name,
+      // ☆7・☆6・☆5 を達成した MASTER / Re:MASTER の譜面数
+      counts: counts || null,
+      // レート対象曲（上位50譜面）：top50 は☆7まで、top50Cap6・top50Cap5 は☆6まで・☆5まで
+      top50: frameOf(full),
+      top50Cap6: frameOf(cap6),
+      top50Cap5: frameOf(cap5),
+      // ☆6・☆7達成譜面（公開するかは publicAchv）
+      achievements: achvOf(scored),
+    };
+  }
+
+  // このブラウザに保存する設定（maimaiでらっくすNET のサイト内だけ。サーバーには送らない）
+  //   FORM_KEY：表示名・匿名・ベスト枠の公開、AUTO_KEY：自動登録 { username, token }（PINは保存しない）
+  const AUTO_KEY = 'dxr-auto-upload';
+  const loadJson = (key) => { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch { return null; } };
+  const saveJson = (key, v) => { try { if (v === null) localStorage.removeItem(key); else localStorage.setItem(key, JSON.stringify(v)); } catch { /* 保存できない環境 */ } };
+
+  function openRankingDialog(root, profile, results, counts, scored) {
+    const full = results.find((r) => r.mode.id === 'full');
+    const cap6 = results.find((r) => r.mode.id === 'cap6');
+    const cap5 = results.find((r) => r.mode.id === 'cap5');
+    const iconFile = iconFileOf(profile);
+    const rankName = rankOf(full.rating, 'full').name;
+    const rankCap6 = rankOf(cap6.rating, 'cap6').name;
+    const rankCap5 = rankOf(cap5.rating, 'cap5').name;
 
     const modal = el('div', 'dxr-modal');
     const dlg = el('div', 'dxr-dialog');
@@ -1142,6 +1439,9 @@
 
     let savedUser = '';
     try { savedUser = localStorage.getItem(USER_KEY) || ''; } catch { /* なし */ }
+    // 前回の登録で入力した表示名など（このブラウザの中だけに保存。サーバーには送らない）
+    let savedForm = {};
+    try { savedForm = JSON.parse(localStorage.getItem(FORM_KEY) || '{}') || {}; } catch { savedForm = {}; }
 
     // ---- 入力画面 ----
     function inputView(prev = {}) {
@@ -1164,7 +1464,7 @@
         '英数字とアンダーバーで3〜16文字（公開されません）', { autocomplete: 'username', autocapitalize: 'off', spellcheck: 'false' });
       const pin = field('PIN', 'password', prev.pin ?? '',
         '数字4〜8桁（公開されません。忘れると更新できなくなります）', { inputmode: 'numeric', autocomplete: 'current-password' });
-      const name = field('表示名', 'text', prev.displayName ?? (profile.name || ''),
+      const name = field('表示名', 'text', prev.displayName ?? (typeof savedForm.displayName === 'string' && savedForm.displayName ? savedForm.displayName : (profile.name || '')),
         'ランキングに表示する名前（20文字まで）', { maxlength: '20' });
 
       const check = (label, checked) => {
@@ -1176,8 +1476,9 @@
         dlg.appendChild(lab);
         return { lab, cb };
       };
-      const anon = check('匿名で掲載する（表示名の代わりに「匿名#記号」で表示）', prev.anonymous ?? false);
-      const pub = check('ベスト枠（☆7までのレート対象曲50譜面）をランキングで公開する', prev.publicTop50 ?? true);
+      const anon = check('匿名で掲載する（表示名の代わりに「匿名#記号」で表示し、アイコンも初期アイコンにします）', prev.anonymous ?? (savedForm.anonymous === true));
+      const pub = check('ベスト枠（3種類のレートそれぞれのレート対象曲50譜面）をランキングで公開する', prev.publicTop50 ?? (typeof savedForm.publicTop50 === 'boolean' ? savedForm.publicTop50 : true));
+      const pubAchv = check('☆6・☆7達成譜面（MASTER・Re:MASTER のスコアと☆）をランキングで公開する', prev.publicAchv ?? (typeof savedForm.publicAchv === 'boolean' ? savedForm.publicAchv : true));
       const sync = () => { name.disabled = anon.cb.checked; };
       anon.cb.onchange = sync;
       sync();
@@ -1191,14 +1492,32 @@
       actions.append(cancel, next);
       dlg.append(err, actions);
 
+      // ユーザー名とPINが入力し終わった時点で、裏側で先に確認を始めておく（「内容を確認」を押したときの待ち時間を減らす）
+      let pre = null; // { key, promise }
+      const prefetch = () => {
+        const u = user.value.trim().toLowerCase();
+        const p = pin.value.trim();
+        if (!/^[a-z0-9_]{3,16}$/.test(u) || !/^\d{4,8}$/.test(p)) return;
+        const key = u + '\n' + p;
+        if (pre && pre.key === key) return;
+        pre = { key, promise: callRanking({ action: 'check', username: u, pin: p }).catch(() => null) };
+      };
+      let preTimer = null;
+      [user, pin].forEach((input) => {
+        input.addEventListener('input', () => { clearTimeout(preTimer); preTimer = setTimeout(prefetch, 600); });
+        input.addEventListener('change', prefetch);
+      });
+      prefetch(); // 前回のユーザー名が入っていて、PINも入っている場合など
+
       next.onclick = async () => {
         const form = {
           username: user.value.trim().toLowerCase(),
           pin: pin.value.trim(),
           displayName: name.value.trim(),
           anonymous: anon.cb.checked,
-          showIcon: !!iconFile, // アイコンは匿名かどうかに関わらず必ず表示する
+          showIcon: !anon.cb.checked, // 匿名のときはアイコンも送らない（初期アイコンで表示）
           publicTop50: pub.cb.checked,
+          publicAchv: pubAchv.cb.checked,
         };
         if (!/^[a-z0-9_]{3,16}$/.test(form.username)) { err.textContent = 'ユーザー名は英数字とアンダーバーで3〜16文字にしてください。'; return; }
         if (!/^\d{4,8}$/.test(form.pin)) { err.textContent = 'PINは数字4〜8桁にしてください。'; return; }
@@ -1206,8 +1525,13 @@
         next.disabled = true;
         err.textContent = '確認中…';
         try {
-          const r = await callRanking({ action: 'check', username: form.username, pin: form.pin },
-            () => { err.textContent = '混み合っているため、送り直しています…'; });
+          // 先に始めておいた確認が使えればそれを使い、なければここで確認する
+          const key = form.username + '\n' + form.pin;
+          let r = pre && pre.key === key ? await pre.promise : null;
+          if (!r || (!r.ok && r.busy)) {
+            r = await callRanking({ action: 'check', username: form.username, pin: form.pin },
+              () => { err.textContent = '混み合っているため、送り直しています…'; });
+          }
           if (!r.ok) { err.textContent = r.error || '確認できませんでした。'; next.disabled = false; return; }
           confirmView(form, r);
         } catch (e) {
@@ -1222,25 +1546,45 @@
       dlg.replaceChildren();
       dlg.append(el('h3', '', check.exists ? '記録を更新します' : '新しく登録します'),
         el('p', '', form.publicTop50
-          ? 'ランキングには次の内容と、ベスト枠（☆7までのレート対象曲50譜面）が公開されます（アイコンは匿名でも表示されます）。ユーザー名とPINは公開されません。'
-          : 'ランキングには次の内容が公開されます（アイコンは匿名でも表示されます）。ベスト枠は管理者の確認用に送信されますが、公開はされません。ユーザー名とPINは公開されません。'));
+          ? 'ランキングには次の内容と、ベスト枠（☆7まで・☆6まで・☆5まで それぞれのレート対象曲50譜面）が公開されます（匿名の場合、アイコンは初期アイコンで表示されます）。ユーザー名とPINは公開されません。'
+          : 'ランキングには次の内容が公開されます（匿名の場合、アイコンは初期アイコンで表示されます）。ベスト枠は管理者の確認用に送信されますが、公開はされません。ユーザー名とPINは公開されません。'),
+        el('p', '', form.publicAchv
+          ? '☆6・☆7を達成した MASTER・Re:MASTER の譜面（スコアと☆）も公開されます。'
+          : '☆6・☆7達成譜面は送信されますが、公開はされません（マイページの設定でいつでも公開に切り替えられます）。'));
 
       const pv = el('div', 'dxr-preview');
-      if (form.showIcon && profile.icon) {
+      if (form.showIcon && iconFile) {
         const img = el('img');
         img.src = profile.icon;
         img.alt = '';
         pv.appendChild(img);
+      } else if (form.showIcon) {
+        // カメラで撮影したアイコンはランキングではカメラマークで表示する（写真そのものは送らない）
+        const ph = el('div', 'ph');
+        ph.innerHTML = '<svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true">' +
+          '<rect width="64" height="64" style="fill:var(--ph)"/>' +
+          '<path d="M24 19l3-5h10l3 5h7a5 5 0 0 1 5 5v19a5 5 0 0 1-5 5H17a5 5 0 0 1-5-5V24a5 5 0 0 1 5-5z" style="fill:var(--sub)"/>' +
+          '<circle cx="32" cy="33" r="9" style="fill:var(--ph)"/><circle cx="32" cy="33" r="5.5" style="fill:var(--sub)"/></svg>';
+        ph.style.overflow = 'hidden';
+        pv.appendChild(ph);
       } else {
         pv.appendChild(el('div', 'ph'));
       }
       const tx = el('div');
       tx.append(
         el('div', 'nm', form.anonymous ? `匿名#${check.anonCode}` : form.displayName),
-        el('div', 'rt', `☆7まで ${full.rating.toFixed(3)}（${rankName}）／☆6まで ${cap6.rating.toFixed(3)}／☆5まで ${cap5.rating.toFixed(3)}`)
+        el('div', 'rt', `☆7まで ${full.rating.toFixed(3)}（${rankName}）／☆6まで ${cap6.rating.toFixed(3)}（${rankCap6}）／☆5まで ${cap5.rating.toFixed(3)}（${rankCap5}）`)
       );
+      if (counts) {
+        tx.appendChild(el('div', 'rt',
+          [7, 6, 5].map((n) => {
+            const mas = counts[`star${n}Mas`], re = counts[`star${n}Remas`];
+            return `☆${n}達成 ${mas + re}譜面（MAS ${mas}／Re:MAS ${re}）`;
+          }).join('・')));
+      }
       pv.appendChild(tx);
       dlg.appendChild(pv);
+      if (form.showIcon && !iconFile) dlg.appendChild(el('p', '', 'カメラで撮影した写真をアイコンにしている場合、ランキングではカメラマークで表示されます（写真は送信されません）。'));
       if (form.anonymous) dlg.appendChild(el('p', '', `あなたの匿名表記は「匿名#${check.anonCode}」です。ランキングで自分の記録を探すときの目印になります。`));
 
       const err = el('div', 'dxr-err');
@@ -1258,33 +1602,9 @@
         err.textContent = '送信中…';
         try {
           const r = await callRanking({
-            action: 'submit',
+            ...buildSubmitBody(profile, results, counts, form, scored),
             username: form.username,
             pin: form.pin,
-            displayName: form.displayName,
-            anonymous: form.anonymous,
-            showIcon: form.showIcon,
-            publicTop50: form.publicTop50,
-            icon: form.showIcon ? iconFile : '',
-            rateFull: round3(full.rating),
-            rateCap6: round3(cap6.rating),
-            rateCap5: round3(cap5.rating),
-            rank: rankName,
-            constVersion,
-            formulaVersion: FORMULA_VERSION,
-            // ☆7までのレート対象曲（上位50譜面）
-            top50: full.top.map((t) => ({
-              name: t.name,
-              kind: t.kind,
-              diff: t.diff,
-              level: t.level,
-              const: t.c,
-              estimated: !!t.estimated,
-              score: t.cur,
-              max: t.max,
-              star: Math.round(starTenths(t.cur, t.max)) / 10,
-              value: round3(t.values.full),
-            })),
           }, () => { err.textContent = '混み合っているため、送り直しています…'; });
           if (!r.ok) {
             err.textContent = r.error || '登録できませんでした。';
@@ -1292,7 +1612,12 @@
             back.disabled = false;
             return;
           }
-          try { localStorage.setItem(USER_KEY, form.username); } catch { /* 無視 */ }
+          try {
+            localStorage.setItem(USER_KEY, form.username);
+            localStorage.setItem(FORM_KEY, JSON.stringify({
+              displayName: form.displayName, anonymous: form.anonymous, publicTop50: form.publicTop50, publicAchv: form.publicAchv,
+            }));
+          } catch { /* 保存できない環境では何もしない */ }
           doneView(r, form);
         } catch (e) {
           err.textContent = '通信に失敗しました。時間をおいてもう一度お試しください。';
@@ -1401,10 +1726,11 @@
       const targetTenths = targetStars * 10;
       const pct = STAR_THRESHOLDS.find((t) => t.stars === targetStars).pct;
       const needScore = targetStars >= 7 ? s.max : Math.ceil((s.max * pct) / 100);
-      const newValue = (s.c * s.c * targetStars) / RATE_DIVISOR + (targetTenths >= 70 ? MAX_BONUS : 0);
+      const st = stats.get(`${s.name}|${s.kind}|${s.diff}|${s.max}`);
+      const newValue = (s.c * s.c * targetStars) / RATE_DIVISOR + (targetTenths >= 70 ? MAX_BONUS : 0)
+        + (targetTenths >= 60 ? rareOf(st).add : 0); // ☆6以上で希少ボーナス
       const gain = inTop.has(s) ? (newValue - s.values.full) / TOP_N : Math.max(0, newValue - value50) / TOP_N;
       if (gain <= 0) continue;
-      const st = stats.get(`${s.name}|${s.kind}|${s.diff}|${s.max}`);
       list.push({
         s, inTop: inTop.has(s), now, targetTenths, needScore, rest: needScore - s.cur,
         newValue, gain, ease: easeOf(st, targetTenths),
@@ -1417,7 +1743,30 @@
 
 
   function recommendEl(all, top, stats, jackets, rating) {
-    const recs = buildRecommendations(all, top, stats, rating);
+    return recommendListEl(buildRecommendations(all, top, stats, rating).slice(0, RECOMMEND_COUNT), jackets, rating);
+  }
+
+  // 前回のおすすめ楽曲をこのブラウザに保存しておく（次に起動したとき、計算する前にマイページで見られるように）
+  //   保存するのは表示に使う項目だけ（上位 RECOMMEND_COUNT 件）。プレイヤー名も残し、別のプレイヤーの結果は出さない
+  const LAST_REC_KEY = 'dxr-last-recommend';
+  function saveLastRecommend(profile, run) {
+    const full = run.results.find((r) => r.mode.id === 'full');
+    const recs = buildRecommendations(run.scored, full.top, run.stats, full.rating).slice(0, RECOMMEND_COUNT);
+    const d = new Date();
+    const p2 = (v) => String(v).padStart(2, '0');
+    saveJson(LAST_REC_KEY, {
+      player: profile.name || '',
+      date: `${d.getFullYear()}/${p2(d.getMonth() + 1)}/${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`,
+      rating: full.rating,
+      recs: recs.map((r) => ({
+        s: { name: r.s.name, kind: r.s.kind, diff: r.s.diff, level: r.s.level, max: r.s.max, cur: r.s.cur, c: r.s.c, estimated: !!r.s.estimated },
+        inTop: r.inTop, now: r.now, targetTenths: r.targetTenths, needScore: r.needScore, rest: r.rest,
+        newValue: r.newValue, gain: r.gain, ease: r.ease,
+      })),
+    });
+  }
+
+  function recommendListEl(recs, jackets, rating) {
     const box = el('div', 'dxr-rec');
     const head = el('div', 'dxr-rec-head');
     head.append(el('div', 'dxr-rec-title', 'おすすめ楽曲（☆7まで）'),
@@ -1432,7 +1781,7 @@
     box.appendChild(listBox);
 
     function render() {
-      const shown = recs.slice(0, RECOMMEND_COUNT);
+      const shown = recs;
       const list = el('div', 'dxr-list');
       if (!shown.length) list.appendChild(el('div', 'dxr-rec-empty', 'おすすめできる譜面が見つかりませんでした。'));
       shown.forEach((r, i) => {
@@ -1477,8 +1826,8 @@
   }
 
   // results: [{ mode, rating, top }, ...]
-  function renderResult(ui, profile, results, info, jackets, extras = {}) {
-    // プレイヤー情報：アイコン / 称号 / 名前
+  // プレイヤー情報（maimaiでらっくすNET のアイコン・称号・プレイヤー名）。caption は名前の上の小さな見出し（省略可）
+  function profileEl(ui, profile, caption) {
     const player = el('div', 'dxr-profile');
     if (profile.icon) {
       const icon = el('img', 'dxr-icon');
@@ -1488,13 +1837,18 @@
       player.appendChild(icon);
     }
     const text = el('div', 'dxr-profile-text');
+    if (caption) text.appendChild(el('div', 'dxr-card-desc dxr-profile-caption', caption));
     if (profile.trophy) {
+      const root = ui.body.getRootNode();
       const officialCss = profile.trophyEl ? extractOfficialCss(profile.trophyEl) : '';
       if (officialCss) {
-        // 公式の称号をそのまま複製し、取り出した公式CSSで表示する
-        const style = el('style');
-        style.textContent = officialCss;
-        ui.body.getRootNode().appendChild(style);
+        // 公式の称号をそのまま複製し、取り出した公式CSSで表示する（CSSは画面に1回だけ入れる）
+        if (!root.getElementById?.('dxr-trophy-css')) {
+          const style = el('style');
+          style.id = 'dxr-trophy-css';
+          style.textContent = officialCss;
+          root.appendChild(style);
+        }
         const clone = document.importNode(profile.trophyEl, true);
         [clone, ...clone.querySelectorAll('[id]')].forEach((e) => e.removeAttribute('id'));
         const holder = el('div', 'dxr-trophy-official');
@@ -1509,6 +1863,12 @@
     }
     text.appendChild(el('div', 'dxr-player', profile.name || 'プレイヤー名を取得できませんでした'));
     player.appendChild(text);
+    return player;
+  }
+
+  function renderResult(ui, profile, results, info, jackets, extras = {}) {
+    // プレイヤー情報：アイコン / 称号 / 名前
+    const player = profileEl(ui, profile);
 
     // レートの札（押すとそのレートのレート対象曲に切り替わる）
     const plates = el('div', 'dxr-plates');
@@ -1523,7 +1883,7 @@
           const rate = el('span', 'dxr-plate-rate');
           const value = el('span', 'dxr-plate-value', rating.toFixed(3));
           if (RANK_MODES.includes(mode.id)) {
-            const rank = rankOf(rating);
+            const rank = rankOf(rating, mode.id);
             value.classList.add('dxr-ranked');
             value.style.cssText = rankCss(rank);
             value.title = rank.name;
@@ -1564,14 +1924,17 @@
     const note = el('p', 'dxr-note',
       `${info}。` +
       (hasEst ? '定数の * は定数表にない譜面で、レベル表示からの概算値（下限）です。' : '') +
-      '☆の小数は次の☆までの進み具合で、計算には整数部分のみ使います。' +
+      '☆の小数は次の☆までの進み具合で、計算には0.5倍の重みで反映します。' +
       '「☆6まで」は☆7を☆6として、「☆5まで」は☆6以上を☆5として計算しています。' +
-      (jackets ? '' : 'ジャケット画像の対応表を読み込めなかったため、画像は表示していません。'));
+      'どのレートも、☆が上限（☆7・☆6・☆5）に達した譜面には +0.1 されます。' +
+      '「☆7まで」「☆6まで」では、全国ランキング上位100人のうち☆6以上が20人以下の譜面を☆6以上で達成すると、希少ボーナス（20人以下 +0.05、10人以下 +0.10、3人以下 +0.15）が加わります。' +
+      (jackets ? '' : 'ジャケット画像の対応表を読み込めなかったため、画像は表示していません。') +
+      `${COPYRIGHT}。2fRATE のプログラム・デザイン・ロゴの無断転載・無断使用を禁じます。`);
 
     // ランキングに登録（☆7まで・☆6まで・☆5まで の3つのレートを送る）
     const rankBtn = el('button', 'dxr-rank-open', 'ランキングに登録・更新する');
     rankBtn.type = 'button';
-    rankBtn.onclick = () => openRankingDialog(ui.body.getRootNode(), profile, results);
+    rankBtn.onclick = () => openRankingDialog(ui.body.getRootNode(), profile, results, extras.counts, extras.all);
 
     // おすすめ楽曲（☆7まで）：ボタンで開閉
     const recBtn = el('button', 'dxr-rank-open', 'おすすめ楽曲を見る');
@@ -1585,25 +1948,875 @@
       recBtn.textContent = 'おすすめ楽曲を閉じる';
     };
 
-    ui.body.append(player, plates, shareBtn, showLabel, rankBtn, ...(SHOW_RECOMMEND ? [recBtn] : []), ...lists, note);
+    // ☆7・☆6・☆5達成譜面数（MASTER・Re:MASTER の合計と内訳）
+    const counts = extras.counts;
+    const countBox = el('div', 'dxr-counts');
+    if (counts) {
+      [
+        { stars: 7, label: '達成', mas: counts.star7Mas, re: counts.star7Remas },
+        { stars: 6, label: '達成', mas: counts.star6Mas, re: counts.star6Remas },
+        { stars: 5, label: '達成', mas: counts.star5Mas, re: counts.star5Remas },
+      ].forEach((c) => {
+        const card = el('div', 'dxr-count');
+        const head = el('div', 'dxr-count-head');
+        head.append(el('span', `dxr-star-pill ${starClass(c.stars)}`, `☆${c.stars}`), document.createTextNode(c.label));
+        const num = el('div', 'dxr-count-num', String(c.mas + c.re));
+        num.appendChild(el('small', '', '譜面'));
+        const sub = el('div', 'dxr-count-sub');
+        sub.append(el('span', '', `MAS ${c.mas}`), document.createTextNode(' ／ '), el('span', '', `Re:MAS ${c.re}`));
+        card.append(head, num, sub);
+        countBox.appendChild(card);
+      });
+    }
+
+    ui.body.append(player, plates, ...(counts ? [countBox] : []), shareBtn, showLabel, rankBtn, ...(SHOW_RECOMMEND ? [recBtn] : []), ...lists, note);
+  }
+
+  // ============================================================
+  //  マイページ
+  // ============================================================
+
+  const GENRE_URL = (d) => `/maimai-mobile/record/musicGenre/search/?genre=99&diff=${d}`; // 全ジャンル（d：3=MASTER, 4=Re:MASTER）
+  const RARE_PAGE_SIZE = 20; // 達成人数の一覧を何件ずつ表示するか
+  const FAV_DIFFS = ['BASIC', 'ADVANCED', 'EXPERT', 'MASTER', 'Re:MASTER'];
+
+  // ランキングは上位100人までしか載らないので、100人目まで埋まっている譜面は「100人以上」の可能性がある（譜面データビューアと同じ扱い）
+  const statFull = (r) => r.count >= 100 && r.max && r.row100 !== null && r.row100 !== undefined;
+  const PEOPLE_METRICS = [
+    {
+      id: 'max', label: '☆7', need: 7,
+      desc: '自分が☆7（理論値）を達成した譜面と、全国ランキング上位100人で☆7を達成している人数',
+      people: (r) => (r.maxCount === null || r.maxCount === undefined ? null : r.maxCount),
+      plus: (r) => statFull(r) && r.row100 === r.max,
+    },
+    {
+      id: 'star6', label: '☆6以上', need: 6,
+      desc: '自分が☆6以上を達成した譜面と、全国ランキング上位100人で☆6以上（☆7を含む）を達成している人数',
+      people: (r) => (r.star6Count === null || r.star6Count === undefined || r.maxCount === null || r.maxCount === undefined
+        ? null : r.star6Count + r.maxCount),
+      plus: (r) => statFull(r) && r.row100 * 100 >= r.max * 99,
+    },
+  ];
+
+  // 自分の MASTER・Re:MASTER の全譜面を読み込み、指標ごとに達成人数の少ない譜面を選ぶ
+  async function findRareCharts(onStatus) {
+    const statsPromise = loadRankingStats(LEVEL_MAX, COUNT_MIN_LEVEL); // 全国ランキングの集計（Lv10+〜Lv15）
+    const jacketPromise = loadJacketMap();
+    const mine = [];
+    for (const [i, d] of [[0, 3], [1, 4]]) {
+      onStatus(`${d === 3 ? 'MASTER' : 'Re:MASTER'} の全楽曲を取得中…（${i + 1} / 2ページ目）`);
+      if (i > 0) await sleep(WAIT_MS);
+      const res = await fetch(GENRE_URL(d), { credentials: 'same-origin' });
+      if (!res.ok) throw new Error(`${d === 3 ? 'MASTER' : 'Re:MASTER'} の取得に失敗しました (HTTP ${res.status})`);
+      mine.push(...parsePage(await res.text(), 0).filter((s) => COUNT_DIFFS.includes(s.diff)));
+    }
+    onStatus('全国ランキングの集計と照らし合わせています…');
+    const [stats, jackets] = await Promise.all([statsPromise, jacketPromise]);
+    const lists = {};
+    for (const m of PEOPLE_METRICS) {
+      const rows = [];
+      for (const s of mine) {
+        const stars = starsOf(s.cur, s.max);
+        if (stars < m.need) continue;
+        const st = stats.get(`${s.name}|${s.kind}|${s.diff}|${s.max}`);
+        if (!st) continue;
+        const people = m.people(st);
+        if (people === null) continue;
+        const plus = m.plus(st);
+        const lv = st.level || s.level;
+        // 定数（集計にないときはレベル表記の下限。14+ なら 14.6）
+        const cf = st.const ?? (parseInt(lv, 10) + (String(lv).endsWith('+') ? 0.6 : 0));
+        rows.push({ ...s, level: lv, c: st.const ?? null, cf, stars, people, plus, sort: people + (plus ? 0.5 : 0) });
+      }
+      // 人数の少ない順。同じ人数なら定数の高い順
+      rows.sort((a, b) => a.sort - b.sort || (b.c ?? 0) - (a.c ?? 0) || a.name.localeCompare(b.name, 'ja'));
+      lists[m.id] = rows; // 達成した譜面すべて（表示は20件ずつ）
+    }
+    return { lists, jackets, scanned: mine.length };
+  }
+
+  function rareListEl(rows, metric, jackets, start = 0) {
+    const list = el('div', 'dxr-list');
+    if (!rows.length) {
+      list.appendChild(el('div', 'dxr-rec-empty', `${metric.label}を達成した譜面のうち、全国ランキングの集計がある譜面（Lv10+以上）はまだありません。`));
+      return list;
+    }
+    rows.forEach((s, i) => {
+      const row = el('div', 'dxr-rec-row');
+      const song = resolveSong(jackets, s.name, s.kind, s.diff, s.level, s.max);
+      let jacket;
+      if (song?.img) {
+        jacket = el('img', 'dxr-jacket');
+        jacket.src = JACKET_BASE + song.img;
+        jacket.alt = '';
+        jacket.loading = 'lazy';
+        jacket.onerror = () => { jacket.removeAttribute('src'); };
+      } else {
+        jacket = el('div', 'dxr-jacket');
+      }
+      const main = el('div');
+      const nameEl = el('div', 'dxr-name', s.name);
+      if (song?.genre) nameEl.appendChild(el('span', 'dxr-genre', `（${song.genre}）`));
+      const meta = el('div', 'dxr-meta');
+      meta.append(
+        el('span', `dxr-chip dxr-kind-${s.kind === '?' ? 'unknown' : s.kind}`, s.kind),
+        el('span', `dxr-chip dxr-diff-${s.diff.replace(':', '').toUpperCase()}`, s.diff),
+        el('span', 'dxr-chip dxr-const', s.c ? s.c.toFixed(1) : `Lv${s.level}`)
+      );
+      const pill = el('span', `dxr-star-pill ${starClass(s.stars)}`, `☆${starDisplay(s.cur, s.max)}`);
+      pill.style.marginLeft = '2px';
+      meta.appendChild(pill);
+      main.append(nameEl, meta);
+      const gain = el('div', 'dxr-rec-gain');
+      gain.append(el('div', 'dxr-rec-plus', `${s.people}${s.plus ? '+' : ''}人`), el('div', 'dxr-rec-sub', `上位100人中の${metric.label}`));
+      row.append(el('div', 'dxr-rank', String(start + i + 1)), jacket, main, gain);
+      list.appendChild(row);
+    });
+    return list;
+  }
+
+  // ページ切り替え：« 前へ  1 … 4 5 [6] 7 8 … 20  次へ »（onGo にページ番号を渡す）
+  function pagerEl(page, total, onGo) {
+    const nav = el('div', 'dxr-pager');
+    if (total <= 1) return nav;
+    const btn = (label, n, opts = {}) => {
+      const b = el('button', opts.current ? 'is-on' : '', label);
+      b.type = 'button';
+      if (opts.disabled || opts.current) b.disabled = true;
+      else b.onclick = () => onGo(n);
+      return b;
+    };
+    nav.appendChild(btn('« 前へ', page - 1, { disabled: page === 1 }));
+    const nums = new Set([1, total]);
+    for (let n = page - 2; n <= page + 2; n++) if (n >= 1 && n <= total) nums.add(n);
+    let prev = 0;
+    [...nums].sort((a, b) => a - b).forEach((n) => {
+      if (n - prev > 1) nav.appendChild(el('span', 'gap', '…'));
+      nav.appendChild(btn(String(n), n, { current: n === page }));
+      prev = n;
+    });
+    nav.appendChild(btn('次へ »', page + 1, { disabled: page === total }));
+    return nav;
+  }
+
+  // 達成人数の一覧のカード（達成した譜面すべてを、人数の少ない順／多い順で20件ずつ）
+  function rareCard() {
+    const card = el('section', 'dxr-card');
+    card.append(el('h3', '', '達成人数で見る自分の達成譜面'),
+      el('p', 'dxr-card-desc', '自分が達成した譜面を、全国ランキング上位100人で同じく達成している人数の順に表示します。MASTER・Re:MASTER の全楽曲（2ページ）を読み込みます。人数は譜面データビューアと同じ集計（Lv10+以上）を使います。'));
+    const btn = el('button', 'dxr-rank-open', '集計する');
+    btn.type = 'button';
+    btn.style.margin = '4px 0 0';
+    const msg = el('p', 'dxr-status');
+    const out = el('div');
+    card.append(btn, msg, out);
+    btn.onclick = async () => {
+      btn.disabled = true;
+      out.replaceChildren();
+      msg.classList.remove('is-error');
+      try {
+        const { lists, jackets, scanned } = await findRareCharts((t) => { msg.textContent = t; });
+        msg.textContent = `${scanned} 譜面から集計しました。`;
+        const tabs = el('div', 'dxr-tabs');
+        const order = el('div', 'dxr-tabs dxr-order');
+        const kindTabs = el('div', 'dxr-tabs dxr-order');
+        const crange = el('div', 'dxr-ptabs dxr-crange');
+        let kind = '*'; // '*'：すべて / 'DX' / 'ST'
+        let cMin = null;
+        let cMax = null;
+        const allRows = [...lists.max, ...lists.star6].map((r) => r.cf).filter(Number.isFinite);
+        const cLo = allRows.length ? Math.min(...allRows) : 10;
+        const cHi = allRows.length ? Math.max(...allRows) : 15;
+        const cOpts = [];
+        for (let v = Math.round(cLo * 10); v <= Math.round(cHi * 10); v++) cOpts.push(v / 10);
+        const renderRange = () => {
+          const mk = (value, label, onChange) => {
+            const sel = el('select');
+            sel.setAttribute('aria-label', label);
+            cOpts.forEach((v) => { const o = el('option', '', v.toFixed(1)); o.value = String(v); sel.appendChild(o); });
+            sel.value = String(value);
+            sel.onchange = () => { onChange(Number(sel.value)); page = 1; show(); };
+            return sel;
+          };
+          const reset = el('button', 'dxr-ptab', '指定なし');
+          reset.type = 'button';
+          reset.setAttribute('aria-pressed', String(cMin === null && cMax === null));
+          reset.onclick = () => { cMin = null; cMax = null; page = 1; show(); };
+          crange.replaceChildren(el('span', 'dxr-crange-label', '譜面定数'),
+            mk(cMin ?? cLo, '譜面定数の下限', (v) => { cMin = v; if (cMax !== null && cMax < v) cMax = v; }),
+            el('span', 'dxr-crange-sep', '〜'),
+            mk(cMax ?? cHi, '譜面定数の上限', (v) => { cMax = v; if (cMin !== null && cMin > v) cMin = v; }),
+            reset);
+        };
+        const desc = el('p', 'dxr-card-desc');
+        const holder = el('div');
+        let metric = PEOPLE_METRICS[0];
+        let asc = true; // true：少ない順、false：多い順
+        let page = 1;
+        const show = () => {
+          [...tabs.children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === metric.id)));
+          [...order.children].forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.asc === '1') === asc)));
+          [...kindTabs.children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.kind === kind)));
+          renderRange();
+          // DX/ST と譜面定数の範囲で絞り込む
+          const base = lists[metric.id].filter((r) => (kind === '*' || r.kind === kind)
+            && (cMin === null || r.cf >= cMin - 1e-9) && (cMax === null || r.cf <= cMax + 1e-9));
+          // 多い順でも、同じ人数なら定数の高い順にする
+          const all = asc ? base
+            : [...base].sort((x, y) => y.sort - x.sort || (y.c ?? 0) - (x.c ?? 0) || x.name.localeCompare(y.name, 'ja'));
+          const total = Math.max(1, Math.ceil(all.length / RARE_PAGE_SIZE));
+          page = Math.min(Math.max(page, 1), total);
+          const start = (page - 1) * RARE_PAGE_SIZE;
+          const shown = all.slice(start, start + RARE_PAGE_SIZE);
+          desc.textContent = `${metric.desc}（${all.length} 譜面${all.length > RARE_PAGE_SIZE ? `中 ${start + 1}〜${start + shown.length} 件目` : ''}）`;
+          const go = (n) => { page = n; show(); desc.scrollIntoView({ block: 'start' }); };
+          holder.replaceChildren(pagerEl(page, total, go), rareListEl(shown, metric, jackets, start), pagerEl(page, total, go));
+        };
+        PEOPLE_METRICS.forEach((m) => {
+          const b = el('button', 'dxr-tab', m.label);
+          b.type = 'button';
+          b.dataset.id = m.id;
+          b.onclick = () => { metric = m; page = 1; show(); };
+          tabs.appendChild(b);
+        });
+        [['1', '少ない順'], ['0', '多い順']].forEach(([v, label]) => {
+          const b = el('button', 'dxr-tab dxr-tab-sm', label);
+          b.type = 'button';
+          b.dataset.asc = v;
+          b.onclick = () => { asc = v === '1'; page = 1; show(); };
+          order.appendChild(b);
+        });
+        [['*', 'DX・ST'], ['DX', 'DXのみ'], ['ST', 'STのみ']].forEach(([v, label]) => {
+          const b = el('button', 'dxr-tab dxr-tab-sm', label);
+          b.type = 'button';
+          b.dataset.kind = v;
+          b.onclick = () => { kind = v; page = 1; show(); };
+          kindTabs.appendChild(b);
+        });
+        out.append(tabs, order, kindTabs, crange, desc, holder);
+        show();
+        btn.textContent = 'もう一度集計する';
+      } catch (e) {
+        msg.textContent = 'エラー: ' + e.message;
+        msg.classList.add('is-error');
+        console.error(e);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+    return card;
+  }
+
+  // お気に入り譜面の候補：定数表に載っている譜面（＝実在する譜面の組み合わせ）を一覧にする
+  //   定数からレベル表記（14 / 14+ など）を出す。同名の別曲は「|最大値」つきのキーで別々に入っている
+  const FAV_PAGE_SIZE = 50;
+  const levelLabelOf = (c) => {
+    const base = Math.floor(c + 1e-9);
+    return base >= 7 && c - base >= 0.6 - 1e-9 ? `${base}+` : String(base);
+  };
+  let favChartsPromise = null;
+  function loadFavCharts() {
+    if (!favChartsPromise) {
+      favChartsPromise = Promise.all([
+        fetch(CONST_URL + '?' + Date.now()).then((r) => (r.ok ? r.json() : {})).catch(() => ({})),
+        loadJacketMap(),
+      ]).then(([table, jackets]) => {
+        const charts = [];
+        Object.entries(table).forEach(([k, c]) => {
+          const [name, kind, diff, max] = k.split('|');
+          if (!name || !FAV_DIFFS.includes(diff) || typeof c !== 'number') return;
+          const level = levelLabelOf(c);
+          const mx = max ? Number(max) : null;
+          const song = resolveSong(jackets, name, kind === 'ST' ? 'ST' : 'DX', diff, level, mx);
+          charts.push({ name, kind: kind === 'ST' ? 'ST' : 'DX', diff, c, level, max: mx, img: song?.img || '', genre: song?.genre || '' });
+        });
+        // 同名の別曲で、最大値つきのキーと最大値なしのキーが両方ある場合は、最大値つきだけを残す
+        const withMax = new Set(charts.filter((x) => x.max).map((x) => `${x.name}|${x.kind}|${x.diff}`));
+        const list = charts.filter((x) => x.max || !withMax.has(`${x.name}|${x.kind}|${x.diff}`));
+        list.sort((a, b) => b.c - a.c || a.name.localeCompare(b.name, 'ja'));
+        return { list, jackets };
+      });
+    }
+    return favChartsPromise;
+  }
+
+  // ジャケット画像（見つからなければ空の枠）
+  function jacketBox(file) {
+    if (!file) return el('div', 'dxr-jacket');
+    const img = el('img', 'dxr-jacket');
+    img.src = JACKET_BASE + file;
+    img.alt = '';
+    img.loading = 'lazy';
+    img.onerror = () => { img.removeAttribute('src'); };
+    return img;
+  }
+
+  // 譜面データビューアと同じ形の選択画面（レベル・難易度・曲名で絞り込み、50件ずつ表示）
+  function favPicker(onPick) {
+    const box = el('div', 'dxr-picker');
+    const status = el('p', 'dxr-card-desc', '譜面の一覧を読み込み中…');
+    box.appendChild(status);
+    loadFavCharts().then(({ list }) => {
+      if (!list.length) { status.textContent = '譜面の一覧を読み込めませんでした。時間をおいてお試しください。'; return; }
+      status.remove();
+      // 譜面定数の範囲（下限・上限。0.1刻み）。null は制限なし
+      let cMin = null;
+      let cMax = null;
+      let diffs = null; // null = すべて
+      let kindF = '*';  // '*'：すべて / 'DX' / 'ST'
+      let query = '';
+      let page = 1;
+      let selected = null;
+      const levelTabs = el('div', 'dxr-ptabs dxr-crange');
+      const diffTabs = el('div', 'dxr-ptabs');
+      const kindTabsP = el('div', 'dxr-ptabs');
+      const search = el('input', 'dxr-psearch');
+      search.type = 'search';
+      search.placeholder = '曲名で絞り込み';
+      search.setAttribute('aria-label', '曲名で絞り込み');
+      const info = el('p', 'dxr-card-desc');
+      const listBox = el('div');
+      box.append(levelTabs, diffTabs, kindTabsP, search, info, listBox);
+
+      const lo = Math.min(...list.map((x) => x.c));
+      const hi = Math.max(...list.map((x) => x.c));
+      const cOpts = [];
+      for (let v = Math.round(lo * 10); v <= Math.round(hi * 10); v++) cOpts.push(v / 10);
+      const diffsHere = FAV_DIFFS.filter((d) => list.some((x) => x.diff === d));
+      const tab = (label, on, cls, onClick) => {
+        const b = el('button', 'dxr-ptab' + (cls ? ' ' + cls : ''), label);
+        b.type = 'button';
+        b.setAttribute('aria-pressed', String(on));
+        b.onclick = onClick;
+        return b;
+      };
+      const renderTabs = () => {
+        const mkSel = (value, label, onChange) => {
+          const sel = el('select');
+          sel.setAttribute('aria-label', label);
+          cOpts.forEach((v) => {
+            const o = el('option', '', v.toFixed(1));
+            o.value = String(v);
+            sel.appendChild(o);
+          });
+          sel.value = String(value);
+          sel.onchange = () => { onChange(Number(sel.value)); page = 1; renderTabs(); renderList(); };
+          return sel;
+        };
+        levelTabs.replaceChildren(el('span', 'dxr-crange-label', '譜面定数'),
+          mkSel(cMin ?? lo, '譜面定数の下限', (v) => { cMin = v; if (cMax !== null && cMax < v) cMax = v; }),
+          el('span', 'dxr-crange-sep', '〜'),
+          mkSel(cMax ?? hi, '譜面定数の上限', (v) => { cMax = v; if (cMin !== null && cMin > v) cMin = v; }),
+          tab('すべて', cMin === null && cMax === null, '', () => { cMin = null; cMax = null; page = 1; renderTabs(); renderList(); }));
+        diffTabs.replaceChildren(tab('すべての難易度', diffs === null, '', () => { diffs = null; page = 1; renderTabs(); renderList(); }),
+          ...diffsHere.map((d) => tab(d, !!diffs?.has(d), `pd-${d.replace(':', '').toUpperCase()}`, () => {
+            if (diffs === null) diffs = new Set([d]);
+            else if (diffs.has(d)) { diffs.delete(d); if (!diffs.size) diffs = null; } else diffs.add(d);
+            page = 1; renderTabs(); renderList();
+          })));
+        kindTabsP.replaceChildren(...[['*', 'DX・ST'], ['DX', 'DXのみ'], ['ST', 'STのみ']].map(([v, label]) =>
+          tab(label, kindF === v, '', () => { kindF = v; page = 1; renderTabs(); renderList(); })));
+      };
+      const pager = (total) => pagerEl(page, total, (n) => { page = n; renderList(); info.scrollIntoView({ block: 'start' }); });
+      const renderList = () => {
+        const q = query.trim().toLowerCase();
+        const items = list.filter((x) => (cMin === null || x.c >= cMin - 1e-9) && (cMax === null || x.c <= cMax + 1e-9)
+          && (diffs === null || diffs.has(x.diff)) && (kindF === '*' || x.kind === kindF) && (!q || x.name.toLowerCase().includes(q)));
+        const total = Math.max(1, Math.ceil(items.length / FAV_PAGE_SIZE));
+        page = Math.min(Math.max(page, 1), total);
+        const shown = items.slice((page - 1) * FAV_PAGE_SIZE, page * FAV_PAGE_SIZE);
+        info.textContent = `${items.length} 譜面（押して選ぶ）`;
+        const ul = el('div', 'dxr-list');
+        if (!shown.length) ul.appendChild(el('div', 'dxr-rec-empty', '見つかりませんでした。'));
+        shown.forEach((x) => {
+          const row = el('button', 'dxr-prow' + (selected === x ? ' is-on' : ''));
+          row.type = 'button';
+          const main = el('div');
+          const nm = el('div', 'dxr-name', x.name);
+          if (x.genre) nm.appendChild(el('span', 'dxr-genre', `（${x.genre}）`));
+          const meta = el('div', 'dxr-meta');
+          meta.append(
+            el('span', `dxr-chip dxr-kind-${x.kind}`, x.kind),
+            el('span', `dxr-chip dxr-diff-${x.diff.replace(':', '').toUpperCase()}`, x.diff),
+            el('span', 'dxr-chip dxr-const', `Lv${x.level}（${x.c.toFixed(1)}）`)
+          );
+          main.append(nm, meta);
+          row.append(jacketBox(x.img), main);
+          row.onclick = () => { selected = x; renderList(); };
+          ul.appendChild(row);
+          // 選んだ譜面のすぐ下に、登録ボタンを出す
+          if (selected === x) {
+            const bar = el('div', 'dxr-pconfirm');
+            const ok = el('button', 'primary', 'この譜面をお気に入りに登録');
+            ok.type = 'button';
+            ok.onclick = () => onPick(x, ok);
+            const cancel = el('button', '', 'やめる');
+            cancel.type = 'button';
+            cancel.onclick = () => { selected = null; renderList(); };
+            bar.append(cancel, ok);
+            ul.appendChild(bar);
+          }
+        });
+        listBox.replaceChildren(pager(total), ul, pager(total));
+      };
+      let timer = null;
+      search.addEventListener('input', () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => { query = search.value; page = 1; renderList(); }, 250);
+      });
+      renderTabs();
+      renderList();
+    });
+    return box;
+  }
+
+  const favChips = (fav) => {
+    const meta = el('div', 'dxr-meta');
+    meta.append(
+      el('span', `dxr-chip dxr-kind-${fav.kind}`, fav.kind),
+      el('span', `dxr-chip dxr-diff-${fav.diff.replace(':', '').toUpperCase()}`, fav.diff)
+    );
+    return meta;
+  };
+
+  // ランキング登録者向けのカード（ログイン → お気に入り譜面・PINの変更）
+  function memberCard(profile) {
+    const card = el('section', 'dxr-card');
+    let savedUser = '';
+    try { savedUser = localStorage.getItem(USER_KEY) || ''; } catch { /* なし */ }
+
+    const field = (parent, label, type, value, note, attrs = {}) => {
+      const lab = el('label', 'dxr-field', label);
+      const input = el('input');
+      input.type = type;
+      input.value = value;
+      Object.entries(attrs).forEach(([k, v]) => input.setAttribute(k, v));
+      lab.appendChild(input);
+      if (note) lab.appendChild(el('small', '', note));
+      parent.appendChild(lab);
+      return input;
+    };
+
+    function loginView() {
+      card.replaceChildren(el('h3', '', 'ランキングの設定・お気に入り譜面・PINの変更'),
+        el('p', 'dxr-card-desc', 'ランキングに登録したユーザー名とPINで入ります。ランキングに載せる名前や自動登録の設定、お気に入り譜面（ランキングページに表示）、PINの変更ができます。'));
+      const user = field(card, 'ユーザー名', 'text', savedUser, '', { autocomplete: 'username', autocapitalize: 'off', spellcheck: 'false' });
+      const pin = field(card, 'PIN', 'password', '', '', { inputmode: 'numeric', autocomplete: 'current-password' });
+      const err = el('div', 'dxr-err');
+      const actions = el('div', 'dxr-actions');
+      const go = el('button', 'primary', '入る');
+      go.type = 'button';
+      actions.appendChild(go);
+      card.append(err, actions);
+      const submit = async () => {
+        const username = user.value.trim().toLowerCase();
+        const p = pin.value.trim();
+        if (!/^[a-z0-9_]{3,16}$/.test(username)) { err.textContent = 'ユーザー名は英数字とアンダーバーで3〜16文字です。'; return; }
+        if (!/^\d{4,8}$/.test(p)) { err.textContent = 'PINは数字4〜8桁です。'; return; }
+        go.disabled = true;
+        err.textContent = '確認中…';
+        const r = await callRanking({ action: 'mypage', username, pin: p }, () => { err.textContent = '混み合っています。送り直しています…'; })
+          .catch(() => ({ ok: false, error: '通信できませんでした。' }));
+        go.disabled = false;
+        if (!r.ok) { err.textContent = r.error || '確認できませんでした。'; return; }
+        try { localStorage.setItem(USER_KEY, username); } catch { /* 保存できなくても続ける */ }
+        savedUser = username;
+        memberView({ username, pin: p, info: r });
+      };
+      go.onclick = submit;
+      pin.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+    }
+
+    function memberView(auth) {
+      const { info } = auth;
+      card.replaceChildren();
+      const head = el('div', 'dxr-card-head');
+      head.append(el('h3', '', info.anonymous ? `匿名#${info.anonCode}` : (info.displayName || auth.username)));
+      const out = el('button', 'dxr-mini', 'ログアウト');
+      out.type = 'button';
+      out.onclick = loginView;
+      head.appendChild(out);
+      card.appendChild(head);
+      card.appendChild(el('p', 'dxr-card-desc', `ユーザー名：${auth.username}`));
+
+      // ---- ランキングの設定（表示名・匿名・ベスト枠の公開・自動登録） ----
+      const setBox = el('div', 'dxr-sub');
+      card.appendChild(setBox);
+      setBox.appendChild(el('h4', '', 'ランキングの設定'));
+      setBox.appendChild(el('p', 'dxr-card-desc', 'ランキングに載せる内容です。保存するとすぐにランキングに反映され、次からの登録（自動登録を含む）でもこの内容を使います。'));
+      const local = loadJson(FORM_KEY) || {};
+      const dnInput = field(setBox, '表示名', 'text', info.displayName || local.displayName || profile.name || '', 'ランキングに表示する名前（20文字まで）', { maxlength: '20' });
+      const chk = (label, checked) => {
+        const lab = el('label', 'dxr-check');
+        const cb = el('input');
+        cb.type = 'checkbox';
+        cb.checked = checked;
+        lab.append(cb, document.createTextNode(label));
+        setBox.appendChild(lab);
+        return cb;
+      };
+      const anonCb = chk('匿名で掲載する（「匿名#記号」と初期アイコンで表示）', !!info.anonymous);
+      const pubCb = chk('ベスト枠をランキングで公開する', info.publicTop50 !== false);
+      const achvCb = chk('☆6・☆7達成譜面（スコアと☆）をランキングで公開する', info.publicAchv !== false);
+      const syncName = () => { dnInput.disabled = anonCb.checked; };
+      anonCb.onchange = syncName;
+      syncName();
+      const setErr = el('div', 'dxr-err');
+      const setActions = el('div', 'dxr-actions');
+      const setBtn = el('button', 'primary', '設定を保存');
+      setBtn.type = 'button';
+      setActions.appendChild(setBtn);
+      setBox.append(setErr, setActions);
+      setBtn.onclick = async () => {
+        const form = { displayName: dnInput.value.trim(), anonymous: anonCb.checked, publicTop50: pubCb.checked, publicAchv: achvCb.checked };
+        if (!form.anonymous && !form.displayName) { setErr.textContent = '表示名を入力するか、匿名で掲載を選んでください。'; return; }
+        setBtn.disabled = true;
+        setErr.textContent = '保存中…';
+        const r = await callRanking({ action: 'setProfile', username: auth.username, pin: auth.pin, ...form, icon: iconValueOf(profile, form.anonymous) },
+          () => { setErr.textContent = '混み合っています。送り直しています…'; })
+          .catch(() => ({ ok: false, error: '通信できませんでした。' }));
+        setBtn.disabled = false;
+        if (!r.ok) { setErr.textContent = r.error || '保存できませんでした。'; return; }
+        saveJson(FORM_KEY, form);
+        setErr.textContent = '';
+        setErr.replaceChildren(el('span', 'dxr-ok', '設定を保存しました。'));
+      };
+
+      // 自動登録：このブラウザに「自動登録用の鍵」を保存し、レート計算のあとに自動で登録・更新する（PINは保存しない）
+      const autoBox = el('div', 'dxr-auto-set');
+      const autoLab = el('label', 'dxr-check');
+      const autoCb = el('input');
+      autoCb.type = 'checkbox';
+      const savedAuto = loadJson(AUTO_KEY);
+      autoCb.checked = !!(savedAuto && savedAuto.token && savedAuto.username === auth.username);
+      autoLab.append(autoCb, document.createTextNode('レート計算のあとに、自動でランキングに登録・更新する'));
+      const autoNote = el('p', 'dxr-card-desc',
+        'このブラウザだけの設定です。PINは保存せず、自動登録専用の鍵を保存します（鍵でできるのはランキングの登録・更新だけです）。'
+        + '別のブラウザで設定すると、こちらの設定は無効になります。');
+      if (info.autoUpload && !autoCb.checked) {
+        autoNote.textContent += '（現在、別のブラウザで自動登録が設定されています）';
+      }
+      const autoErr = el('div', 'dxr-err');
+      autoBox.append(autoLab, autoNote, autoErr);
+      setBox.appendChild(autoBox);
+      autoCb.onchange = async () => {
+        const on = autoCb.checked;
+        autoCb.disabled = true;
+        autoErr.textContent = on ? '設定中…' : '解除中…';
+        const r = await callRanking({ action: on ? 'issueToken' : 'revokeToken', username: auth.username, pin: auth.pin })
+          .catch(() => ({ ok: false, error: '通信できませんでした。' }));
+        autoCb.disabled = false;
+        if (!r.ok) {
+          autoCb.checked = !on;
+          autoErr.textContent = r.error || '設定できませんでした。';
+          return;
+        }
+        if (on) {
+          saveJson(AUTO_KEY, { username: auth.username, token: r.token });
+          // 自動登録で使う表示名などが未保存なら、今の画面の内容を保存しておく
+          if (!loadJson(FORM_KEY)) saveJson(FORM_KEY, { displayName: dnInput.value.trim(), anonymous: anonCb.checked, publicTop50: pubCb.checked, publicAchv: achvCb.checked });
+        } else {
+          saveJson(AUTO_KEY, null);
+        }
+        autoErr.textContent = '';
+        autoErr.replaceChildren(el('span', 'dxr-ok', on ? '自動登録を設定しました。次のレート計算から自動で登録されます。' : '自動登録を解除しました。'));
+      };
+
+      // ---- お気に入り譜面 ----
+      const fav = el('div', 'dxr-sub');
+      card.appendChild(fav);
+      let current = info.favorite || null;
+      const favView = () => {
+        fav.replaceChildren(el('h4', '', 'お気に入り譜面'));
+        const now = el('div', 'dxr-fav-now');
+        if (current) {
+          const main = el('div');
+          main.append(el('div', 'dxr-name', current.name), favChips(current));
+          const jk = el('div', 'dxr-jacket');
+          now.append(jk, main);
+          // 登録済みの譜面のジャケット（ランキングページと同じ方法で探す）
+          loadFavCharts().then(({ jackets }) => {
+            const song = resolveSong(jackets, current.name, current.kind, current.diff, current.level || '', current.max ?? null);
+            if (song?.img) jk.replaceWith(jacketBox(song.img));
+          });
+        } else {
+          now.appendChild(el('div', 'dxr-card-desc', 'まだ登録されていません。'));
+        }
+        fav.appendChild(now);
+        fav.appendChild(el('p', 'dxr-card-desc', '1譜面だけ登録できます。ランキングでは、ジャケット・曲名・ST/DX・難易度が表示されます。'));
+        const err = el('div', 'dxr-err');
+        const actions = el('div', 'dxr-actions');
+        if (current) {
+          const clear = el('button', '', 'お気に入りを外す');
+          clear.type = 'button';
+          clear.onclick = () => save(null, clear, err);
+          actions.appendChild(clear);
+        }
+        const open = el('button', 'primary', current ? '別の譜面に変える' : '譜面を選ぶ');
+        open.type = 'button';
+        actions.appendChild(open);
+        const holder = el('div');
+        fav.append(actions, err, holder);
+        open.onclick = () => {
+          open.remove();
+          holder.replaceChildren(favPicker((x, btn) => save({ name: x.name, kind: x.kind, diff: x.diff, level: x.level, max: x.max }, btn, err)));
+        };
+      };
+      const save = async (value, button, err) => {
+        button.disabled = true;
+        err.textContent = '保存中…';
+        const r = await callRanking({ action: 'setFavorite', username: auth.username, pin: auth.pin, favorite: value },
+          () => { err.textContent = '混み合っています。送り直しています…'; })
+          .catch(() => ({ ok: false, error: '通信できませんでした。' }));
+        button.disabled = false;
+        if (!r.ok) { err.textContent = r.error || '保存できませんでした。'; return; }
+        current = r.favorite || null;
+        favView();
+        fav.appendChild(el('div', 'dxr-ok', current ? 'お気に入り譜面を登録しました。' : 'お気に入り譜面を外しました。'));
+      };
+      favView();
+
+      // ---- PINの変更 ----
+      const pinBox = el('div', 'dxr-sub');
+      pinBox.appendChild(el('h4', '', 'PINの変更'));
+      pinBox.appendChild(el('p', 'dxr-card-desc', '管理者から仮のPINを受け取った方は、ここで自分で決めたPINに変更してください。'));
+      const np1 = field(pinBox, '新しいPIN', 'password', '', '数字4〜8桁', { inputmode: 'numeric', autocomplete: 'new-password' });
+      const np2 = field(pinBox, '新しいPIN（確認のためもう一度）', 'password', '', '', { inputmode: 'numeric', autocomplete: 'new-password' });
+      const pinErr = el('div', 'dxr-err');
+      const pinActions = el('div', 'dxr-actions');
+      const pinBtn = el('button', 'primary', 'PINを変更');
+      pinBtn.type = 'button';
+      pinActions.appendChild(pinBtn);
+      pinBox.append(pinErr, pinActions);
+      card.appendChild(pinBox);
+      pinBtn.onclick = async () => {
+        const v = np1.value.trim();
+        if (!/^\d{4,8}$/.test(v)) { pinErr.textContent = '新しいPINは数字4〜8桁にしてください。'; return; }
+        if (v !== np2.value.trim()) { pinErr.textContent = '新しいPINが2回とも同じになるように入力してください。'; return; }
+        pinBtn.disabled = true;
+        pinErr.textContent = '変更中…';
+        const r = await callRanking({ action: 'changePin', username: auth.username, pin: auth.pin, newPin: v },
+          () => { pinErr.textContent = '混み合っています。送り直しています…'; })
+          .catch(() => ({ ok: false, error: '通信できませんでした。' }));
+        pinBtn.disabled = false;
+        if (!r.ok) { pinErr.textContent = r.error || '変更できませんでした。'; return; }
+        auth.pin = v;
+        np1.value = np2.value = '';
+        // PINを変えると自動登録の鍵も無効になるので、このブラウザの設定も消す
+        const sa = loadJson(AUTO_KEY);
+        if (sa && sa.username === auth.username) {
+          saveJson(AUTO_KEY, null);
+          autoCb.checked = false;
+        }
+        pinErr.textContent = '';
+        pinErr.replaceChildren(Object.assign(el('span', 'dxr-ok', 'PINを変更しました。次からは新しいPINを使ってください。')));
+      };
+    }
+
+    loginView();
+    return card;
+  }
+
+  // おすすめ楽曲のカード
+  //   同じ起動の中でレート計算をしていればその結果、なければ前回のレート計算のときに保存した結果をすぐに表示する
+  function recommendCard(ctx, profile) {
+    const card = el('section', 'dxr-card');
+    card.append(el('h3', '', 'おすすめ楽曲'),
+      el('p', 'dxr-card-desc', '全国ランキングの達成率から、次に☆を伸ばすと 2fRATE（☆7まで）が上がりやすい譜面を提案します。'));
+    // 最初は閉じておき、「おすすめ楽曲を表示する」を押したときに中身を作る
+    const toggle = el('button', 'dxr-rank-open', 'おすすめ楽曲を表示する');
+    toggle.type = 'button';
+    toggle.style.margin = '4px 0 0';
+    const body = el('div');
+    body.hidden = true;
+    const when = el('p', 'dxr-card-desc');
+    const btn = el('button', 'dxr-rank-open', '最新のスコアで計算し直す');
+    btn.type = 'button';
+    btn.style.margin = '4px 0 0';
+    const msg = el('p', 'dxr-status');
+    const out = el('div');
+    body.append(when, out, btn, msg);
+    card.append(toggle, body);
+    let opened = false;
+    toggle.onclick = () => {
+      body.hidden = !body.hidden;
+      toggle.textContent = body.hidden ? 'おすすめ楽曲を表示する' : 'おすすめ楽曲を閉じる';
+      if (!body.hidden && !opened) { opened = true; fill(); }
+    };
+
+    const showRun = (run) => {
+      const full = run.results.find((r) => r.mode.id === 'full');
+      when.textContent = '最新のスコアから計算した結果です。';
+      out.replaceChildren(recommendEl(run.scored, full.top, run.stats, run.jackets, full.rating));
+    };
+    const fill = () => {
+    const saved = loadJson(LAST_REC_KEY);
+    if (ctx.getLastRun()) {
+      showRun(ctx.getLastRun());
+    } else if (saved && Array.isArray(saved.recs) && saved.player === (profile.name || '')) {
+      when.textContent = `前回のレート計算（${saved.date}）のときの結果です。そのあとに更新したスコアは反映されていません。`;
+      loadJacketMap().then((jackets) => out.replaceChildren(recommendListEl(saved.recs, jackets, saved.rating)));
+    } else {
+      when.textContent = 'まだ結果がありません。下のボタンで計算するか、レート計算を実行すると、次からはここにすぐ表示されます。';
+      btn.textContent = 'おすすめ楽曲を計算する';
+    }
+    };
+    btn.onclick = async () => {
+      btn.disabled = true;
+      msg.classList.remove('is-error');
+      try {
+        const run = await ctx.computeRating((t) => { msg.textContent = t; });
+        if (!run) return;
+        msg.textContent = '';
+        showRun(run);
+        btn.textContent = '最新のスコアで計算し直す';
+      } catch (e) {
+        msg.textContent = 'エラー: ' + e.message;
+        msg.classList.add('is-error');
+        console.error(e);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+    return card;
+  }
+
+  // レート計算のあと、自動登録が設定されていればランキングに登録・更新する
+  async function autoUpload(ui, profile, results, counts, scored) {
+    const auto = loadJson(AUTO_KEY);
+    if (!auto || !auto.token || !auto.username) return;
+    const form = loadJson(FORM_KEY) || {};
+    const settings = {
+      displayName: String(form.displayName || profile.name || '').slice(0, 20),
+      anonymous: form.anonymous === true,
+      publicTop50: form.publicTop50 !== false,
+      publicAchv: form.publicAchv !== false,
+    };
+    const box = el('div', 'dxr-auto', 'ランキングに自動で登録しています…');
+    ui.body.prepend(box);
+    const r = await callRanking({ ...buildSubmitBody(profile, results, counts, settings, scored), username: auto.username, token: auto.token },
+      () => { box.textContent = '混み合っているため、送り直しています…'; })
+      .catch(() => ({ ok: false, error: '通信できませんでした。' }));
+    if (r.ok) {
+      box.textContent = `ランキングに自動で登録しました（${settings.anonymous ? `匿名#${r.anonCode}` : settings.displayName}）。`;
+      const a = el('a', '', 'ランキングを見る ›');
+      a.href = RANKING_PAGE;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      box.append(' ', a);
+    } else {
+      box.classList.add('is-error');
+      box.textContent = `自動登録できませんでした：${r.error || '不明なエラー'}`;
+      if (r.tokenInvalid) saveJson(AUTO_KEY, null);
+    }
+  }
+
+  function renderMyPage(ui, profile, ctx) {
+    ui.status('');
+    const player = profileEl(ui, profile, 'マイページ');
+    ui.body.append(player, recommendCard(ctx, profile), rareCard(), memberCard(profile));
+  }
+
+  // 起動時のメニュー（ログインを確認したあとに表示）
+  function renderMenu(ui, profile, go) {
+    ui.status('');
+    ui.setBack(null);
+    ui.body.replaceChildren();
+    const player = profileEl(ui, profile, 'ログインを確認しました');
+    const menu = el('div', 'dxr-menu');
+    const item = (title, desc, onClick, primary) => {
+      const b = el('button', 'dxr-menu-item' + (primary ? ' is-primary' : ''));
+      b.type = 'button';
+      b.append(el('span', 'dxr-menu-title', title), el('span', 'dxr-menu-desc', desc));
+      b.onclick = onClick;
+      menu.appendChild(b);
+    };
+    item('レート計算・ランキング登録', '2fRATE を計算して、レート対象曲の一覧・画像化・ランキング登録を行います', () => go('rating'), true);
+    item('マイページ', '達成人数で見る自分の達成譜面・おすすめ楽曲・ランキングの設定（自動登録）・お気に入り譜面・PINの変更', () => go('mypage'), false);
+    ui.body.append(player, menu);
   }
 
   // ============================================================
   //  メイン処理
   // ============================================================
 
+  // 画像の検証用：検証ページ（image_test.html）から読み込まれたときは、画面を作らずに
+  // 画像を描く関数だけを渡して終わる（スコアの読み込みや登録は行わない）
+  if (typeof window.__2fRATE_PREVIEW__ === 'function') {
+    window.__2fRATE_PREVIEW__({
+      edition: EDITION,
+      modes: RATE_MODES,
+      buildShareImage,
+      loadJacketMap,
+      setTheme: (t) => { theme = t === 'dark' ? 'dark' : 'light'; },
+    });
+    return;
+  }
+
   if (location.hostname !== 'maimaidx.jp') {
-    alert('maimai DX NET にログインした状態で実行してください。');
+    alert('maimaiでらっくすNET にログインした状態で実行してください。');
     return;
   }
 
   const ui = createPanel();
 
+  // ① まずログインできているかを確認する（できていなければ、メニューを出す前にエラーを表示して終わる）
+  let profile;
   try {
-    // まずログインできているかを確認（プレイヤー情報の取得を兼ねる）
     ui.status('ログイン状態を確認中…');
-    const profile = await getPlayerProfile();
+    profile = await getPlayerProfile();
+  } catch (e) {
+    ui.status('エラー: ' + e.message, true);
+    console.error(e);
+    return;
+  }
 
+  // ② レート計算・ランキング登録 か マイページ かを選ぶ
+  let navId = 0; // 画面を切り替えるたびに増やす（読み込み途中でメニューに戻ったら、その読み込みの結果は表示しない）
+  const go = (where) => {
+    navId++;
+    ui.body.replaceChildren();
+    ui.status('');
+    ui.setBack(() => { navId++; renderMenu(ui, profile, go); });
+    if (where === 'mypage') renderMyPage(ui, profile, { getLastRun: () => lastRun, computeRating: computeForMyPage });
+    else runRating();
+  };
+  renderMenu(ui, profile, go);
+
+  // 最後に計算した結果（同じ起動の中で、マイページのおすすめ楽曲に使い回す）
+  let lastRun = null;
+
+  // マイページから計算する（状況は onStatus に出す。途中でメニューに戻ったら null）
+  async function computeForMyPage(onStatus) {
+    const myNav = navId;
+    const run = await computeRating(onStatus, () => myNav !== navId);
+    if (run) {
+      lastRun = run;
+      saveLastRecommend(profile, run);
+    }
+    return run;
+  }
+
+  async function runRating() {
+    const myNav = navId;
+    const left = () => myNav !== navId; // メニューに戻った
+    try {
+      const run = await computeRating((t) => ui.status(t), left);
+      if (!run || left()) return;
+      lastRun = run;
+      saveLastRecommend(profile, run);
+      ui.status('');
+      renderResult(ui, profile, run.results, run.info, run.jackets, { all: run.scored, stats: run.stats, counts: run.counts });
+      autoUpload(ui, profile, run.results, run.counts, run.scored);
+    } catch (e) {
+      if (left()) return;
+      ui.status('エラー: ' + e.message, true);
+      console.error(e);
+    }
+  }
+
+  // スコアを読み込んでレートを計算する（画面は作らない）。途中で left() が true になったら null
+  async function computeRating(status, left) {
     // 譜面定数表の読み込み（任意）
     let constTable = {};
     if (CONST_URL) {
@@ -1617,25 +2830,36 @@
           throw new Error('JSONとして読み込めませんでした（ファイルの中身が壊れている可能性があります）');
         }
       } catch (err) {
-        ui.status(`譜面定数表を読み込めませんでした：${err.message}／URL: ${CONST_URL}　概算値で計算します。`, true);
+        status(`譜面定数表を読み込めませんでした：${err.message}／URL: ${CONST_URL}　概算値で計算します。`, true);
         console.error('定数表の読み込みエラー', err);
         await sleep(4000);
       }
     }
+    if (left()) return;
 
     const jacketPromise = loadJacketMap(); // 別サーバーなので並行して読み込む
 
     // 高いレベルから順に取得し、下のレベルが上位に入り得なくなったら打ち切る
     let scored = [];
     let fetched = 0;
+    const stats = new Map(); // 全国ランキングの集計（希少ボーナスとおすすめ楽曲に使う）
     let lastLevel = LEVEL_MAX;
+    let rateLevel = null; // レート対象曲が確定したレベル（読み込み中の表示に使う）
 
     for (let n = LEVEL_MAX; n >= 1; n--) {
-      ui.status(`Lv${levelInfo(n).label} を取得中…（${++fetched}ページ目）`);
-      const res = await fetch(LEVEL_URL(n), { credentials: 'same-origin' });
+      if (left()) return;
+      status(`Lv${levelInfo(n).label} を取得中…（${++fetched}ページ目）` +
+        (rateLevel !== null ? '　☆5・☆6・☆7達成譜面数の集計のため、Lv10+ まで読み込みます' : ''));
+      // レコードのページと、そのレベルの全国ランキング集計（GitHub。なくても続行）を同時に読み込む
+      const [res, lvStats] = await Promise.all([
+        fetch(LEVEL_URL(n), { credentials: 'same-origin' }),
+        loadRankingStats(n, n),
+      ]);
+      if (left()) return;
       if (!res.ok) throw new Error(`Lv${levelInfo(n).label} の取得に失敗しました (HTTP ${res.status})`);
+      lvStats.forEach((v, k) => stats.set(k, v));
 
-      scored.push(...parsePage(await res.text(), n).map((s) => score(s, constTable)));
+      scored.push(...parsePage(await res.text(), n).map((s) => score(s, constTable, stats)));
       lastLevel = n;
 
       // すべてのレートで「下のレベルはもう上位に入れない」状態になったら打ち切る
@@ -1643,7 +2867,9 @@
         const nth = [...scored].sort((a, b) => b.values[m.id] - a.values[m.id])[TOP_N - 1];
         return nth && nth.values[m.id] >= upperBound(n - 1, m.capStars);
       });
-      if (n === 1 || allDone) break;
+      if (allDone && rateLevel === null) rateLevel = n;
+      // レート対象曲が確定し、☆6・☆7の集計に必要なレベル（10+）まで取得したら終了
+      if (n === 1 || (allDone && n <= COUNT_MIN_LEVEL)) break;
       await sleep(WAIT_MS);
     }
 
@@ -1659,23 +2885,16 @@
       return { mode, rating, top };
     });
 
-    ui.status('');
-    ui.status('ジャケット画像の対応表を確認中…');
+    status('ジャケット画像の対応表を確認中…');
     const jackets = await jacketPromise;
-    // おすすめ楽曲用に、取得したレベルのランキング集計（取りやすさ）を読み込む（GitHubから。失敗しても続行）
-    ui.status('おすすめ楽曲のデータを確認中…');
-    const stats = await loadRankingStats(LEVEL_MAX, lastLevel);
-    ui.status('');
-    renderResult(
-      ui,
-      profile,
+    if (left()) return null;
+    return {
       results,
-      `Lv15〜Lv${levelInfo(lastLevel).label} の ${fetched} ページを取得し、${scored.length} 譜面から計算`,
+      scored,
+      stats,
       jackets,
-      { all: scored, stats }
-    );
-  } catch (e) {
-    ui.status('エラー: ' + e.message, true);
-    console.error(e);
+      counts: countStars(scored),
+      info: `Lv15〜Lv${levelInfo(lastLevel).label} の ${fetched} ページを取得し、${scored.length} 譜面から計算`,
+    };
   }
 })();
