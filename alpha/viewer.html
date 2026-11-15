@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2fRATE 譜面データビューア（α版）</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="2frate.css">
+<script src="2frate-theme.js"></script>
+</head>
+<body class="pg-viewer">
+<div class="wrap">
+  <header class="site-head">
+    <a class="site-logo" href="./" aria-label="2fRATE トップへ">2fRATE</a>
+    <button type="button" class="theme-toggle"></button>
+  </header>
+  <div class="page-title"><h1>CHART DATA</h1><span>譜面データビューア</span></div>
+  <p class="lead">でらっくスコア全国ランキング（上位100人）から集計した、譜面ごとの取りやすさの目安です。</p>
+  <div class="status" id="status">データを読み込み中…</div>
+
+  <div id="app" hidden>
+    <div class="tabs snap-tabs" id="snapTabs" role="group" aria-label="データの時点"></div>
+    <div class="crange" id="levelTabs" role="group" aria-label="譜面定数の範囲"></div>
+    <div class="tabs diffs" id="diffTabs" role="group" aria-label="難易度"></div>
+    <div class="tabs diffs" id="rareTabs" role="group" aria-label="希少ボーナス"></div>
+    <input class="search" id="search" type="search" placeholder="曲名で絞り込み" aria-label="曲名で絞り込み">
+    <div class="daterange" id="daterange"></div>
+    <div id="listBox"></div>
+    <p class="foot">
+      「平均」は上位100人のでらっくスコア取得率の平均と、その☆換算です。「☆7」は理論値の人数、「☆6」は取得率99%以上（理論値の人を含む）の人数です。
+      見出しの「平均」「☆7」「☆6」を押すと並び替えられます。<br>
+      上の「時点」で過去の集計に切り替えられます（レベルごとに、その日までで最後に集計したデータを表示）。各譜面の「推移を見る」で、☆7・☆6以上（理論値を含む）の人数と平均取得率の変化をグラフで確認できます。<br>
+      ランキングには上位100人までしか載らないため、100人目まで☆6以上で埋まっている譜面は、☆6の欄を「100+」（☆7を含めて☆6を達成した人が100人以上）と表示しています。全員が☆7の譜面は、☆7の欄も「100+」になります。<br>
+      「希少」の印は、2fRATE の希少ボーナスの対象譜面です。上位100人のうち☆6以上（☆6＋☆7）が20人以下の譜面を☆6以上で達成すると、「☆7まで」「☆6まで」の単曲レート値に加算されます（20人以下 +0.05、10人以下 +0.10、3人以下 +0.15）。<br>
+      ☆の基準：☆7 100%、☆6 99%以上、☆5 97%以上、☆4 95%以上、☆3 93%以上、☆2 90%以上、☆1 85%以上。<br>
+      非公式のファンメイドツールです。株式会社セガおよび関連会社とは一切関係ありません。この統計は公式の全国ランキングをもとに独自に集計したもので、公式の情報ではありません。プレイヤー名などの個人情報は集計・保存・公開していません。<br>
+      楽曲・ジャケット画像・アイコン画像の著作権は、株式会社セガおよび各権利者に帰属します。ジャケット画像・アイコン画像は公式サイトの画像を表示しているもので、本ツールでは保存・配布していません。権利者の方からご連絡をいただいた場合は、該当部分の公開停止などに速やかに対応します。<br>
+      © 2026 なふ（2fRATE）。2fRATE のプログラム・デザイン・ロゴの無断転載・無断使用を禁じます。
+    </p>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ===== 設定 =====
+  const RESULTS_DIR = '../ranking/';                 // このページと同じ場所の ranking フォルダ
+  const JACKETS_URL = '../maimai_jackets.json';      // ジャケット対応表
+  const OVERRIDES_URL = '../jacket_overrides.json';  // 同名曲でレベルも同じ譜面の手動対応表
+  // ジャケット画像の置き場所（上から順に試す）
+  const JACKET_BASES = [
+    'https://maimaidx.jp/maimai-mobile/img/Music/',
+    'https://maimai.sega.jp/storage/DX_jacket/',
+  ];
+  const PAGE_SIZE = 50; // 1ページに表示する譜面数（多いとページが重くなる）
+  const LEVEL_MIN = 7;
+  const LEVEL_MAX = 23;
+  const DIFF_NAMES = ['BASIC', 'ADVANCED', 'EXPERT', 'MASTER', 'Re:MASTER'];
+  const STAR_THRESHOLDS = [
+    { stars: 7, pct: 100 }, { stars: 6, pct: 99 }, { stars: 5, pct: 97 }, { stars: 4, pct: 95 },
+    { stars: 3, pct: 93 }, { stars: 2, pct: 90 }, { stars: 1, pct: 85 },
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function levelLabel(n) {
+    if (n <= 6) return String(n);
+    const base = 7 + Math.floor((n - 7) / 2);
+    return (n - 7) % 2 === 1 ? `${base}+` : String(base);
+  }
+  const fileOfLevel = (label) => `lv${String(label).replace('+', 'p')}.json`;
+  const levelOrder = (label) => parseInt(label, 10) + (String(label).endsWith('+') ? 0.5 : 0);
+  const isRow = (r) => r && typeof r === 'object' && typeof r.name === 'string' && typeof r.level === 'string';
+
+  function starOfScore(cur, max) {
+    if (!max || cur === null || cur === undefined) return null;
+    let s = 0;
+    for (const t of STAR_THRESHOLDS) {
+      if (cur * 100 >= max * t.pct) { s = t.stars; break; }
+    }
+    const lo = STAR_THRESHOLDS.find((t) => t.stars === s)?.pct ?? 0;
+    const hi = STAR_THRESHOLDS.find((t) => t.stars === s + 1)?.pct;
+    if (hi === undefined) return s.toFixed(1);
+    return (s + Math.floor(((cur * 100 - max * lo) * 10) / (max * (hi - lo))) / 10).toFixed(1);
+  }
+  function dateOf(v) {
+    if (!v) return null;
+    const p = (x) => String(x).padStart(2, '0');
+    const m = String(v).match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+    if (m) return `${m[1]}/${p(m[2])}/${p(m[3])}`;
+    const d = new Date(v);
+    return isNaN(d) ? null : `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())}`;
+  }
+  // 同名の別曲は、種別・難易度・レベルが一致する候補が1つだけのときに特定する
+  function resolveSong(map, name, kind, diffIdx, level, max) {
+    const v = map?.get(name);
+    if (!v) return null;
+    if (typeof v === 'string') return { img: v, genre: null };
+    if (!Array.isArray(v)) return null;
+    // 手動の対応表（同名の別曲で、レベルまで同じ譜面用）：「曲名|種別|難易度|最大値」→ ジャンル
+    const g = jacketOverrides?.[`${name}|${kind}|${DIFF_NAMES[diffIdx]}|${max}`];
+    if (g) {
+      const c = v.find((x) => x.genre === g);
+      if (c) return { img: c.img, genre: c.genre };
+    }
+    const k = kind === 'ST' ? 'st' : 'dx';
+    const hits = v.filter((c) => c[k]?.[diffIdx] === level);
+    return hits.length === 1 ? { img: hits[0].img, genre: hits[0].genre } : null;
+  }
+  const fetchJson = (url) =>
+    fetch(url + '?' + Date.now()).then((res) => (res.ok ? res.json() : null)).catch(() => null);
+
+  // ===== 状態 =====
+  let all = [];        // いま表示している時点のデータ
+  let latest = [];     // 最新のデータ（ranking/lv○○.json）
+  let histories = [];  // レベルごとの履歴（ranking/lv○○_history.json）：[{ level, snapshots: [{ date, rows }] }]
+  let snapDates = [];  // 履歴にある日付（新しい順）
+  let currentSnap = null; // null = 最新、それ以外は 'YYYY-MM-DD'
+  // 過去の記録（履歴）は ranking/history/ に置く（最新のファイルと分けるため）
+  const HISTORY_DIR = RESULTS_DIR + 'history/';
+  const historyFileOfLevel = (label) => `lv${String(label).replace('+', 'p')}_history.json`;
+  const chartKey = (r) => `${r.name}|${r.kind}|${r.diff}|${r.max}`;
+
+  // 履歴ファイル（項目名の配列＋値の配列）を、ふつうの行の形に戻す
+  function expandHistory(h, level) {
+    if (!h || !Array.isArray(h.snapshots) || !Array.isArray(h.fields)) return null;
+    return {
+      level,
+      snapshots: h.snapshots
+        .filter((x) => x && typeof x.date === 'string' && Array.isArray(x.rows))
+        .map((x) => ({
+          date: x.date,
+          rows: x.rows.map((vals) => {
+            const r = { level };
+            h.fields.forEach((f, i) => { r[f] = vals[i]; });
+            return r;
+          }).filter(isRow),
+        }))
+        .sort((a, b) => (a.date < b.date ? -1 : 1)),
+    };
+  }
+  // 指定した日付の時点のデータ：レベルごとに、その日までで最後のスナップショットを使う
+  function rowsAt(date) {
+    if (!date) return latest;
+    const out = [];
+    histories.forEach((h) => {
+      const snap = [...h.snapshots].reverse().find((x) => x.date <= date);
+      if (snap) out.push(...snap.rows);
+    });
+    return out;
+  }
+  let jackets = null;
+  let jacketOverrides = {};
+  // 譜面定数の範囲（下限・上限。0.1刻み）で絞り込む
+  let cMin = null;
+  let cMax = null;
+  // 定数がわからない譜面は、レベル表記の下限（14+ なら 14.6）で扱う
+  const levelMinOf = (label) => parseInt(label, 10) + (String(label).endsWith('+') ? 0.6 : 0);
+  const constOf = (r) => (r.const !== null && r.const !== undefined ? Number(r.const) : levelMinOf(r.level));
+  const r1 = (x) => Math.round(x * 10) / 10;
+  let currentDiffs = null; // null = すべて
+  let query = '';
+  let page = 1;
+  let sortKey = 'avgPct';
+  let sortDir = -1;
+  const SORTS = { avgPct: '平均', maxCount: '☆7', star6Count: '☆6' };
+  let rareMax = null; // 希少ボーナスの絞り込み：null＝すべて、20 / 10 / 3＝☆6以上がその人数以下の譜面だけ
+  // 2fRATE の希少ボーナス：上位100人のうち☆6以上（☆6＋☆7）が少ない譜面は、☆6以上で達成すると
+  // 「☆7まで」「☆6まで」の単曲レート値に加算される（20人以下 +0.05、10人以下 +0.10、3人以下 +0.15）
+  const RARE_BONUS = [
+    { maxPeople: 3, add: 0.15 },
+    { maxPeople: 10, add: 0.10 },
+    { maxPeople: 20, add: 0.05 },
+  ];
+  function rareOf(r) {
+    if (r.star6Count === null || r.star6Count === undefined || r.maxCount === null || r.maxCount === undefined) return null;
+    const people = r.star6Count + r.maxCount;
+    const hit = RARE_BONUS.find((b) => people <= b.maxPeople);
+    return hit ? { people, add: hit.add } : null;
+  }
+
+  // ランキングは上位100人までしか載らないため、100人目まで☆6以上の譜面は、
+  // ☆6を達成した人（☆7を含む）が100人を超えている可能性がある。その場合は「100+」と表示する
+  const isFull = (r) => r.count >= 100 && r.max && r.row100 !== null && r.row100 !== undefined;
+  const sat7 = (r) => isFull(r) && r.row100 === r.max;             // 100人全員が☆7
+  const sat6 = (r) => isFull(r) && r.row100 * 100 >= r.max * 99;   // 100人目まで☆6以上
+  function countCell(r, key) {
+    // ☆6の欄は「☆6以上」（☆6＋☆7）の人数を出す（集計データの star6Count は☆7を含まないため、maxCount を足す）
+    const v = key === 'star6Count'
+      ? (r.star6Count === null || r.star6Count === undefined || r.maxCount === null || r.maxCount === undefined ? null : r.star6Count + r.maxCount)
+      : r[key];
+    // 100人目まで☆6以上で埋まっている譜面は、☆6の欄を「100+」（☆6以上の人数が100人を超える）とする
+    if (key === 'star6Count' && sat6(r)) return { text: '100+', sort: 100.5 };
+    if (v === null || v === undefined) return { text: '-', sort: null };
+    // 100人全員が☆7なら、☆7の人数も100人を超える可能性がある
+    if (key === 'maxCount' && sat7(r)) return { text: `${v}+`, sort: v + 0.5 };
+    return { text: String(v), sort: v };
+  }
+
+  const sortValue = (r, key) => (key === 'avgPct' ? r.avgPct : countCell(r, key).sort);
+
+  const byAvgDesc = (a, b) => (b.avgPct ?? -1) - (a.avgPct ?? -1);
+  const sortFn = (a, b) => {
+    const va = sortValue(a, sortKey) ?? -Infinity;
+    const vb = sortValue(b, sortKey) ?? -Infinity;
+    if (va !== vb) return (va - vb) * sortDir;
+    return byAvgDesc(a, b);
+  };
+
+  // ===== 描画 =====
+  function renderSnapTabs() {
+    const st = $('snapTabs');
+    st.replaceChildren();
+    if (!snapDates.length) { st.hidden = true; return; }
+    st.hidden = false;
+    st.appendChild(el('span', 'snap-label', '時点'));
+    [null, ...snapDates].forEach((d) => {
+      const b = el('button', '', d === null ? '最新' : d.replace(/-/g, '/'));
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(d === currentSnap));
+      b.onclick = () => {
+        currentSnap = d;
+        all = rowsAt(d);
+        page = 1;
+        renderSnapTabs(); renderTabs(); renderList();
+      };
+      st.appendChild(b);
+    });
+  }
+
+  // ===== 推移のグラフ =====
+  // ある譜面の推移：履歴の各スナップショット＋最新（最後のスナップショットと中身が違うときだけ）
+  function trendOf(r) {
+    const key = chartKey(r);
+    const pts = [];
+    histories.forEach((h) => h.snapshots.forEach((x) => {
+      const hit = x.rows.find((y) => chartKey(y) === key);
+      if (hit) pts.push({ label: x.date.replace(/-/g, '/'), date: x.date, r: hit });
+    }));
+    pts.sort((a, b) => (a.date < b.date ? -1 : 1));
+    const now = latest.find((y) => chartKey(y) === key);
+    const same = (a, b) => ['top1', 'row50', 'row100', 'avgPct', 'maxCount', 'star6Count'].every((f) => a[f] === b[f]);
+    if (now && (!pts.length || !same(pts[pts.length - 1].r, now))) pts.push({ label: '最新', date: '9999', r: now });
+    return pts;
+  }
+
+  // 折れ線グラフ（SVG）。series: [{ name, color, values }]。1本なら凡例なし（見出しが名前を表す）
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  function svgEl(tag, attrs) {
+    const e = document.createElementNS(SVGNS, tag);
+    Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v));
+    return e;
+  }
+  function lineChart({ labels, series, yMin, yMax, fmt, tipFmt }) {
+    // スマホでは横幅を詰めて、文字が小さくなりすぎないようにする
+    const narrow = window.innerWidth < 560;
+    const W = narrow ? 360 : 640, H = narrow ? 200 : 220, L = 40, R = narrow ? 34 : 48, T = 12, B = 28;
+    const iw = W - L - R, ih = H - T - B;
+    const xAt = (i) => L + (labels.length === 1 ? iw / 2 : (iw * i) / (labels.length - 1));
+    const yAt = (v) => T + ih - ((v - yMin) / (yMax - yMin)) * ih;
+    const wrap = el('div', 'tr-chart');
+    const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img' });
+    // 目盛り（4本の横線）
+    for (let k = 0; k <= 4; k++) {
+      const v = yMin + ((yMax - yMin) * k) / 4;
+      const y = yAt(v);
+      svg.appendChild(svgEl('line', { x1: L, x2: W - R, y1: y, y2: y, stroke: 'var(--line)', 'stroke-width': 1 }));
+      const t = svgEl('text', { x: L - 8, y: y + 4, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--sub)' });
+      t.textContent = fmt(v);
+      svg.appendChild(t);
+    }
+    // 日付（多いときは間引く）
+    const step = Math.max(1, Math.ceil(labels.length / 6));
+    labels.forEach((lb, i) => {
+      if (i % step !== 0 && i !== labels.length - 1) return;
+      const t = svgEl('text', { x: xAt(i), y: H - 8, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--sub)' });
+      t.textContent = lb === '最新' ? lb : lb.slice(5);
+      svg.appendChild(t);
+    });
+    // 縦の補助線（マウスを乗せた位置）
+    const cross = svgEl('line', { x1: 0, x2: 0, y1: T, y2: T + ih, stroke: 'var(--sub)', 'stroke-width': 1, visibility: 'hidden' });
+    svg.appendChild(cross);
+    // 線と点
+    series.forEach((sr) => {
+      const pts = sr.values.map((v, i) => (v === null || v === undefined ? null : [xAt(i), yAt(v)]));
+      const d = pts.reduce((acc, p, i) => (p ? acc + `${acc && pts[i - 1] ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}` : acc), '');
+      if (d) svg.appendChild(svgEl('path', { d, fill: 'none', stroke: sr.color, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+      pts.forEach((p) => { if (p) svg.appendChild(svgEl('circle', { cx: p[0], cy: p[1], r: 4, fill: sr.color, stroke: 'var(--bg)', 'stroke-width': 2 })); });
+      // 最後の値を線の右端に（文字は本文の色）
+      const lastI = sr.values.map((v, i) => (v === null || v === undefined ? -1 : i)).filter((i) => i >= 0).pop();
+      if (lastI !== undefined) {
+        const t = svgEl('text', { x: xAt(lastI) + 9, y: yAt(sr.values[lastI]) + 4, 'font-size': 12, 'font-weight': 700, fill: 'var(--ink)' });
+        t.textContent = fmt(sr.values[lastI]);
+        svg.appendChild(t);
+      }
+    });
+    // マウス・タップで値を表示（点より広い当たり判定）
+    const tip = el('div', 'tr-tip');
+    tip.hidden = true;
+    labels.forEach((lb, i) => {
+      const half = labels.length === 1 ? iw / 2 : iw / (labels.length - 1) / 2;
+      const hit = svgEl('rect', { x: xAt(i) - half, y: T, width: half * 2, height: ih, fill: 'transparent' });
+      const show = () => {
+        cross.setAttribute('x1', xAt(i)); cross.setAttribute('x2', xAt(i)); cross.setAttribute('visibility', 'visible');
+        tip.textContent = '';
+        tip.appendChild(document.createTextNode(lb));
+        series.forEach((sr) => {
+          tip.appendChild(document.createElement('br'));
+          tip.appendChild(document.createTextNode(`${sr.name}：${tipFmt(sr, i)}`));
+        });
+        const box = svg.getBoundingClientRect();
+        const top = Math.min(...series.map((sr) => (sr.values[i] === null || sr.values[i] === undefined ? T + ih : yAt(sr.values[i]))));
+        tip.style.left = `${(xAt(i) / W) * box.width}px`;
+        tip.style.top = `${(top / H) * box.height - 8}px`;
+        tip.hidden = false;
+      };
+      hit.addEventListener('mouseenter', show);
+      hit.addEventListener('click', show);
+      svg.appendChild(hit);
+    });
+    svg.addEventListener('mouseleave', () => { tip.hidden = true; cross.setAttribute('visibility', 'hidden'); });
+    wrap.append(svg, tip);
+    return wrap;
+  }
+
+  // ☆6以上（理論値を含む）の人数。100人目まで☆6以上で埋まっている回は「100+」
+  const star6Plus = (r) => (r.star6Count === null || r.star6Count === undefined || r.maxCount === null || r.maxCount === undefined
+    ? null : r.star6Count + r.maxCount);
+  const star6PlusText = (r) => (sat6(r) ? '100+' : star6Plus(r) === null ? '-' : String(star6Plus(r)));
+
+  function openTrend(r, song) {
+    const pts = trendOf(r);
+    const ov = el('div', 'tr-overlay');
+    const box = el('div', 'tr-box');
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.setAttribute('aria-label', `${r.name} の推移`);
+    ov.appendChild(box);
+    const close = () => { ov.remove(); document.removeEventListener('keydown', onKey); };
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', onKey);
+    ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+    const x = el('button', 'tr-close', '閉じる');
+    x.type = 'button';
+    x.onclick = close;
+
+    const head = el('div', 'tr-head');
+    const nm = el('div', 'tr-title', r.name);
+    if (song?.genre) nm.appendChild(el('span', 'genre', `（${song.genre}）`));
+    const chips = el('div', 'chips');
+    chips.append(
+      el('span', `chip kind-${r.kind === '?' ? 'unknown' : r.kind}`, r.kind),
+      el('span', `chip diff-${String(r.diff).replace(':', '').toUpperCase()}`, r.diff),
+      el('span', 'chip lv', `Lv${r.level}`)
+    );
+    head.append(nm, chips);
+    box.append(x, head);
+
+    const labels = pts.map((p) => p.label);
+    if (pts.length < 2) {
+      box.appendChild(el('div', 'tr-note', 'この譜面の集計はまだ1回分しかないため、推移は表示できません。次回以降の集計から、変化をグラフで見られるようになります。'));
+    } else {
+      // ① ☆7・☆6 の人数（同じ単位なので1つのグラフに2本）
+      const c7 = 'var(--pink)', c6 = 'var(--accent)'; // 表示（ダーク／ライト）に合わせた色
+      const cnt = el('div', 'tr-card');
+      const legend = el('div', 'tr-legend');
+      [['☆7（理論値）', c7], ['☆6以上（理論値を含む）', c6]].forEach(([t, c]) => {
+        const k = el('span');
+        const key = el('span', 'tr-key');
+        key.style.background = c;
+        k.append(key, document.createTextNode(t));
+        legend.appendChild(k);
+      });
+      const v7 = pts.map((p) => p.r.maxCount ?? null);
+      const v6 = pts.map((p) => star6Plus(p.r));
+      const top = Math.max(10, ...v7.filter((v) => v !== null), ...v6.filter((v) => v !== null));
+      // 目盛りがきりのいい数になるように（4等分して 1・2・5・10・25 刻みのどれか）
+      const stepY = [1, 2, 5, 10, 25].find((st) => st * 4 >= top) ?? 25;
+      const yMax = stepY * 4;
+      cnt.append(el('div', 'tr-ctitle', '人数（上位100人のうち）'), legend, lineChart({
+        labels,
+        series: [{ name: '☆7', color: c7, values: v7 }, { name: '☆6以上', color: c6, values: v6 }],
+        yMin: 0, yMax,
+        fmt: (v) => String(Math.round(v)),
+        tipFmt: (sr, i) => `${sr.name === '☆7' ? countCell(pts[i].r, 'maxCount').text : star6PlusText(pts[i].r)}人`,
+      }));
+      // ② 平均取得率（単位が違うので別のグラフ）
+      const va = pts.map((p) => (p.r.avgPct === null || p.r.avgPct === undefined ? null : Number(p.r.avgPct)));
+      const nums = va.filter((v) => v !== null);
+      const lo = Math.max(0, Math.floor(Math.min(...nums) - 0.5));
+      const hi = Math.min(100, Math.ceil(Math.max(...nums) + 0.5));
+      const avg = el('div', 'tr-card');
+      avg.append(el('div', 'tr-ctitle', '平均取得率（上位100人）'), lineChart({
+        labels,
+        series: [{ name: '平均', color: 'var(--ink)', values: va }],
+        yMin: lo, yMax: hi === lo ? lo + 1 : hi,
+        fmt: (v) => `${v.toFixed(hi - lo <= 2 ? 1 : 0)}%`,
+        tipFmt: (sr, i) => `${va[i] === null ? '-' : va[i].toFixed(2)}%`,
+      }));
+      box.append(cnt, avg);
+    }
+
+    // 表（グラフと同じ値。100人目まで埋まっている回は「100+」）
+    const tbl = el('table', 'tr-table');
+    const thead = tbl.createTHead().insertRow();
+    ['集計日', '☆7', '☆6以上', '平均', '1位', '50位', '100位'].forEach((t) => thead.appendChild(el('th', '', t)));
+    const tb = tbl.createTBody();
+    [...pts].reverse().forEach((p) => {
+      const tr = tb.insertRow();
+      [p.label, countCell(p.r, 'maxCount').text, star6PlusText(p.r),
+        p.r.avgPct === null || p.r.avgPct === undefined ? '-' : `${Number(p.r.avgPct).toFixed(2)}%`,
+        p.r.top1 ?? '-', p.r.row50 ?? '-', p.r.row100 ?? '-'].forEach((v) => { tr.insertCell().textContent = String(v); });
+    });
+    const tw = el('div', 'tr-card');
+    const wrapT = el('div', 'tr-tablewrap');
+    wrapT.appendChild(tbl);
+    tw.append(el('div', 'tr-ctitle', '集計ごとの値'), wrapT);
+    box.appendChild(tw);
+    box.appendChild(el('div', 'tr-note', '「☆6以上」は取得率99%以上の人数で、理論値（☆7）の人も含みます。100人目まで☆6以上で埋まっている回は、表では「100+」、グラフでは100人で表示しています。'));
+
+    document.body.appendChild(ov);
+    x.focus();
+  }
+
+  function renderTabs() {
+    // 譜面定数の範囲：下限と上限を選ぶ（選べるのはデータにある定数の範囲。0.1刻み）
+    const lt = $('levelTabs');
+    lt.replaceChildren();
+    const cs = all.map(constOf).filter(Number.isFinite);
+    const lo = r1(Math.min(...cs));
+    const hi = r1(Math.max(...cs));
+    const opts = [];
+    for (let v = Math.round(lo * 10); v <= Math.round(hi * 10); v++) opts.push(v / 10);
+    const mkSel = (value, label, onChange) => {
+      const sel = el('select');
+      sel.setAttribute('aria-label', label);
+      opts.forEach((v) => {
+        const o = el('option', '', v.toFixed(1));
+        o.value = String(v);
+        sel.appendChild(o);
+      });
+      sel.value = String(Math.min(Math.max(value, lo), hi));
+      sel.onchange = () => { onChange(Number(sel.value)); page = 1; renderTabs(); renderList(); };
+      return sel;
+    };
+    const minSel = mkSel(cMin ?? lo, '譜面定数の下限', (v) => { cMin = v; if (cMax !== null && cMax < v) cMax = v; });
+    const maxSel = mkSel(cMax ?? hi, '譜面定数の上限', (v) => { cMax = v; if (cMin !== null && cMin > v) cMin = v; });
+    const allBtn = el('button', '', 'すべて');
+    allBtn.type = 'button';
+    allBtn.setAttribute('aria-pressed', String((cMin === null || cMin <= lo) && (cMax === null || cMax >= hi)));
+    allBtn.onclick = () => { cMin = null; cMax = null; page = 1; renderTabs(); renderList(); };
+    lt.append(el('span', 'crange-label', '譜面定数'), minSel, el('span', 'crange-sep', '〜'), maxSel, allBtn);
+
+    const dt = $('diffTabs');
+    dt.replaceChildren();
+    const diffsHere = DIFF_NAMES.filter((d) => all.some((r) => r.diff === d));
+    [['*', 'すべての難易度'], ...diffsHere.map((d) => [d, d])].forEach(([d, label]) => {
+      const b = el('button', d === '*' ? '' : `dbtn db-${d.replace(':', '').toUpperCase()}`, label);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(d === '*' ? currentDiffs === null : !!currentDiffs?.has(d)));
+      b.onclick = () => {
+        if (d === '*') currentDiffs = null;
+        else if (currentDiffs === null) currentDiffs = new Set([d]);
+        else if (currentDiffs.has(d)) { currentDiffs.delete(d); if (!currentDiffs.size) currentDiffs = null; }
+        else currentDiffs.add(d);
+        page = 1;
+        renderTabs();
+        renderList();
+      };
+      dt.appendChild(b);
+    });
+    // 希少ボーナスの対象譜面を、☆6以上の人数（ボーナスの区切れ目）で絞り込む
+    const rt = $('rareTabs');
+    rt.replaceChildren(el('span', 'crange-label', '希少ボーナス'));
+    [[null, 'すべて'], ...RARE_BONUS.slice().reverse().map((b) => [b.maxPeople, `${b.maxPeople}人以下（+${b.add.toFixed(2)}${b.maxPeople === 3 ? '' : '〜'}）`])]
+      .forEach(([v, label]) => {
+        const b = el('button', v === null ? '' : 'rare-btn', label);
+        b.type = 'button';
+        b.setAttribute('aria-pressed', String(rareMax === v));
+        b.onclick = () => { rareMax = v; page = 1; renderTabs(); renderList(); };
+        rt.appendChild(b);
+      });
+  }
+
+  function jacketEl(file) {
+    if (!file) return el('div', 'jacket');
+    const img = el('img', 'jacket');
+    let i = 0;
+    img.alt = '';
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.src = JACKET_BASES[0] + file;
+    img.onerror = () => {
+      i++;
+      if (i < JACKET_BASES.length) img.src = JACKET_BASES[i] + file;
+      else img.replaceWith(el('div', 'jacket')); // どこからも読めなければ空の枠にする
+    };
+    return img;
+  }
+
+  // ページ切り替え：« 前へ  1 … 4 5 [6] 7 8 … 20  次へ »
+  function pager(totalPages, where) {
+    const box = el('nav', 'pager');
+    box.setAttribute('aria-label', `ページ切り替え（${where}）`);
+    if (totalPages <= 1) return box;
+    const go = (n) => {
+      page = n;
+      renderList();
+      $('daterange').scrollIntoView({ block: 'start' });
+    };
+    const btn = (label, n, opts = {}) => {
+      const b = el('button', opts.current ? 'current' : '', label);
+      b.type = 'button';
+      if (opts.current) b.setAttribute('aria-current', 'page');
+      if (opts.disabled) b.disabled = true;
+      else if (!opts.current) b.onclick = () => go(n);
+      return b;
+    };
+    box.appendChild(btn('« 前へ', page - 1, { disabled: page === 1 }));
+    const nums = new Set([1, totalPages]);
+    for (let n = page - 2; n <= page + 2; n++) if (n >= 1 && n <= totalPages) nums.add(n);
+    let prev = 0;
+    [...nums].sort((a, b) => a - b).forEach((n) => {
+      if (n - prev > 1) box.appendChild(el('span', 'gap', '…'));
+      box.appendChild(btn(String(n), n, { current: n === page }));
+      prev = n;
+    });
+    box.appendChild(btn('次へ »', page + 1, { disabled: page === totalPages }));
+    return box;
+  }
+
+  function renderList() {
+    const q = query.trim().toLowerCase();
+    const items = all
+      .filter((r) => {
+        const c = constOf(r);
+        if (cMin !== null && c < cMin - 1e-9) return false;
+        if (cMax !== null && c > cMax + 1e-9) return false;
+        if (currentDiffs !== null && !currentDiffs.has(r.diff)) return false;
+        if (q && !r.name.toLowerCase().includes(q)) return false;
+        if (rareMax !== null) {
+          const rare = rareOf(r);
+          if (!rare || rare.people > rareMax) return false;
+        }
+        return true;
+      })
+      .sort(sortFn);
+
+    const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+    page = Math.min(Math.max(page, 1), totalPages);
+    const start = (page - 1) * PAGE_SIZE;
+    const shown = items.slice(start, start + PAGE_SIZE);
+
+    const dates = items.map((r) => dateOf(r.date)).filter(Boolean).sort();
+    const rangeText = items.length > PAGE_SIZE
+      ? `${items.length} 譜面中 ${start + 1}〜${start + shown.length} 件目`
+      : `${items.length} 譜面`;
+    $('daterange').textContent = dates.length
+      ? `${dates[0] === dates[dates.length - 1] ? `取得日：${dates[0]}` : `取得日：${dates[0]} 〜 ${dates[dates.length - 1]}`}（${rangeText}）`
+      : '';
+
+    const list = el('div', 'list');
+    const head = el('div', 'r head');
+    const sortHead = (k) => {
+      const b = el('button', 'c-num sort' + (sortKey === k ? ' on' : ''),
+        SORTS[k] + (sortKey === k ? (sortDir < 0 ? '▼' : '▲') : ''));
+      b.type = 'button';
+      b.title = '押すと並び替え';
+      b.onclick = () => {
+        if (sortKey === k) sortDir = -sortDir;
+        else { sortKey = k; sortDir = -1; }
+        page = 1;
+        renderList();
+      };
+      return b;
+    };
+    head.append(el('div', 'c-rank', '#'), el('div'), el('div', '', '曲名'),
+      sortHead('avgPct'), sortHead('maxCount'), sortHead('star6Count'));
+    list.appendChild(head);
+
+    if (!items.length) list.appendChild(el('div', 'empty', 'この条件の譜面はありません。'));
+
+    shown.forEach((r, j) => {
+      const i = start + j; // 通し番号（2ページ目なら101から）
+      const row = el('div', 'r');
+      const song = resolveSong(jackets, r.name, r.kind, DIFF_NAMES.indexOf(r.diff), r.level, r.max);
+      const main = el('div');
+      const nameEl = el('div', 'name', r.name);
+      if (song?.genre) nameEl.appendChild(el('span', 'genre', `（${song.genre}）`));
+      main.appendChild(nameEl);
+
+      const chips = el('div', 'chips');
+      chips.append(
+        el('span', `chip kind-${r.kind === '?' ? 'unknown' : r.kind}`, r.kind),
+        el('span', `chip diff-${String(r.diff).replace(':', '').toUpperCase()}`, r.diff)
+      );
+      if (r.const !== null && r.const !== undefined) chips.appendChild(el('span', 'chip const', Number(r.const).toFixed(1)));
+      chips.appendChild(el('span', 'chip lv', `Lv${r.level}`));
+      const rare = rareOf(r);
+      if (rare) chips.appendChild(el('span', 'chip rare', `希少 +${rare.add.toFixed(2)}（☆6以上 ${rare.people}人）`));
+      main.appendChild(chips);
+
+      const withStar = (v) => {
+        if (v === null || v === undefined) return '-';
+        const st = starOfScore(v, r.max);
+        return st === null ? String(v) : `${v}(☆${st})`;
+      };
+      const meta = el('div', 'meta');
+      [`1位 ${withStar(r.top1)}`, `50位 ${withStar(r.row50)}`, `100位 ${withStar(r.row100)}`, `MAX ${r.max ?? '-'}`]
+        .forEach((t, k) => {
+          if (k) meta.appendChild(document.createTextNode(k === 3 ? '　' : ' / '));
+          meta.appendChild(el('span', 'nw', t));
+        });
+      main.appendChild(meta);
+      const got = dateOf(r.date);
+      if (got) main.appendChild(el('div', 'date', `取得日 ${got}`));
+      if (histories.length) {
+        const tb = el('button', 'trend-btn', '推移を見る');
+        tb.type = 'button';
+        tb.onclick = () => openTrend(r, song);
+        main.appendChild(tb);
+      }
+
+      const avg = el('div', 'c-num');
+      avg.append(
+        el('div', 'pct', r.avgPct === null || r.avgPct === undefined ? '-' : `${Number(r.avgPct).toFixed(2)}%`),
+        el('div', 'avgstar', r.avgStar === null || r.avgStar === undefined ? '' : `☆${Number(r.avgStar).toFixed(1)}`)
+      );
+
+      row.append(
+        el('div', 'c-rank', String(i + 1)),
+        jacketEl(song?.img),
+        main,
+        avg,
+        el('div', 'c-num', countCell(r, 'maxCount').text),
+        el('div', 'c-num', countCell(r, 'star6Count').text)
+      );
+      list.appendChild(row);
+    });
+
+    $('listBox').replaceChildren(pager(totalPages, '上'), list, pager(totalPages, '下'));
+  }
+
+  // ===== 読み込み =====
+  async function load() {
+    const labels = [];
+    for (let n = LEVEL_MAX; n >= LEVEL_MIN; n--) labels.push(levelLabel(n));
+    const [lists, hists, jmap, overrides] = await Promise.all([
+      Promise.all(labels.map((lb) => fetchJson(RESULTS_DIR + fileOfLevel(lb)))),
+      Promise.all(labels.map((lb) => fetchJson(HISTORY_DIR + historyFileOfLevel(lb)))),
+      fetchJson(JACKETS_URL),
+      fetchJson(OVERRIDES_URL),
+    ]);
+    histories = hists.map((h, i) => expandHistory(h, labels[i])).filter((h) => h && h.snapshots.length);
+    snapDates = [...new Set(histories.flatMap((h) => h.snapshots.map((x) => x.date)))].sort().reverse();
+    jacketOverrides = overrides ?? {};
+    jackets = jmap ? new Map(Object.entries(jmap)) : null;
+    lists.forEach((list) => {
+      if (!list) return;
+      (Array.isArray(list) ? list : Object.values(list)).filter(isRow).forEach((r) => latest.push(r));
+    });
+    all = latest;
+
+    if (!all.length) {
+      $('status').textContent = '表示できるデータがまだありません。';
+      $('status').classList.add('error');
+      return;
+    }
+    // 最初は、いちばん上のレベル（Lv15 など）の定数の範囲を表示する
+    const levels = [...new Set(all.map((r) => r.level))].sort((a, b) => levelOrder(b) - levelOrder(a));
+    if (levels.length) cMin = levelMinOf(levels[0]);
+    $('status').textContent = `${all.length} 譜面のデータを読み込みました。`;
+    $('app').hidden = false;
+    // 入力のたびに描き直すと重いので、入力が止まってから絞り込む
+    let timer = null;
+    $('search').addEventListener('input', (e) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => { query = e.target.value; page = 1; renderList(); }, 250);
+    });
+    renderSnapTabs();
+    renderTabs();
+    renderList();
+  }
+
+  load();
+})();
+</script>
+</body>
+</html>

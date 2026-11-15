@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2fRATE（α版）</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="maimai でらっくす のでらっくスコア☆から計算する非公式レート「2fRATE」のツール集です。">
+<link rel="stylesheet" href="2frate.css">
+<script src="2frate-theme.js"></script>
+</head>
+<body class="pg-index">
+<div class="wrap">
+  <div class="site-head" style="justify-content:flex-end"><button type="button" class="theme-toggle"></button></div>
+
+  <header class="hero">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 512 512">
+        <defs>
+          <linearGradient id="logo-rainbow" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" stop-color="#FF5E7E"/><stop offset=".2" stop-color="#FFB347"/><stop offset=".4" stop-color="#FFE66D"/>
+            <stop offset=".6" stop-color="#7EE081"/><stop offset=".8" stop-color="#5CC8FF"/><stop offset="1" stop-color="#A78BFA"/>
+          </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="112" fill="#2B2350"/>
+        <polygon points="392.0,104.0 404.9,132.2 435.7,135.8 412.9,156.8 419.0,187.2 392.0,172.0 365.0,187.2 371.1,156.8 348.3,135.8 379.1,132.2"
+          fill="#E3A812" stroke="#E3A812" stroke-width="12" stroke-linejoin="round"/>
+        <text x="256" y="196" text-anchor="middle" dominant-baseline="central" letter-spacing="-7"
+          font-family="'M PLUS Rounded 1c', 'Hiragino Maru Gothic ProN', sans-serif" font-weight="800" font-size="200" fill="#FFFFFF">2f</text>
+        <rect x="106" y="372" width="36" height="24" rx="12" fill="#B5E05A"/>
+        <rect x="150" y="372" width="36" height="24" rx="12" fill="#B5E05A"/>
+        <rect x="194" y="372" width="36" height="24" rx="12" fill="#FF8C2E"/>
+        <rect x="238" y="372" width="36" height="24" rx="12" fill="#FF8C2E"/>
+        <rect x="282" y="372" width="36" height="24" rx="12" fill="#FFE066"/>
+        <rect x="326" y="372" width="36" height="24" rx="12" fill="#FFE066"/>
+        <rect x="370" y="372" width="36" height="24" rx="12" fill="url(#logo-rainbow)"/>
+      </svg>
+    </div>
+    <div class="hero-text">
+      <h1>2fRATE</h1>
+      <p>でらっくスコアを用いた新たなレートシステム</p>
+      <span class="badge">非公式・ファンメイドツール</span>
+    </div>
+  </header>
+
+  <section class="about" aria-label="2fRATE について">
+    <p><strong>2fRATE</strong> は、maimai でらっくす の「でらっくスコア」の☆（☆1〜☆7）と譜面定数から計算する、非公式の独自レートです。</p>
+    <p>公式のレーティングとは別に、「どれだけでらっくスコアを詰めたか」を数値で確かめられます。公式サイト「maimaiでらっくすNET」にログインした状態で、ブックマークから実行して使います。</p>
+  </section>
+
+  <h2>ツール</h2>
+  <div class="tools">
+    <a class="tool main" href="2frate.html">
+      <div class="tool-ic ic-pink" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>
+      </div>
+      <div class="tool-body">
+        <div class="tool-name">2fRATE レート計算<span class="tag tag-bm">ブックマーク</span></div>
+        <div class="tool-desc">自分のでらっくスコアから 2fRATE を計算し、レート対象曲50譜面の一覧を表示します。画像の保存やランキングへの登録もここから行えます。</div>
+        <div class="go">登録のしかた・使い方を見る →</div>
+      </div>
+    </a>
+
+    <a class="tool" href="ranking.html">
+      <div class="tool-ic ic-gold" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V18h3v3H8v-3h3v-3.1A5 5 0 0 1 8.3 12H8a4 4 0 0 1-4-4V5h3V3zm0 4H6v1a2 2 0 0 0 1 1.7V7zm10 0v2.7A2 2 0 0 0 18 8V7h-1z"/></svg>
+      </div>
+      <div class="tool-body">
+        <div class="tool-name">ランキング<span class="tag tag-web">Web</span></div>
+        <div class="tool-desc">登録された 2fRATE のランキング。☆7まで・☆6まで・☆5までの3種類で見られます。</div>
+      </div>
+    </a>
+
+    <a class="tool" href="calculator.html">
+      <div class="tool-ic ic-cyan" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm1 3v4h10V5H7zm0 7v2h2v-2H7zm4 0v2h2v-2h-2zm4 0v6h2v-6h-2zm-8 4v2h2v-2H7zm4 0v2h2v-2h-2z"/></svg>
+      </div>
+      <div class="tool-body">
+        <div class="tool-name">単曲レート計算<span class="tag tag-web">Web</span></div>
+        <div class="tool-desc">楽曲と☆を選ぶと、その譜面の単曲レート値がわかります。</div>
+      </div>
+    </a>
+
+    <a class="tool" href="viewer.html">
+      <div class="tool-ic ic-ink" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 19h16v2H4v-2zm1-2V10h3v7H5zm5 0V4h3v13h-3zm5 0v-9h3v9h-3z"/></svg>
+      </div>
+      <div class="tool-body">
+        <div class="tool-name">譜面データビューア<span class="tag tag-web">Web</span></div>
+        <div class="tool-desc">全国ランキング上位100人のでらっくスコアから集計した、譜面ごとのでらっくスコアの取りやすさの目安です。</div>
+      </div>
+    </a>
+
+    <a class="tool" href="about.html">
+      <div class="tool-ic ic-pink" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm-1 8v7h2v-7h-2zm0-4v2h2V6h-2z"/></svg>
+      </div>
+      <div class="tool-body">
+        <div class="tool-name">レートとランクのしくみ</div>
+        <div class="tool-desc">☆の決まり方、単曲レート値の計算式、ランク（WAKABA〜LEGEND）の一覧。</div>
+      </div>
+    </a>
+  </div>
+
+  <h2>はじめかた</h2>
+  <ol class="steps">
+    <li><b>ブックマークを登録</b><span>「2fRATE レート計算」のページにあるコードを、ブラウザのブックマークに登録します。</span></li>
+    <li><b>maimaiでらっくすNET にログイン</b><span>公式サイトにログインして、どのページでもよいので開きます。</span></li>
+    <li><b>ブックマークを実行</b><span>登録したブックマークを開くと、数秒〜十数秒で結果が表示されます。</span></li>
+  </ol>
+
+  <h2>コミュニティ・お問い合わせ</h2>
+  <a class="community" href="https://discord.gg/FtwW32pdaA" target="_blank" rel="noopener">
+    <div class="community-ic" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="Discord"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
+    </div>
+    <div class="community-body">
+      <div class="community-name">2fRATE Discord サーバー</div>
+      <div class="community-desc">お知らせ、不具合の報告、要望などはこちらへ。どなたでも参加できます。</div>
+    </div>
+    <span class="community-go">参加する →</span>
+  </a>
+  <a class="author" href="https://x.com/Porto_mint" target="_blank" rel="noopener">
+    <div class="author-ic" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>
+    </div>
+    <div class="author-body">
+      <div class="author-label">製作者</div>
+      <div class="author-name">@Porto_mint</div>
+    </div>
+    <span class="author-go">X（Twitter）→</span>
+  </a>
+
+  <h2>注意事項</h2>
+  <div class="notes">
+    <ul>
+      <li>非公式のファンメイドツールです。株式会社セガおよび関連会社とは一切関係ありません。このツールに関するお問い合わせは、セガ（公式）ではなく、<a href="https://discord.gg/FtwW32pdaA" target="_blank" rel="noopener">2fRATE Discord サーバー</a>または製作者の X（<a href="https://x.com/Porto_mint" target="_blank" rel="noopener">@Porto_mint</a>）までお願いします。</li>
+      <li>楽曲・ジャケット画像・アイコン画像の著作権は、株式会社セガおよび各権利者に帰属します。ジャケット画像・アイコン画像は公式サイトの画像を表示しているもので、本ツールでは保存・配布していません。</li>
+      <li>譜面データビューアは、公式の全国ランキングをもとに独自に集計した統計で、公式の情報ではありません。プレイヤー名などの個人情報は保存・公開していません。</li>
+      <li>権利者の方からご連絡をいただいた場合は、該当部分の公開停止などに速やかに対応します。</li>
+      <li>レートの計算はすべてお使いのブラウザ内で行います。プレイデータが外部に送られるのは、ご自身で「ランキングに登録」したときだけです。</li>
+      <li>公式サイトへの負荷を抑えるため、短時間に何度も連続で実行しないでください。</li>
+      <li>公式サイトの変更などにより、予告なく動作しなくなることがあります。</li>
+    </ul>
+  </div>
+
+  <footer>
+    2fRATE（非公式）・<a href="https://discord.gg/FtwW32pdaA" target="_blank" rel="noopener">Discord</a>・<a href="https://x.com/Porto_mint" target="_blank" rel="noopener">X（@Porto_mint）</a>・<a href="https://github.com/n4f1316/dxscore-tools">GitHub</a><br>
+    © 2026 なふ（2fRATE）。2fRATE のプログラム・デザイン・ロゴの無断転載・無断使用を禁じます。
+  </footer>
+</div>
+</body>
+</html>
