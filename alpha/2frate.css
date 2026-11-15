@@ -77,10 +77,10 @@ select { font: inherit; font-weight: 700; font-size: 15px; padding: 5px 8px; bor
 .pager .gap { color: var(--sub); padding: 0 8px; }
 /* ランクの色（文字をグラデーションで塗る）。--g はライト用、--gd はダーク用。ページのスクリプトが要素ごとに入れる */
 /* 数字の幅をそろえる（2frate-theme.js の tnum で1文字ずつ分けたもの） */
-.dg { display: inline-block; width: .66em; text-align: center; }
+.dg { display: inline-flex; justify-content: center; width: .6em; } /* 幅の広い数字（0・8 など）は左右に少しはみ出して詰まる */
 .dg-dot { width: .28em; }
 /* ランキングのレート値：整数部分が1桁でも2桁ぶんの幅を取り、ランクのアイコンの位置をそろえる */
-.rate-value:has(.dg-dot) { min-width: 3.58em; text-align: right; }
+.rate-value:has(.dg-dot) { min-width: 3.28em; text-align: right; }
 .rank-grad { display: inline-block; color: transparent; background-image: var(--g); -webkit-background-clip: text; background-clip: text; }
 html[data-theme="dark"] .rank-grad { background-image: var(--gd, var(--g)); }
 .default-icon { overflow: hidden; }
