@@ -15,6 +15,10 @@
     background: var(--bg); color: var(--ink); border-radius: 0; max-width: 100%; }
   .it-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); }
   #user { flex: 1 1 260px; min-width: 0; }
+  .it-save { font: inherit; font-weight: 700; padding: 8px 18px; border: 1px solid var(--accent); background: var(--accent);
+    color: var(--on-accent); border-radius: 0; cursor: pointer; }
+  .it-save:disabled { opacity: .5; cursor: default; }
+  .it-note { color: var(--sub); }
   #out { margin-top: 16px; }
   #out canvas { display: block; max-width: 100%; height: auto; border: 1px solid var(--line); }
 </style>
@@ -42,12 +46,16 @@
       </select>
     </label>
   </div>
+  <div class="it-row">
+    <button type="button" id="save" class="it-save" disabled>画像を保存</button>
+    <span id="saveNote" class="it-note"></span>
+  </div>
   <div class="status" id="status">読み込み中…</div>
   <div id="out"></div>
 
   <p class="foot">
     検証用のページです。称号はデータベースに保存していないため、上の欄に入れた文字で表示を確認します。<br>
-    ジャケット画像・アイコン画像は公式サイトの画像を表示しています（公式サイトがメンテナンス中のときは、灰色の枠になります）。このページの画像は保存できません（実際の保存は、ブックマークレットから行います）。<br>
+    ジャケット画像・アイコン画像は公式サイトの画像を表示しています（公式サイトがメンテナンス中のときは、灰色の枠になります）。「画像を保存」は、公式サイトの画像を書き出せない場合、ジャケットとアイコンを灰色の枠にした画像を保存します（ブラウザの制限のため。ブックマークレットから作る画像には入ります）。<br>
     非公式のファンメイドツールです。株式会社セガおよび関連会社とは一切関係ありません。楽曲・ジャケット画像・アイコン画像の著作権は、株式会社セガおよび各権利者に帰属します。<br>
     © 2026 なふ（2fRATE）。2fRATE のプログラム・デザイン・ロゴの無断転載・無断使用を禁じます。
   </p>
@@ -91,8 +99,47 @@
     values: { [mode]: Number(t.value) || 0 },
   });
 
+  let current = null; // いま表示している画像（保存用）
+
+  // canvas を PNG にする（公式サイトの画像が入っていて書き出せないときは null）
+  const toPng = (canvas) => new Promise((resolve) => {
+    try { canvas.toBlob((b) => resolve(b), 'image/png'); } catch { resolve(null); }
+  });
+
+  async function save() {
+    if (!current) return;
+    const c = current;
+    $('save').disabled = true;
+    try {
+      let blob = await toPng(c.canvas);
+      let note = '保存しました。';
+      if (!blob) {
+        // 書き出せない場合は、ジャケットとアイコンを灰色の枠にして描き直したものを保存する
+        $('saveNote').textContent = '保存用の画像を作成中…';
+        blob = await toPng(await tool.buildShareImage(c.profile, c.result, jackets, { ...c.options, cors: false, noImages: true }));
+        note = '保存しました（ジャケットとアイコンは書き出せないため、灰色の枠にしています）。';
+      }
+      if (!blob) throw new Error('画像を書き出せませんでした。');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = c.fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+      $('saveNote').textContent = note;
+    } catch (e) {
+      $('saveNote').textContent = 'エラー: ' + e.message;
+      console.error(e);
+    } finally {
+      $('save').disabled = false;
+    }
+  }
+
   async function draw() {
     const my = ++drawId;
+    current = null;
+    $('save').disabled = true;
     const u = users.find((x) => x.id === $('user').value);
     if (!u) return;
     try {
@@ -119,9 +166,13 @@
       const profile = { name: u.name, icon, trophy: $('trophy').value.trim(), trophyRank: $('trophyRank').value };
       const result = { mode, rating: Number(u[RATE_KEY[modeId]]) || 0, top: list.map((t) => toSong(t, modeId)) };
       tool.setTheme(document.documentElement.dataset.theme);
-      const canvas = await tool.buildShareImage(profile, result, jackets, { hideProfile: $('hide').checked });
+      const options = { hideProfile: $('hide').checked, cors: true };
+      const canvas = await tool.buildShareImage(profile, result, jackets, options);
       if (my !== drawId) return;
       $('out').replaceChildren(canvas);
+      current = { canvas, profile, result, options, fileName: `2fRATE_test_${u.name.replace(/[\\/:*?"<>|\s]+/g, '_')}_${modeId}.png` };
+      $('save').disabled = false;
+      $('saveNote').textContent = '';
       status(`${u.name} ／ ${mode.label} ／ ${list.length}譜面（${canvas.width}×${canvas.height}px）`);
     } catch (e) {
       if (my !== drawId) return;
@@ -167,6 +218,7 @@
     }));
     sel.disabled = false;
     sel.onchange = draw;
+    $('save').onclick = save;
     $('hide').onchange = draw;
     $('trophy').onchange = draw;
     $('trophyRank').onchange = draw;

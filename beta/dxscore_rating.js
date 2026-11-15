@@ -988,10 +988,12 @@
   const RAINBOW = ['#FF7A93', '#FFB347', '#FFE66D', '#7EE081', '#7CC8FF', '#B79BFA'];
 
   // 画像を読み込む（失敗や時間切れなら null）。maimaiでらっくすNET 上で実行しているので同じサイトの画像は描ける
-  function loadImage(src, ms = 8000) {
+  //   cors が true のときは、別サイトからでも書き出せる形（CORS）での読み込みを試す（検証ページ用）
+  function loadImage(src, ms = 8000, cors = false) {
     return new Promise((resolve) => {
       if (!src) return resolve(null);
       const img = new Image();
+      if (cors) img.crossOrigin = 'anonymous';
       const t = setTimeout(() => resolve(null), ms);
       img.onload = () => { clearTimeout(t); resolve(img); };
       img.onerror = () => { clearTimeout(t); resolve(null); };
@@ -1070,9 +1072,16 @@
     const files = top.map((s) => resolveSong(jackets, s.name, s.kind, s.diff, s.level, s.max)?.img);
     const ranked = RANK_MODES.includes(result.mode.id);
     const rankImg = ranked ? await loadImage(rankIconUrl(rankOf(result.rating, result.mode.id).name)) : null;
+    // 検証ページ用：options.noImages なら画像を読み込まない（灰色の枠）。
+    //   options.cors なら書き出せる形での読み込みを試し、だめなら通常の読み込み（表示のみ）にする
+    const load = async (src) => {
+      if (options.noImages) return null;
+      if (!options.cors) return loadImage(src);
+      return (await loadImage(src, 8000, true)) ?? loadImage(src);
+    };
     const [iconImg, ...jacketImgs] = await Promise.all([
-      loadImage(profile.icon),
-      ...files.map((f) => loadImage(f ? JACKET_BASE + f : null)),
+      load(profile.icon),
+      ...files.map((f) => load(f ? JACKET_BASE + f : null)),
     ]);
 
     // 背景
