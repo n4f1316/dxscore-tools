@@ -6,7 +6,7 @@
 
 :root {
   --bg: #F4F5F7; --panel: #E6E7EC; --line: #D5D6DE; --ink: #12101F; --sub: #55516E;
-  --accent: #007A99; --on-accent: #F4F5F7; --pink: #C2185B; --on-pink: #F4F5F7;
+  --accent: #007A99; --on-accent: #F4F5F7;
   --ph: #D5D6DE; --gold: #8A5A00; --err: #C0303A; --ok: #1E7A3C;
   --dx: #B8460B; --st: #1565B0; --remas: #6B2FB3;
   --m1: #8A5A00; --m2: #5B6876; --m3: #8E4E22;
@@ -17,7 +17,7 @@
 }
 html[data-theme="dark"] {
   --bg: #0E0B1F; --panel: #16122E; --line: #2E2858; --ink: #F2F0FF; --sub: #A9A3D6;
-  --accent: #4DE1FF; --on-accent: #0E0B1F; --pink: #FF5CA8; --on-pink: #0E0B1F;
+  --accent: #4DE1FF; --on-accent: #0E0B1F;
   --ph: #2A2550; --gold: #FFD86B; --err: #FF7A85; --ok: #6FD98C;
   --dx: #FFB37A; --st: #7CC4FF; --remas: #D9B8FF;
   --m1: #FFD86B; --m2: #C9D2DC; --m3: #E0A070;
@@ -102,7 +102,7 @@ html[data-theme="dark"] .rank-grad { background-image: var(--gd, var(--g)); }
 .part-tabs { margin-top: 8px; }
 .part-tabs button { font-size: 12px; min-height: 34px; padding: 4px 12px; }
 .part-tabs[hidden] { display: none; }
-.bf-open { margin-top: 4px; margin-right: 4px; font-size: 11px; padding: 2px 10px; border-color: var(--pink); color: var(--pink); }
+.bf-open { margin-top: 4px; margin-right: 4px; font-size: 11px; padding: 2px 10px; border-color: var(--accent); color: var(--accent); }
 
 /* ベスト枠・お気に入り・達成譜面（重ねて開く画面） */
 .bf-overlay { position: fixed; inset: 0; z-index: 50; background: var(--overlay); overflow: auto; padding: 16px 10px 40px; }
@@ -122,7 +122,7 @@ html[data-theme="dark"] .rank-grad { background-image: var(--gd, var(--g)); }
 .bf-fav-jk { width: 40px; height: 40px; flex: none; object-fit: cover; display: block; background: var(--ph); }
 .bf-fav-text { min-width: 0; flex: 1 1 auto; }
 .bf-fav-top { display: flex; align-items: center; gap: 4px; }
-.bf-fav-label { font-size: 11px; font-weight: 700; color: var(--on-pink); background: var(--pink); padding: 3px 7px; line-height: 1.2; }
+.bf-fav-label { font-size: 11px; font-weight: 700; color: var(--on-accent); background: var(--accent); padding: 3px 7px; line-height: 1.2; }
 .bf-fav-name { font-weight: 700; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bf-rate { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
 .bf-rank-icon { width: 46px; height: 46px; flex: none; }
@@ -248,7 +248,7 @@ html[data-theme="dark"] .rank-grad { background-image: var(--gd, var(--g)); }
 .tr-tablewrap { overflow-x: auto; }
 
 /* ---------- 単曲レート計算 ---------- */
-.calc { margin-top: 16px; background: var(--bg); border: 2px solid var(--pink); padding: 16px; }
+.calc { margin-top: 16px; background: var(--bg); border: 2px solid var(--accent); padding: 16px; }
 .calc[hidden] { display: none; }
 .calc-head { display: flex; gap: 14px; align-items: center; }
 .calc-head .jacket { width: 72px; height: 72px; }
@@ -257,7 +257,7 @@ html[data-theme="dark"] .rank-grad { background-image: var(--gd, var(--g)); }
 .star-row label { font-weight: 700; }
 .star-input { width: 110px; font-family: "Chakra Petch", sans-serif; font-size: 22px; font-weight: 700; text-align: center; padding: 6px 10px;
   border-radius: 0; border: 1px solid var(--sub); background: var(--bg); color: var(--ink); }
-.star-range { flex: 1 1 200px; accent-color: var(--pink); }
+.star-range { flex: 1 1 200px; accent-color: var(--accent); }
 .hint { font-size: 12px; color: var(--sub); margin-top: 6px; }
 .rare-note { font-size: 12px; color: var(--sub); margin-top: 8px; line-height: 1.7; }
 .results { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin-top: 14px; border: 1px solid var(--line); }
@@ -275,7 +275,7 @@ html[data-theme="dark"] .rank-grad { background-image: var(--gd, var(--g)); }
   padding: 8px 12px; border: 0; border-top: 1px solid var(--line); background: transparent; text-align: left; font-weight: 500; }
 .pg-calc .r:first-child { border-top: 0; }
 .pg-calc .r:hover, .pg-calc .r.selected { background: var(--panel); }
-.pg-calc .go { font-size: 12px; font-weight: 700; color: var(--pink); white-space: nowrap; }
+.pg-calc .go { font-size: 12px; font-weight: 700; color: var(--accent); white-space: nowrap; }
 
 /* ---------- 説明のページ（トップ・レート計算の使い方・しくみ） ---------- */
 .pg-doc, .pg-index { font-size: 15px; line-height: 1.75; }
@@ -295,7 +295,7 @@ html[data-theme="dark"] .rank-grad { background-image: var(--gd, var(--g)); }
 .pg-doc ul { margin: 0; padding-left: 1.2em; }
 .pg-doc li + li { margin-top: 4px; }
 .tag, .tag-bm { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; margin-left: 6px; vertical-align: 3px; }
-.tag-bm { background: var(--pink); color: var(--on-pink); }
+.tag-bm { background: var(--accent); color: var(--on-accent); }
 .tag-web { border: 1px solid var(--sub); color: var(--sub); }
 .pg-doc footer, .pg-index footer { margin-top: 40px; text-align: center; font-size: 12px; color: var(--sub); }
 .pg-doc footer a, .pg-index footer a { color: var(--sub); }
@@ -304,9 +304,9 @@ html[data-theme="dark"] .rank-grad { background-image: var(--gd, var(--g)); }
   font: 12.5px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; word-break: break-all; }
 .code-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
 .pg-doc button { min-height: 40px; padding: 6px 16px; }
-.copy { background: var(--pink); border-color: var(--pink); color: var(--on-pink); }
+.copy { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .copy.done { background: var(--ok); border-color: var(--ok); }
-.drag { display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; border: 2px dashed var(--pink); color: var(--pink);
+.drag { display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; border: 2px dashed var(--accent); color: var(--accent);
   font-weight: 700; text-decoration: none; cursor: grab; background: var(--bg); }
 .warn { margin-top: 10px; border: 1px solid var(--gold); color: var(--ink); padding: 10px 14px; font-size: 13px; background: var(--bg); }
 .pg-doc .tabs { margin: 0 0 12px; }
@@ -335,8 +335,10 @@ kbd { font: 700 12px ui-monospace, Menlo, Consolas, monospace; background: var(-
 .pg-doc details > div p + p { margin-top: 6px; }
 /* しくみ：式・☆・ランクの表 */
 .formula { background: var(--panel); color: var(--ink); border: 1px solid var(--line); padding: 14px 18px; font-weight: 700; line-height: 1.9; }
-.formula .v { color: var(--pink); }
+.formula .v { color: var(--accent); }
 .formula .bonus { color: var(--accent); }
+/* 希少ボーナス：画像のラベルと同じ配色（濃い地に黄色の文字。ダーク・ライト共通） */
+.formula .rare { background: #0E0B1F; color: #FFD86B; border: 1px solid #FFD86B; padding: 2px 8px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 .tblw { overflow-x: auto; }
 .pg-about table { font-variant-numeric: tabular-nums; }
 .pg-about th, .pg-about td { padding: 7px 10px; text-align: center; white-space: nowrap; vertical-align: middle; }
@@ -360,18 +362,18 @@ html[data-theme="dark"] .logo { background-image: url("logo/icon-dark.svg"); }
 .hero p { margin: 6px 0 0; color: var(--sub); font-weight: 700; }
 .badge { display: inline-block; font-size: 11px; font-weight: 700; color: var(--sub); border: 1px solid var(--sub); padding: 1px 10px; margin-top: 8px; }
 .about { padding: 18px 20px; }
-.about strong { color: var(--pink); }
+.about strong { color: var(--accent); }
 .tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .tool { display: flex; gap: 14px; align-items: flex-start; text-decoration: none; color: var(--ink); background: var(--bg); border: 1px solid var(--line); padding: 16px; }
 .tool:hover, .author:hover { border-color: var(--accent); }
-.tool.main { grid-column: 1 / -1; border: 2px solid var(--pink); }
+.tool.main { grid-column: 1 / -1; border: 2px solid var(--accent); }
 .tool-ic { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border: 1px solid currentColor; }
 .tool-ic svg { width: 26px; height: 26px; display: block; }
-.ic-pink { color: var(--pink); } .ic-cyan { color: var(--accent); } .ic-gold { color: var(--gold); } .ic-ink { color: var(--ink); }
+.ic-pink { color: var(--accent); } .ic-cyan { color: var(--accent); } .ic-gold { color: var(--gold); } .ic-ink { color: var(--ink); }
 .tool-body { min-width: 0; }
 .tool-name { font-size: 17px; font-weight: 700; line-height: 1.4; }
 .tool-desc { font-size: 13px; color: var(--sub); margin-top: 2px; line-height: 1.65; }
-.pg-index .go { font-size: 13px; font-weight: 700; color: var(--pink); margin-top: 6px; }
+.pg-index .go { font-size: 13px; font-weight: 700; color: var(--accent); margin-top: 6px; }
 .steps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; counter-reset: s; }
 .steps li { background: var(--bg); border: 1px solid var(--line); padding: 16px; counter-increment: s; }
 .steps li::before { content: counter(s); display: grid; place-items: center; width: 28px; height: 28px; background: var(--accent); color: var(--on-accent);
