@@ -54,6 +54,22 @@
     const shift = RATE_MODES.find((m) => m.id === modeId)?.rankShift ?? 0;
     return RANKS.find((r) => v >= r.min - shift);
   };
+  // 数字を1文字ずつ同じ幅の枠に入れる（使っている書体は数字ごとに幅が違うため、桁の位置をそろえる）
+  const tnum = (node) => {
+    const text = node.textContent;
+    node.textContent = '';
+    node.setAttribute('aria-label', text); // 読み上げでは元の数値として読む
+    for (const ch of text) {
+      const sp = document.createElement('span');
+      if (/[0-9]/.test(ch)) sp.className = 'dg';
+      else if (ch === '.') sp.className = 'dg dg-dot';
+      sp.setAttribute('aria-hidden', 'true');
+      sp.textContent = ch;
+      node.appendChild(sp);
+    }
+    return node;
+  };
+
   // ランクの色は CSS 変数で渡す（--g：ライト用、--gd：ダーク用。どちらを使うかはスタイル側で決める）
   const rankCss = (rank) =>
     `--g: linear-gradient(90deg, ${rank.colors.join(', ')});` +
@@ -63,9 +79,9 @@
   const THEME_KEY = '2frate-theme';
   const THEME_COLORS = {
     light: { bg: '#F4F5F7', panel: '#E6E7EC', line: '#D5D6DE', ink: '#12101F', sub: '#55516E',
-      accent: '#007A99', onAccent: '#F4F5F7', pink: '#C2185B', ph: '#D5D6DE', ring: '#DCDDE4' },
+      accent: '#007A99', onAccent: '#F4F5F7', ph: '#D5D6DE', ring: '#DCDDE4' },
     dark: { bg: '#0E0B1F', panel: '#16122E', line: '#2E2858', ink: '#F2F0FF', sub: '#A9A3D6',
-      accent: '#4DE1FF', onAccent: '#0E0B1F', pink: '#FF5CA8', ph: '#2A2550', ring: '#2A2550' },
+      accent: '#4DE1FF', onAccent: '#0E0B1F', ph: '#2A2550', ring: '#2A2550' },
   };
   const loadTheme = () => {
     let saved = null;
@@ -384,7 +400,7 @@
     :host {
       all: initial; display: block;
       --bg: #F4F5F7; --panel: #E6E7EC; --line: #D5D6DE; --ink: #12101F; --sub: #55516E;
-      --accent: #007A99; --on-accent: #F4F5F7; --pink: #C2185B; --ph: #D5D6DE;
+      --accent: #007A99; --on-accent: #F4F5F7; --ph: #D5D6DE;
       --gold: #8A5A00; --err: #C0303A; --ok: #1E7A3C; --dx: #B8460B; --st: #1565B0; --remas: #6B2FB3;
       --basic: #23804A; --advanced: #A86B00; --expert: #D0343D; --master: #8A3FD1;
       --card: var(--bg); --cyan: var(--accent);
@@ -399,12 +415,15 @@
     }
     :host([data-theme="dark"]) {
       --bg: #0E0B1F; --panel: #16122E; --line: #2E2858; --ink: #F2F0FF; --sub: #A9A3D6;
-      --accent: #4DE1FF; --on-accent: #0E0B1F; --pink: #FF5CA8; --ph: #2A2550;
+      --accent: #4DE1FF; --on-accent: #0E0B1F; --ph: #2A2550;
       --gold: #FFD86B; --err: #FF7A85; --ok: #6FD98C; --dx: #FFB37A; --st: #7CC4FF; --remas: #D9B8FF;
       --rings: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' fill='none' stroke='%232A2550'%3E%3Ccircle cx='400' cy='0' r='60'/%3E%3Ccircle cx='400' cy='0' r='100'/%3E%3Ccircle cx='400' cy='0' r='140'/%3E%3Ccircle cx='400' cy='0' r='180' stroke='%234DE1FF' stroke-opacity='.6'/%3E%3Ccircle cx='400' cy='0' r='220'/%3E%3Ccircle cx='400' cy='0' r='260'/%3E%3Ccircle cx='400' cy='0' r='300'/%3E%3Ccircle cx='400' cy='0' r='340'/%3E%3Ccircle cx='400' cy='0' r='380'/%3E%3C/svg%3E");
       --rings2: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260' fill='none' stroke='%232A2550'%3E%3Ccircle cx='0' cy='260' r='70'/%3E%3Ccircle cx='0' cy='260' r='110'/%3E%3Ccircle cx='0' cy='260' r='150'/%3E%3Ccircle cx='0' cy='260' r='190'/%3E%3Ccircle cx='0' cy='260' r='230'/%3E%3C/svg%3E");
     }
     * { box-sizing: border-box; border-radius: 0; }
+    /* 数字の幅をそろえる（tnum で1文字ずつ分けたもの。書体の数字は幅がまちまちなため） */
+    .dg { display: inline-flex; justify-content: center; width: .6em; }
+    .dg-dot { width: .28em; }
     /* 背景のリング（枠の背面に見える軽いアクセント） */
     .dxr-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none;
       background: var(--rings) top right no-repeat, var(--rings2) bottom left no-repeat; }
@@ -462,7 +481,7 @@
     .dxr-plate-label { display: block; font: 700 12px/1.4 var(--num); letter-spacing: .04em; color: var(--sub); }
     .dxr-plate[aria-pressed="true"] .dxr-plate-label { color: var(--accent); }
     .dxr-plate-value { display: block; font: 700 34px/1.2 var(--num); font-variant-numeric: tabular-nums; }
-    .dxr-plate[aria-pressed="true"] .dxr-plate-value { color: var(--pink); }
+    .dxr-plate[aria-pressed="true"] .dxr-plate-value { color: var(--accent); }
     /* ランクの色（グラデーションの文字）。--g がライト用、--gd がダーク用 */
     .dxr-plate-value.dxr-ranked, .dxr-plate[aria-pressed="true"] .dxr-plate-value.dxr-ranked {
       color: transparent; -webkit-background-clip: text; background-clip: text; display: inline-block;
@@ -562,7 +581,7 @@
     .dxr-rec-rest { font-size: 12px; font-weight: 700; color: var(--ink); margin-left: 4px; }
     .dxr-rec-ease { font-size: 11px; color: var(--sub); margin-top: 2px; }
     .dxr-rec-gain { text-align: right; }
-    .dxr-rec-plus { font: 700 17px/1.3 var(--num); color: var(--pink); font-variant-numeric: tabular-nums; }
+    .dxr-rec-plus { font: 700 17px/1.3 var(--num); color: var(--accent); font-variant-numeric: tabular-nums; }
     .dxr-rec-sub { font: 500 11px/1.4 var(--num); color: var(--sub); font-variant-numeric: tabular-nums; }
     .dxr-rec-empty { padding: 20px; text-align: center; color: var(--sub); }
     @media (max-width: 520px) {
@@ -865,7 +884,7 @@
           return cell;
         })(),
         el('div', `dxr-diffmax${isMax ? ' is-max' : ''}`, diffText),
-        el('div', 'dxr-val', s.values[mode.id].toFixed(3))
+        tnum(el('div', 'dxr-val', s.values[mode.id].toFixed(3)))
       );
       list.appendChild(row);
     });
@@ -975,7 +994,7 @@
     num: '"Chakra Petch", "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif', // 数字・英字ラベル用
     // 色は表示（ダーク／ライト）に合わせる
     get ink() { return themeColors().ink; }, get sub() { return themeColors().sub; }, get line() { return themeColors().line; },
-    get bg() { return themeColors().bg; }, get panel() { return themeColors().panel; }, get pink() { return themeColors().pink; },
+    get bg() { return themeColors().bg; }, get panel() { return themeColors().panel; }, 
     get accent() { return themeColors().accent; }, get ph() { return themeColors().ph; }, get ring() { return themeColors().ring; },
   };
   const DARK_INK = '#0E0B1F'; // 色つきラベルの上の文字（ダーク・ライト共通）
@@ -1019,6 +1038,22 @@
     let t = text;
     while (t.length && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
     return t + '…';
+  }
+
+  // 数字を1文字ずつ同じ幅で、右端 xRight にそろえて描く（画面の tnum と同じ幅）。全体の幅を返す
+  const digitsWidth = (text, size) => [...text].reduce((w, ch) => w + (ch === '.' ? 0.28 : 0.6) * size, 0);
+  function fillDigits(ctx, text, xRight, y, size) {
+    const total = digitsWidth(text, size);
+    const align = ctx.textAlign;
+    ctx.textAlign = 'center';
+    let x = xRight - total;
+    for (const ch of text) {
+      const w = (ch === '.' ? 0.28 : 0.6) * size;
+      ctx.fillText(ch, x + w / 2, y);
+      x += w;
+    }
+    ctx.textAlign = align;
+    return total;
   }
 
   // 四角のラベル（塗り＋文字）。幅を返す
@@ -1154,13 +1189,13 @@
     if (RANK_MODES.includes(result.mode.id)) {
       // ランクの色で描く（グラデーション。ダーク表示では明るめの同系色）
       const rank = rankOf(result.rating, result.mode.id);
-      const tw = ctx.measureText(rateText).width;
+      const tw = digitsWidth(rateText, 80);
       const g = ctx.createLinearGradient(rx - tw, 0, rx, 0);
       const rc = theme === 'dark' ? (rank.dark || rank.colors) : rank.colors;
       rc.forEach((c, i) => g.addColorStop(rc.length > 1 ? i / (rc.length - 1) : 0, c));
       ctx.save();
       ctx.fillStyle = g;
-      ctx.fillText(rateText, rx, iy + 120);
+      fillDigits(ctx, rateText, rx, iy + 120, 80);
       ctx.restore();
       // ランクのアイコン（レート値の左）
       if (rankImg) {
@@ -1168,8 +1203,8 @@
         ctx.drawImage(rankImg, rx - tw - 12 - size, iy + 120 - 66, size, size);
       }
     } else {
-      ctx.fillStyle = IMG.pink;
-      ctx.fillText(rateText, rx, iy + 120);
+      ctx.fillStyle = IMG.accent;
+      fillDigits(ctx, rateText, rx, iy + 120, 80);
     }
 
     // ---- 譜面の一覧（5列×10行） ----
@@ -1249,7 +1284,7 @@
       ctx.fillStyle = IMG.ink;
       ctx.textAlign = 'right';
       ctx.textBaseline = 'middle';
-      ctx.fillText(s.values[result.mode.id].toFixed(3), jx + J, r2 + 18);
+      fillDigits(ctx, s.values[result.mode.id].toFixed(3), jx + J, r2 + 18, 29);
     });
 
     // ---- 下部：注意書き ----
@@ -1823,7 +1858,7 @@
         const easeText = r.ease === null ? '取りやすさ：データなし' : `上位100人の ${Math.round(r.ease * 100)}% が達成`;
         main.append(nm, meta, goal, el('div', 'dxr-rec-ease', (r.inTop ? 'レート対象曲　' : '対象外（入れ替わり）　') + easeText));
         const right = el('div', 'dxr-rec-gain');
-        right.append(el('div', 'dxr-rec-plus', `+${r.gain.toFixed(3)}`), el('div', 'dxr-rec-sub', `単曲 ${r.newValue.toFixed(3)}`));
+        right.append(tnum(el('div', 'dxr-rec-plus', `+${r.gain.toFixed(3)}`)), tnum(el('div', 'dxr-rec-sub', `単曲 ${r.newValue.toFixed(3)}`)));
         row.append(el('div', 'dxr-rank', String(i + 1)), jacket, main, right);
         list.appendChild(row);
       });
@@ -1889,7 +1924,7 @@
         (() => {
           // [ランクのアイコン（後で実装）][レート値]
           const rate = el('span', 'dxr-plate-rate');
-          const value = el('span', 'dxr-plate-value', rating.toFixed(3));
+          const value = tnum(el('span', 'dxr-plate-value', rating.toFixed(3)));
           if (RANK_MODES.includes(mode.id)) {
             const rank = rankOf(rating, mode.id);
             value.classList.add('dxr-ranked');
