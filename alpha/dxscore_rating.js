@@ -36,8 +36,11 @@
 
   // オマケ：対象の譜面を絞って計算するレート（計算式は同じ。ランク・ランキング登録・おすすめ楽曲はなし）
   //   filter: 対象にする譜面。label: 画面や画像に添える短い名前
+  const BONUS_COUNT_MARGIN = 1; // 達成譜面数を数えるとき、定数表にある最低レベルより何段階下まで読むか（定数表にない譜面への備え）
   const BONUS_MODES = [
-    { id: 'expert', label: 'EXPERT', title: 'EXPERTのみレート', desc: 'EXPERT の譜面だけで計算します', filter: (s) => s.diff === 'EXPERT' },
+    { id: 'expert', label: 'EXPERT', title: 'EXPERTのみレート', desc: 'EXPERT の譜面だけで計算します', filter: (s) => s.diff === 'EXPERT',
+      countDiff: 'EXPERT',
+      accent: { light: '#D0343D', dark: '#FF6B76' } }, // accent: 画像のアクセント色（EXPERT は赤。通常のレートの画像と見分けるため） // countDiff: ☆5・☆6・☆7達成譜面数も数える（その難易度の譜面があるレベルをすべて読み込む）
     { id: 'st', label: 'ST', title: 'STのみレート', desc: 'スタンダード譜面だけで計算します（全難易度）', filter: (s) => s.kind === 'ST' },
     { id: 'dx', label: 'DX', title: 'DXのみレート', desc: 'でらっくす譜面だけで計算します（全難易度）', filter: (s) => s.kind === 'DX' },
   ];
@@ -1129,6 +1132,7 @@
     // 画像をまとめて読み込む
     const top = result.top.slice(0, cols * rows);
     const files = top.map((s) => resolveSong(jackets, s.name, s.kind, s.diff, s.level, s.max)?.img);
+    const accent = result.bonus?.accent?.[theme] ?? IMG.accent; // オマケで色の指定があればその色（EXPERT は赤）
     const ranked = RANK_MODES.includes(result.mode.id) && !result.bonus; // オマケのレートにはランクを付けない
     const rankImg = ranked ? await loadImage(rankIconUrl(rankOf(result.rating, result.mode.id).name)) : null;
     // 検証ページ用：options.noImages なら画像を読み込まない（灰色の枠）。
@@ -1150,7 +1154,7 @@
     ctx.save();
     ctx.lineWidth = 2;
     for (let r = 120, k = 0; r <= 760; r += 80, k++) {
-      ctx.strokeStyle = k === 3 ? IMG.accent : IMG.ring;
+      ctx.strokeStyle = k === 3 ? accent : IMG.ring;
       ctx.globalAlpha = k === 3 ? 0.6 : 1;
       ctx.beginPath(); ctx.arc(W, 0, r, 0, Math.PI * 2); ctx.stroke();
     }
@@ -1167,7 +1171,7 @@
     ctx.lineWidth = 2;
     ctx.strokeStyle = IMG.line;
     ctx.stroke();
-    ctx.fillStyle = IMG.accent; // 上辺のアクセント線
+    ctx.fillStyle = accent; // 上辺のアクセント線
     ctx.fillRect(hx, hy, W - pad * 2, 5);
 
     const iconSize = 136;
@@ -1208,7 +1212,8 @@
     ctx.textAlign = 'right';
     ctx.fillStyle = IMG.sub;
     ctx.font = `700 23px ${IMG.num}`;
-    // 例：2fRATE☆7（オマケのレートは「2fRATE☆7 EXPERTのみ」）
+    // 例：2fRATE☆7（オマケのレートは「2fRATE☆7 EXPERTのみ」。色の指定があるオマケはその色で書く）
+    if (result.bonus?.accent) ctx.fillStyle = accent;
     ctx.fillText(`2fRATE${result.mode.label.replace("まで", "")}${result.bonus ? ` ${result.bonus.label}のみ` : ''}`, rx, iy + 36);
     ctx.font = `700 80px ${IMG.num}`;
     const rateText = result.rating.toFixed(3);
@@ -1229,7 +1234,7 @@
         ctx.drawImage(rankImg, rx - tw - 12 - size, iy + 120 - 66, size, size);
       }
     } else {
-      ctx.fillStyle = IMG.accent;
+      ctx.fillStyle = accent;
       fillDigits(ctx, rateText, rx, iy + 120, 80);
     }
 
@@ -1938,6 +1943,7 @@
   function renderResult(ui, profile, results, info, jackets, extras = {}) {
     // プレイヤー情報：アイコン / 称号 / 名前
     const bonus = extras.bonus || null; // オマケのレート（対象を絞った計算）のとき
+    const bc = extras.bonusCounts || null; // オマケの達成譜面数
     const player = profileEl(ui, profile, bonus ? `オマケ：${bonus.title}` : undefined);
 
     // レートの札（押すとそのレートのレート対象曲に切り替わる）
@@ -1994,6 +2000,7 @@
     const note = el('p', 'dxr-note',
       `${info}。` +
       (bonus ? `オマケのレートです（${bonus.desc}）。計算式は通常のレートと同じで、ランクの表示・ランキング登録・おすすめ楽曲はありません。` : '') +
+      (bc ? `達成譜面数は、プレイ済みの ${bonus.countDiff} 譜面（${bc.total} 譜面）から数えています（☆6達成は☆7を、☆5達成は☆6・☆7を含みます）。` : '') +
       (hasEst ? '定数の * は定数表にない譜面で、レベル表示からの概算値（下限）です。' : '') +
       '☆の小数は次の☆までの進み具合で、計算には0.5倍の重みで反映します。' +
       '「☆6まで」は☆7を☆6として、「☆5まで」は☆6以上を☆5として計算しています。' +
@@ -2040,7 +2047,20 @@
       });
     }
 
-    ui.body.append(player, plates, ...(counts ? [countBox] : []), shareBtn, showLabel,
+    // オマケの達成譜面数（対象の難易度の全譜面から数えたもの）
+    if (bc) {
+      [[7, bc.star7], [6, bc.star6], [5, bc.star5]].forEach(([stars, n]) => {
+        const card = el('div', 'dxr-count');
+        const head = el('div', 'dxr-count-head');
+        head.append(el('span', `dxr-star-pill ${starClass(stars)}`, `☆${stars}`), document.createTextNode('達成'));
+        const num = el('div', 'dxr-count-num', String(n));
+        num.appendChild(el('small', '', '譜面'));
+        card.append(head, num, el('div', 'dxr-count-sub', `${bonus.countDiff} ${bc.total} 譜面中`));
+        countBox.appendChild(card);
+      });
+    }
+
+    ui.body.append(player, plates, ...(counts || bc ? [countBox] : []), shareBtn, showLabel,
       ...(bonus ? [] : [rankBtn, ...(SHOW_RECOMMEND ? [recBtn] : [])]), ...lists, note);
   }
 
@@ -3073,7 +3093,7 @@
       const run = await computeRating((t) => ui.status(`【${bonus.title}】${t}`), left, bonus);
       if (!run || left()) return;
       ui.status('');
-      renderResult(ui, profile, run.results.map((r) => ({ ...r, bonus })), run.info, run.jackets, { bonus });
+      renderResult(ui, profile, run.results.map((r) => ({ ...r, bonus })), run.info, run.jackets, { bonus, bonusCounts: run.bonusCounts });
     } catch (e) {
       if (left()) return;
       ui.status('エラー: ' + e.message, true);
@@ -3113,10 +3133,27 @@
     let lastLevel = LEVEL_MAX;
     let rateLevel = null; // レート対象曲が確定したレベル（読み込み中の表示に使う）
 
-    for (let n = LEVEL_MAX; n >= 1; n--) {
+    // オマケで達成譜面数も数える場合：定数表から、その難易度の譜面があるレベルの範囲を出す
+    //   （例：EXPERT は 13+ が最高なので、Lv14 以上のページは読まない）。定数表を読めなかったときは全レベルを読む
+    let startLevel = LEVEL_MAX;
+    let countMin = null; // 達成譜面数のために、ここまでは読み込む
+    if (bonus?.countDiff) {
+      const levelNoOf = (c) => { for (let n = LEVEL_MAX; n > 1; n--) if (c >= levelInfo(n).min) return n; return 1; };
+      const cs = Object.entries(constTable)
+        .filter(([k, c]) => k.split('|')[2] === bonus.countDiff && typeof c === 'number').map(([, c]) => c);
+      countMin = 1;
+      if (cs.length) {
+        startLevel = levelNoOf(Math.max(...cs));
+        countMin = Math.max(1, levelNoOf(Math.min(...cs)) - BONUS_COUNT_MARGIN);
+      }
+    }
+    lastLevel = startLevel;
+
+    for (let n = startLevel; n >= 1; n--) {
       if (left()) return;
       status(`Lv${levelInfo(n).label} を取得中…（${++fetched}ページ目）` +
-        (rateLevel !== null && !bonus ? '　☆5・☆6・☆7達成譜面数の集計のため、Lv10+ まで読み込みます' : ''));
+        (rateLevel !== null && !bonus ? '　☆5・☆6・☆7達成譜面数の集計のため、Lv10+ まで読み込みます' : '') +
+        (countMin !== null ? `　☆5・☆6・☆7達成譜面数の集計のため、Lv${levelInfo(countMin).label} まで読み込みます` : ''));
       // レコードのページと、そのレベルの全国ランキング集計（GitHub。なくても続行）を同時に読み込む
       const [res, lvStats] = await Promise.all([
         fetch(LEVEL_URL(n), { credentials: 'same-origin' }),
@@ -3138,7 +3175,8 @@
       if (allDone && rateLevel === null) rateLevel = n;
       // レート対象曲が確定し、☆6・☆7の集計に必要なレベル（10+）まで取得したら終了
       //   オマケのレートは達成譜面数を集計しないので、レート対象曲が確定した時点で終了
-      if (n === 1 || (allDone && (bonus || n <= COUNT_MIN_LEVEL))) break;
+      //   達成譜面数も数えるオマケは、その難易度の最低レベルまで読んで終了（それより下に対象の譜面はない）
+      if (n === 1 || (countMin !== null ? n <= countMin : allDone && (bonus || n <= COUNT_MIN_LEVEL))) break;
       await sleep(WAIT_MS);
     }
 
@@ -3165,7 +3203,14 @@
       stats,
       jackets,
       counts: bonus ? null : countStars(scored),
-      info: `Lv15〜Lv${levelInfo(lastLevel).label} の ${fetched} ページを取得し、${bonus ? `${bonus.label} の ` : ''}${scored.length} 譜面から計算`,
+      // オマケの達成譜面数（☆6達成は☆7を、☆5達成は☆6・☆7を含む）。total は読み込んだ対象の譜面数
+      bonusCounts: bonus?.countDiff ? {
+        star7: scored.filter((s) => s.stars >= 7).length,
+        star6: scored.filter((s) => s.stars >= 6).length,
+        star5: scored.filter((s) => s.stars >= 5).length,
+        total: scored.length,
+      } : null,
+      info: `Lv${levelInfo(startLevel).label}〜Lv${levelInfo(lastLevel).label} の ${fetched} ページを取得し、${bonus ? `${bonus.label} の ` : ''}${scored.length} 譜面から計算`,
     };
   }
 })();
