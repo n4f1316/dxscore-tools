@@ -1275,7 +1275,7 @@
       ctx.strokeStyle = IMG.line;
       ctx.stroke();
 
-      // ---- コンパクトの形：ジャケット（左上）、右に種別・定数・☆・単曲レート値、下に楽曲名 ----
+      // ---- コンパクトの形：ジャケット（左上。種別・難易度を重ねる）、右に 定数・☆・MAX-xx・単曲レート値、下に楽曲名 ----
       if (compact) {
         const jx = x + 8, jy = y + 8;
         ctx.save();
@@ -1284,34 +1284,47 @@
         if (jacketImgs[i]) ctx.drawImage(jacketImgs[i], jx, jy, J, J);
         else { ctx.fillStyle = IMG.ph; ctx.fillRect(jx, jy, J, J); }
         ctx.restore();
-        // ジャケットの上：順位（左）と MAX-xx（右）、下：希少ボーナス
+        // ジャケットの上：順位（左上）、下部に DX/ST・難易度（左）
         pill(ctx, jx + 4, jy + 4, `#${i + 1}`, { bg: 'rgba(14,11,31,.9)', fg: '#FFFFFF', h: 22, size: 13, padX: 6 });
-        pill(ctx, jx + J - 4, jy + 4, maxLabelOf(s), {
-          bg: 'rgba(14,11,31,.9)', fg: s.cur >= s.max ? '#FFD86B' : '#FFFFFF', h: 22, size: 13, padX: 6, align: 'right',
-        });
+        ctx.save();
+        roundRect(ctx, jx, jy, J, J);
+        ctx.clip();
+        const shade = ctx.createLinearGradient(0, jy + J - 40, 0, jy + J);
+        shade.addColorStop(0, 'rgba(14,11,31,0)');
+        shade.addColorStop(1, 'rgba(14,11,31,.75)');
+        ctx.fillStyle = shade;
+        ctx.fillRect(jx, jy + J - 40, J, 40);
+        ctx.restore();
+        const r1 = jy + J - 24;
         if (s.rareAdd > 0 && RARE_MODES.includes(result.mode.id)) {
-          pill(ctx, jx + 4, jy + J - 24, `希少 +${s.rareAdd.toFixed(2)}`, {
-            bg: DARK_INK, fg: '#FFD86B', border: '#FFD86B', h: 20, size: 11, padX: 5, font: IMG.font,
+          pill(ctx, jx + 3, r1 - 21, `希少 +${s.rareAdd.toFixed(2)}`, {
+            bg: DARK_INK, fg: '#FFD86B', border: '#FFD86B', h: 18, size: 10, padX: 4, font: IMG.font,
           });
         }
-        // 右の列
-        const cx0 = jx + J + 8, cx1 = x + cellW - 8;
         const isRe = s.diff === 'Re:MASTER';
-        let px = cx0;
-        px += pill(ctx, px, jy, s.kind, { bg: s.kind === 'ST' ? '#1565B0' : '#B8460B', fg: '#FFFFFF', h: 22, size: 12, padX: 5 }) + 3;
-        pill(ctx, px, jy, SHORT_DIFF[s.diff] ?? s.diff, {
+        let px = jx + 3;
+        px += pill(ctx, px, r1, s.kind, { bg: s.kind === 'ST' ? '#1565B0' : '#B8460B', fg: '#FFFFFF', h: 20, size: 11, padX: 4 }) + 2;
+        px += pill(ctx, px, r1, SHORT_DIFF[s.diff] ?? s.diff, {
           bg: isRe ? '#FFFFFF' : DIFF_COLOR[s.diff] ?? '#999', fg: isRe ? '#6B2FB3' : '#FFFFFF',
-          border: isRe ? '#6B2FB3' : null, h: 22, size: 12, padX: 5,
+          border: isRe ? '#6B2FB3' : null, h: 20, size: 11, padX: 4,
         });
-        pill(ctx, cx0, jy + 28, `${s.c.toFixed(1)}${s.estimated ? '*' : ''}`, { bg: IMG.panel, fg: IMG.ink, h: 22, size: 13, padX: 6 });
+
+        // 右の列：1段目 譜面定数と☆、2段目 MAX-xx（どちらも右寄せ）、3段目 単曲レート値（中央）
+        const cx0 = jx + J + 8, cx1 = x + cellW - 8;
         const sc = starPillColor(s.stars);
-        pill(ctx, cx0, jy + 56, `☆${starDisplay(s.cur, s.max)}`, {
-          bg: s.stars >= 7 ? (lx, w) => rainbow(ctx, lx, w) : sc, fg: s.stars >= 1 ? DARK_INK : IMG.sub, h: 26, size: 15, padX: 7,
+        const sw = pill(ctx, cx1, jy + 6, `☆${starDisplay(s.cur, s.max)}`, {
+          bg: s.stars >= 7 ? (lx, w) => rainbow(ctx, lx, w) : sc, fg: s.stars >= 1 ? DARK_INK : IMG.sub, h: 24, size: 14, padX: 6, align: 'right',
         });
-        ctx.font = `700 26px ${IMG.num}`;
-        ctx.fillStyle = IMG.ink;
+        pill(ctx, cx1 - sw - 3, jy + 6, `${s.c.toFixed(1)}${s.estimated ? '*' : ''}`, { bg: IMG.panel, fg: IMG.ink, h: 24, size: 13, padX: 5, align: 'right' });
+        ctx.font = `700 17px ${IMG.num}`;
+        ctx.fillStyle = s.cur >= s.max ? (theme === 'dark' ? '#FFD86B' : '#8A5A00') : IMG.sub;
+        ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
-        fillDigits(ctx, s.values[result.mode.id].toFixed(3), cx1, jy + 100, 26);
+        ctx.fillText(maxLabelOf(s), cx1, jy + 46);
+        const vText = s.values[result.mode.id].toFixed(3);
+        ctx.font = `700 28px ${IMG.num}`;
+        ctx.fillStyle = IMG.ink;
+        fillDigits(ctx, vText, (cx0 + cx1) / 2 + digitsWidth(vText, 28) / 2, jy + 88, 28);
         // ジャケットの下：楽曲名（枠の幅いっぱい。長い場合は末尾を「…」で省略）
         ctx.font = `700 17px ${IMG.font}`;
         ctx.fillStyle = IMG.ink;
