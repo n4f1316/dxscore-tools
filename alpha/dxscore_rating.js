@@ -1289,24 +1289,24 @@
         ctx.save();
         roundRect(ctx, jx, jy, J, J);
         ctx.clip();
-        const shade = ctx.createLinearGradient(0, jy + J - 40, 0, jy + J);
+        const shade = ctx.createLinearGradient(0, jy + J - 48, 0, jy + J);
         shade.addColorStop(0, 'rgba(14,11,31,0)');
         shade.addColorStop(1, 'rgba(14,11,31,.75)');
         ctx.fillStyle = shade;
-        ctx.fillRect(jx, jy + J - 40, J, 40);
+        ctx.fillRect(jx, jy + J - 48, J, 48);
         ctx.restore();
-        const r1 = jy + J - 24;
+        const r1 = jy + J - 26;
         if (s.rareAdd > 0 && RARE_MODES.includes(result.mode.id)) {
-          pill(ctx, jx + 3, r1 - 21, `希少 +${s.rareAdd.toFixed(2)}`, {
-            bg: DARK_INK, fg: '#FFD86B', border: '#FFD86B', h: 18, size: 10, padX: 4, font: IMG.font,
+          pill(ctx, jx + 3, r1 - 24, `希少 +${s.rareAdd.toFixed(2)}`, {
+            bg: DARK_INK, fg: '#FFD86B', border: '#FFD86B', h: 21, size: 12, padX: 5, font: IMG.font,
           });
         }
         const isRe = s.diff === 'Re:MASTER';
         let px = jx + 3;
-        px += pill(ctx, px, r1, s.kind, { bg: s.kind === 'ST' ? '#1565B0' : '#B8460B', fg: '#FFFFFF', h: 20, size: 11, padX: 4 }) + 2;
+        px += pill(ctx, px, r1, s.kind, { bg: s.kind === 'ST' ? '#1565B0' : '#B8460B', fg: '#FFFFFF', h: 23, size: 13, padX: 5 }) + 2;
         px += pill(ctx, px, r1, SHORT_DIFF[s.diff] ?? s.diff, {
           bg: isRe ? '#FFFFFF' : DIFF_COLOR[s.diff] ?? '#999', fg: isRe ? '#6B2FB3' : '#FFFFFF',
-          border: isRe ? '#6B2FB3' : null, h: 20, size: 11, padX: 4,
+          border: isRe ? '#6B2FB3' : null, h: 23, size: 13, padX: 5,
         });
 
         // 右の列：1段目 譜面定数と☆、2段目 MAX-xx（どちらも右寄せ）、3段目 単曲レート値（中央）
@@ -1315,7 +1315,7 @@
         const sw = pill(ctx, cx1, jy + 6, `☆${starDisplay(s.cur, s.max)}`, {
           bg: s.stars >= 7 ? (lx, w) => rainbow(ctx, lx, w) : sc, fg: s.stars >= 1 ? DARK_INK : IMG.sub, h: 24, size: 14, padX: 6, align: 'right',
         });
-        pill(ctx, cx1 - sw - 3, jy + 6, `${s.c.toFixed(1)}${s.estimated ? '*' : ''}`, { bg: IMG.panel, fg: IMG.ink, h: 24, size: 13, padX: 5, align: 'right' });
+        pill(ctx, cx1 - sw - 3, jy + 6, `${s.c.toFixed(1)}${s.estimated ? '*' : ''}`, { bg: IMG.panel, fg: IMG.ink, h: 24, size: 15, padX: 5, align: 'right' });
         ctx.font = `700 17px ${IMG.num}`;
         ctx.fillStyle = s.cur >= s.max ? (theme === 'dark' ? '#FFD86B' : '#8A5A00') : IMG.sub;
         ctx.textAlign = 'right';
