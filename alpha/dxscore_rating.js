@@ -1312,10 +1312,25 @@
         // 右の列：1段目 譜面定数と☆、2段目 MAX-xx（どちらも右寄せ）、3段目 単曲レート値（中央）
         const cx0 = jx + J + 8, cx1 = x + cellW - 8;
         const sc = starPillColor(s.stars);
-        const sw = pill(ctx, cx1, jy + 6, `☆${starDisplay(s.cur, s.max)}`, {
-          bg: s.stars >= 7 ? (lx, w) => rainbow(ctx, lx, w) : sc, fg: s.stars >= 1 ? DARK_INK : IMG.sub, h: 24, size: 14, padX: 6, align: 'right',
-        });
-        pill(ctx, cx1 - sw - 3, jy + 6, `${s.c.toFixed(1)}${s.estimated ? '*' : ''}`, { bg: IMG.panel, fg: IMG.ink, h: 24, size: 15, padX: 5, align: 'right' });
+        //   定数と☆は、同じ文字の大きさ・同じ幅の枠にして、文字を枠の中央に置く（どの譜面でも位置がそろう）
+        const starText = `☆${starDisplay(s.cur, s.max)}`;
+        const constText = `${s.c.toFixed(1)}${s.estimated ? '*' : ''}`;
+        ctx.font = `700 14px ${IMG.num}`;
+        const boxW = Math.ceil(Math.max(
+          ctx.measureText('☆0.0').width, ctx.measureText('00.0').width,
+          ctx.measureText(starText).width, ctx.measureText(constText).width)) + 10;
+        const box = (xLeft, text, bg, fg) => {
+          roundRect(ctx, xLeft, jy + 6, boxW, 24);
+          ctx.fillStyle = typeof bg === 'function' ? bg(xLeft, boxW) : bg;
+          ctx.fill();
+          ctx.font = `700 14px ${IMG.num}`;
+          ctx.fillStyle = fg;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(text, xLeft + boxW / 2, jy + 6 + 13);
+        };
+        box(cx1 - boxW, starText, s.stars >= 7 ? (lx, w) => rainbow(ctx, lx, w) : sc, s.stars >= 1 ? DARK_INK : IMG.sub);
+        box(cx1 - boxW * 2 - 3, constText, IMG.panel, IMG.ink);
         ctx.font = `700 17px ${IMG.num}`;
         ctx.fillStyle = s.cur >= s.max ? (theme === 'dark' ? '#FFD86B' : '#8A5A00') : IMG.sub;
         ctx.textAlign = 'right';
