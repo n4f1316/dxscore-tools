@@ -1115,10 +1115,10 @@
   const rankIconUrl = (name) => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(rankIconSvg(name));
 
   // 画像の形。standard：今までの形（ジャケット大）、compact：ジャケットを小さくして文字を右と下に置く形
-  //   どちらも 5列×10行・横幅は同じで、compact は縦が短い
+  //   どちらも 5列×10行。compact は縦が短く、横は少し広い
   const IMAGE_LAYOUTS = {
     standard: { label: '通常', cellW: 240, jacket: 224, cellH: 320 },
-    compact: { label: 'コンパクト', cellW: 240, jacket: 112, cellH: 160 },
+    compact: { label: 'コンパクト', cellW: 264, jacket: 136, cellH: 184 }, // 横幅は通常より少し広い（1432px）
   };
   const LAYOUT_KEY = 'dxr-image-layout'; // 最後に選んだ形（この端末のブラウザに保存）
   const loadLayout = () => {
@@ -1335,11 +1335,11 @@
         ctx.fillStyle = s.cur >= s.max ? (theme === 'dark' ? '#FFD86B' : '#8A5A00') : IMG.sub;
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
-        ctx.fillText(maxLabelOf(s), cx1, jy + 46);
+        ctx.fillText(maxLabelOf(s), cx1, jy + 50);
         const vText = s.values[result.mode.id].toFixed(3);
         ctx.font = `700 28px ${IMG.num}`;
         ctx.fillStyle = IMG.ink;
-        fillDigits(ctx, vText, (cx0 + cx1) / 2 + digitsWidth(vText, 28) / 2, jy + 88, 28);
+        fillDigits(ctx, vText, (cx0 + cx1) / 2 + digitsWidth(vText, 28) / 2, jy + (J + 54) / 2 + 4, 28);
         // ジャケットの下：楽曲名（枠の幅いっぱい。長い場合は末尾を「…」で省略）
         ctx.font = `700 17px ${IMG.font}`;
         ctx.fillStyle = IMG.ink;
