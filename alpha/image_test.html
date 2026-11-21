@@ -41,6 +41,9 @@
     <select id="user" disabled><option>読み込み中…</option></select>
   </div>
   <div class="it-row">
+    <label>画像の形
+      <select id="layout"><option value="standard">通常</option><option value="compact">コンパクト</option></select>
+    </label>
     <label><input type="checkbox" id="hide"> 名前と称号を載せない</label>
     <label><input type="checkbox" id="withImg"> ジャケット入りで表示（保存不可の場合あり）</label>
     <label>称号（テスト用）<input type="text" id="trophy" placeholder="空なら称号なし" maxlength="40"></label>
@@ -149,7 +152,7 @@
       const profile = { name: u.name, icon, trophy: $('trophy').value.trim(), trophyRank: $('trophyRank').value };
       const result = { mode, rating: Number(u[RATE_KEY[modeId]]) || 0, top: list.map((t) => toSong(t, modeId)) };
       tool.setTheme(document.documentElement.dataset.theme);
-      const base = { hideProfile: $('hide').checked };
+      const base = { hideProfile: $('hide').checked, layout: $('layout').value };
       // まずジャケット入りで描き、書き出せるか試す。書き出せないときは灰色の枠で描き直して、保存できる画像にする
       let canvas = await tool.buildShareImage(profile, result, jackets, { ...base, cors: true });
       let url = toUrl(canvas);
@@ -162,7 +165,7 @@
         note = '　※この表示は保存できません（見た目の確認用）';
       }
       if (my !== drawId) return;
-      const fileName = `2fRATE_test_${u.name.replace(/[\\/:*?"<>|\s]+/g, '_')}_${modeId}.png`;
+      const fileName = `2fRATE_test_${$('layout').value}_${u.name.replace(/[\\/:*?"<>|\s]+/g, '_')}_${modeId}.png`;
       if (url) {
         // 長押しで保存できるよう、画像（img）として表示する
         const img = new Image();
@@ -222,6 +225,7 @@
     sel.onchange = draw;
     $('save').onclick = save;
     $('hide').onchange = draw;
+    $('layout').onchange = draw;
     $('withImg').onchange = draw;
     $('trophy').onchange = draw;
     $('trophyRank').onchange = draw;
