@@ -186,7 +186,7 @@
     "javascript:(()=>{const s=document.createElement('script');s.src='" + BASE + path +
     "?'+Date.now();document.body.appendChild(s);})();void(0);";
   const CODES = {
-    'code': bookmarklet('dxscore_rating.js'),
+    'code': bookmarklet('alpha/dxscore_rating.js'), // α版のページなので α版のブックマークレットを案内する
   };
   for (const [id, text] of Object.entries(CODES)) document.getElementById(id).textContent = text;
   document.getElementById('drag').href = CODES.code;

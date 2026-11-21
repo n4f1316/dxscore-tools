@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2fRATE 単曲レート計算（β版）</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="logo/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="logo/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="logo/apple-touch-icon.png">
+<link rel="stylesheet" href="2frate.css?v=20261116g">
+<script src="2frate-theme.js?v=20261116g"></script>
+</head>
+<body class="pg-calc">
+<div class="wrap">
+  <header class="site-head">
+    <a class="site-logo" href="./" aria-label="2fRATE トップへ">2fRATE</a>
+    <button type="button" class="theme-toggle"></button>
+  </header>
+  <div class="page-title"><h1>CALCULATOR</h1><span>単曲レート計算</span></div>
+  <p class="lead">楽曲を選んで☆の値を入れると、その譜面の単曲レート値がわかります。</p>
+  <div class="status" id="status">データを読み込み中…</div>
+
+  <section class="calc" id="calc" hidden aria-live="polite"></section>
+
+  <div id="app" hidden>
+    <input class="search" id="search" type="search" placeholder="曲名で絞り込み" aria-label="曲名で絞り込み">
+    <div class="tabs" id="levelTabs" role="group" aria-label="レベル"></div>
+    <div class="tabs diffs" id="diffTabs" role="group" aria-label="難易度"></div>
+    <div class="count" id="count"></div>
+    <div id="listBox"></div>
+    <p class="foot">
+      単曲レート値 =（譜面定数 × 譜面定数 × ☆の整数部分 ＋ 譜面定数 × 譜面定数 × ☆の小数部分 × 0.5）÷ 100。
+      「☆6まで」「☆5まで」は、上限を超える☆をその上限として計算します。☆が上限（☆7まで は☆7、☆6まで は☆6、☆5まで は☆5）に達した譜面は ＋0.1 です。☆1未満は0です。<br>
+      全国ランキング上位100人のうち☆6以上が20人以下の譜面は、☆6以上で「☆7まで」「☆6まで」に希少ボーナス（20人以下 ＋0.05、10人以下 ＋0.10、3人以下 ＋0.15）が加わります。<br>
+      ☆の基準：☆7 100%、☆6 99%以上、☆5 97%以上、☆4 95%以上、☆3 93%以上、☆2 90%以上、☆1 85%以上。<br>
+      非公式のファンメイドツールです。株式会社セガおよび関連会社とは一切関係ありません。楽曲・ジャケット画像・アイコン画像の著作権は、株式会社セガおよび各権利者に帰属します。ジャケット画像・アイコン画像は公式サイトの画像を表示しているもので、本ツールでは保存・配布していません。権利者の方からご連絡をいただいた場合は、該当部分の公開停止などに速やかに対応します。<br>
+      © 2026 なふ（2fRATE）。2fRATE のプログラム・デザイン・ロゴの無断転載・無断使用を禁じます。
+    </p>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ===== 設定 =====
+  const CONST_URL = '../maimai_consts_magical.json';  // 譜面定数表（このページと同じ場所）
+  const JACKETS_URL = '../maimai_jackets.json';
+  const OVERRIDES_URL = '../jacket_overrides.json';
+  const JACKET_BASES = [
+    'https://maimaidx.jp/maimai-mobile/img/Music/',
+    'https://maimai.sega.jp/storage/DX_jacket/',
+  ];
+  const PAGE_SIZE = 50; // 1ページに表示する譜面数
+  const DIFF_NAMES = ['BASIC', 'ADVANCED', 'EXPERT', 'MASTER', 'Re:MASTER'];
+
+  // 2fRATE と同じ計算式
+  const RATE_DIVISOR = 100;
+  const FRACTION_WEIGHT = 0.5;
+  const MAX_BONUS = 0.1;
+  const MODES = [
+    { id: 'full', label: '☆7まで', cap: 7, shift: 0 },   // shift：ランクの区切りを「☆7まで」から下げる量
+    { id: 'cap6', label: '☆6まで', cap: 6, shift: 0.5 },
+    { id: 'cap5', label: '☆5まで', cap: 5, shift: 1.5 },
+  ];
+  // 希少ボーナス：全国ランキング（上位100人）で☆6以上（☆6＋☆7）が少ない譜面を☆6以上で達成すると、
+  // 「☆7まで」「☆6まで」に加算する（20人以下 +0.05、10人以下 +0.10、3人以下 +0.15）
+  const RARE_BONUS = [
+    { maxPeople: 3, add: 0.15 },
+    { maxPeople: 10, add: 0.10 },
+    { maxPeople: 20, add: 0.05 },
+  ];
+  const STATS_DIR = 'ranking/'; // 全国ランキングの集計（レベルごとの JSON）
+  function rareOf(st) {
+    if (!st || st.star6Count === null || st.star6Count === undefined || st.maxCount === null || st.maxCount === undefined) return null;
+    const people = st.star6Count + st.maxCount;
+    const hit = RARE_BONUS.find((b) => people <= b.maxPeople);
+    return { people, add: hit ? hit.add : 0 };
+  }
+
+  // ☆×10 の整数（例：6.4 → 64）から単曲レート値を出す。rareAdd：希少ボーナス（☆6以上・☆6まで以上のレートだけ）
+  function rateOf(c, tenths, cap, rareAdd = 0) {
+    if (tenths < 10) return 0; // ☆1未満は0
+    const t = Math.min(tenths, cap * 10);
+    const whole = Math.floor(t / 10);
+    const frac = (t % 10) / 10;
+    return (c * c * whole + c * c * frac * FRACTION_WEIGHT) / RATE_DIVISOR
+      + (t >= cap * 10 ? MAX_BONUS : 0) // ☆が上限に達したら +0.1
+      + (cap >= 6 && tenths >= 60 ? rareAdd : 0); // 希少ボーナス
+  }
+
+  // 選んだ譜面の全国ランキング集計を探す（レベルごとの JSON を一度だけ読む）
+  const statsCache = new Map();
+  async function findStats(s) {
+    const file = `lv${s.level.replace('+', 'p')}.json`;
+    if (!statsCache.has(file)) statsCache.set(file, fetchJson(STATS_DIR + file));
+    const list = (await statsCache.get(file)) || [];
+    let hits = list.filter((r) => r && r.name === s.name && r.kind === s.kind && r.diff === s.diff && (!s.max || r.max === s.max));
+    if (hits.length > 1) hits = hits.filter((r) => r.const === s.c); // 同名の別曲は定数で見分ける
+    return hits.length === 1 ? hits[0] : null;
+  }
+
+  // ランク（2fRATE と同じ区切りと色）。min は「☆7まで」の区切り。☆6まで・☆5まで は MODES の shift だけ下げる
+  const RANKS = [
+    { name: 'LEGEND',        min: 12,   colors: ['#6A1BD8', '#D6246E', '#F2A007'], dark: ['#B98CFF', '#FF6FA8', '#FFC247'], glow: 'rgba(242,160,7,.55)' },
+    { name: 'RAINBOW PLUS',  min: 11.5, colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'], dark: ['#FF6B8E', '#FFA640', '#F2CE3A', '#4FD9B0', '#6FA4FF', '#B58CFF'], glow: 'rgba(255,196,0,.6)' },
+    { name: 'RAINBOW',       min: 11,   colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'], dark: ['#FF6B8E', '#FFA640', '#F2CE3A', '#4FD9B0', '#6FA4FF', '#B58CFF'] },
+    { name: 'PLATINUM PLUS', min: 10.5, colors: ['#4F8AA6', '#8FBED4', '#4F8AA6'], dark: ['#8FC4DC', '#D5EEF8', '#8FC4DC'], glow: 'rgba(120,190,225,.65)' },
+    { name: 'PLATINUM',      min: 10,   colors: ['#4F8AA6', '#8FBED4', '#4F8AA6'], dark: ['#8FC4DC', '#D5EEF8', '#8FC4DC'] },
+    { name: 'GOLD PLUS',     min: 9.5,  colors: ['#B8860B', '#E0B32E', '#B8860B'], dark: ['#E0B32E', '#FFE58A', '#E0B32E'], glow: 'rgba(240,190,40,.6)' },
+    { name: 'GOLD',          min: 9,    colors: ['#B8860B', '#E0B32E', '#B8860B'], dark: ['#E0B32E', '#FFE58A', '#E0B32E'] },
+    { name: 'SILVER PLUS',   min: 8.5,  colors: ['#6F7C8B', '#A7B2BE', '#6F7C8B'], dark: ['#A7B2BE', '#E3E8EE', '#A7B2BE'], glow: 'rgba(150,165,185,.7)' },
+    { name: 'SILVER',        min: 8,    colors: ['#6F7C8B', '#A7B2BE', '#6F7C8B'], dark: ['#A7B2BE', '#E3E8EE', '#A7B2BE'] },
+    { name: 'BRONZE PLUS',   min: 7.5,  colors: ['#8E4E22', '#C07A45', '#8E4E22'], dark: ['#C98A58', '#F0BE98', '#C98A58'], glow: 'rgba(205,125,65,.55)' },
+    { name: 'BRONZE',        min: 7,    colors: ['#8E4E22', '#C07A45', '#8E4E22'], dark: ['#C98A58', '#F0BE98', '#C98A58'] },
+    { name: 'WAKABA',        min: -Infinity, colors: ['#3E9B3A', '#7CBF3F'], dark: ['#6FCB6A', '#B4E36C'] },
+  ];
+  const rankOf = (v, shift = 0) => RANKS.find((r) => Math.round(v * 1000) / 1000 >= r.min - shift);
+  // 文字をランクの色（グラデーション＋PLUS などの光）にする
+  function paintRank(node, v, shift = 0) {
+    const rank = rankOf(v, shift);
+    node.classList.add('rank-grad');
+    node.style.setProperty('--g', `linear-gradient(90deg, ${rank.colors.join(', ')})`);
+    node.style.setProperty('--gd', `linear-gradient(90deg, ${(rank.dark || rank.colors).join(', ')})`);
+    node.title = rank.name;
+  }
+
+  const $ = (id) => document.getElementById(id);
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  const fetchJson = (url) =>
+    fetch(url + '?' + Date.now()).then((res) => (res.ok ? res.json() : null)).catch(() => null);
+
+  // 定数 → レベル表記（13.0〜13.5 は「13」、13.6〜13.9 は「13+」。6以下は整数）
+  function levelOfConst(c) {
+    const base = Math.floor(c + 1e-9);
+    if (base < 7) return String(base);
+    return c - base >= 0.6 - 1e-9 ? `${base}+` : String(base);
+  }
+  const levelOrder = (label) => parseInt(label, 10) + (String(label).endsWith('+') ? 0.5 : 0);
+
+  function resolveSong(map, overrides, name, kind, diffIdx, level, max) {
+    const v = map?.get(name);
+    if (!v) return null;
+    if (typeof v === 'string') return { img: v, genre: null };
+    if (!Array.isArray(v)) return null;
+    const g = max ? overrides?.[`${name}|${kind}|${DIFF_NAMES[diffIdx]}|${max}`] : null;
+    if (g) {
+      const c = v.find((x) => x.genre === g);
+      if (c) return { img: c.img, genre: c.genre };
+    }
+    const k = kind === 'ST' ? 'st' : 'dx';
+    const hits = v.filter((c) => c[k]?.[diffIdx] === level);
+    return hits.length === 1 ? { img: hits[0].img, genre: hits[0].genre } : null;
+  }
+
+  function jacketEl(file) {
+    if (!file) return el('div', 'jacket');
+    const img = el('img', 'jacket');
+    let i = 0;
+    img.alt = '';
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.src = JACKET_BASES[0] + file;
+    img.onerror = () => {
+      i++;
+      if (i < JACKET_BASES.length) img.src = JACKET_BASES[i] + file;
+      else img.replaceWith(el('div', 'jacket'));
+    };
+    return img;
+  }
+
+  function chipsOf(s, withLevel) {
+    const chips = el('div', 'chips');
+    chips.append(
+      el('span', `chip kind-${s.kind}`, s.kind),
+      el('span', `chip diff-${s.diff.replace(':', '').toUpperCase()}`, s.diff),
+      el('span', 'chip const', s.c.toFixed(1))
+    );
+    if (withLevel) chips.appendChild(el('span', 'chip lv', `Lv${s.level}`));
+    return chips;
+  }
+
+  // ===== 状態 =====
+  let all = [];
+  let currentLevel = null;
+  let currentDiffs = null;
+  let query = '';
+  let page = 1;
+  let selected = null;
+  let starTenths = 60; // 入力中の☆（×10）
+
+  // ===== 計算パネル =====
+  function renderCalc() {
+    const box = $('calc');
+    if (!selected) { box.hidden = true; return; }
+    box.hidden = false;
+    box.replaceChildren();
+    const s = selected;
+
+    const head = el('div', 'calc-head');
+    const nameBox = el('div');
+    const nm = el('div', 'calc-name', s.name);
+    if (s.genre) nm.appendChild(el('span', 'genre', `（${s.genre}）`));
+    nameBox.append(nm, chipsOf(s, true));
+    const close = el('button', 'close', '閉じる');
+    close.type = 'button';
+    close.onclick = () => { selected = null; renderCalc(); renderList(); };
+    head.append(jacketEl(s.img), nameBox, close);
+
+    const row = el('div', 'star-row');
+    const label = el('label', '', '☆');
+    label.htmlFor = 'starInput';
+    const input = el('input', 'star-input');
+    input.id = 'starInput';
+    input.type = 'number';
+    input.inputMode = 'decimal';
+    input.min = '0';
+    input.max = '7';
+    input.step = '0.1';
+    input.value = (starTenths / 10).toFixed(1);
+    const range = el('input', 'star-range');
+    range.type = 'range';
+    range.min = '0';
+    range.max = '70';
+    range.step = '1';
+    range.value = String(starTenths);
+    range.setAttribute('aria-label', '☆の値');
+    row.append(label, input, range);
+
+    const results = el('div', 'results');
+    const quick = el('table', 'quick');
+
+    function update(fromRange) {
+      if (fromRange) {
+        starTenths = Number(range.value);
+        input.value = (starTenths / 10).toFixed(1);
+      } else {
+        const v = Number(input.value);
+        if (!Number.isFinite(v)) return;
+        starTenths = Math.max(0, Math.min(70, Math.floor(v * 10 + 1e-9))); // 小数第2位以下は切り捨て
+        range.value = String(starTenths);
+      }
+      const rareAdd = s.rare ? s.rare.add : 0;
+      results.replaceChildren(...MODES.map((m, i) => {
+        const card = el('div', 'res' + (i === 0 ? ' main' : ''));
+        const v = rateOf(s.c, starTenths, m.cap, rareAdd);
+        const val = tnum(el('div', 'res-value', v.toFixed(3)));
+        paintRank(val, v, m.shift); // ランクの色で表示（レートの種類ごとの区切り）
+        card.append(el('div', 'res-label', m.label), val);
+        return card;
+      }));
+      // 早見表：☆5.0〜7.0 の主な値
+      quick.replaceChildren();
+      const thead = quick.createTHead().insertRow();
+      ['☆', ...MODES.map((m) => m.label)].forEach((t) => { const th = el('th', '', t); thead.appendChild(th); });
+      const body = quick.createTBody();
+      [50, 55, 60, 65, 70].forEach((t) => {
+        const tr = body.insertRow();
+        if (t === starTenths) tr.className = 'on';
+        tr.insertCell().textContent = `☆${(t / 10).toFixed(1)}`;
+        MODES.forEach((m) => { const td = tr.insertCell(); td.textContent = rateOf(s.c, t, m.cap, rareAdd).toFixed(3); tnum(td); });
+      });
+    }
+    input.addEventListener('input', () => update(false));
+    range.addEventListener('input', () => update(true));
+
+    // 希少ボーナスの案内（集計データを読み込んでから表示を更新する）
+    const rareNote = el('div', 'rare-note');
+    const showRare = () => {
+      if (s.rare === undefined) { rareNote.textContent = '希少ボーナスを確認中…'; return; }
+      if (s.rare === null) { rareNote.textContent = 'この譜面の全国ランキング集計がないため、希少ボーナスは計算に含めていません。'; return; }
+      if (!s.rare.add) {
+        rareNote.textContent = `希少ボーナスの対象外です（全国ランキング上位100人のうち☆6以上 ${s.rare.people}人）。`;
+        return;
+      }
+      rareNote.replaceChildren(
+        el('span', 'chip rare', `希少 +${s.rare.add.toFixed(2)}`),
+        document.createTextNode(` 上位100人のうち☆6以上が ${s.rare.people}人の譜面です。☆6以上なら「☆7まで」「☆6まで」に +${s.rare.add.toFixed(2)} されます（下の値に含めています）。`));
+    };
+
+    box.append(head, row,
+      el('div', 'hint', '☆は 0.0〜7.0 を小数第1位まで入力できます（スライダーでも変えられます）。'),
+      rareNote, results, quick);
+    showRare();
+    update(false);
+    if (s.rare === undefined) {
+      findStats(s).then((st) => {
+        s.rare = rareOf(st);
+        if (selected === s) { showRare(); update(false); }
+      });
+    }
+  }
+
+  // ===== 一覧 =====
+  function renderTabs() {
+    const levels = [...new Set(all.map((r) => r.level))].sort((a, b) => levelOrder(b) - levelOrder(a));
+    const lt = $('levelTabs');
+    lt.replaceChildren();
+    [['*', 'すべて'], ...levels.map((lv) => [lv, `Lv${lv}`])].forEach(([key, label]) => {
+      const b = el('button', '', label);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(currentLevel === key));
+      b.onclick = () => { currentLevel = key; page = 1; renderTabs(); renderList(); };
+      lt.appendChild(b);
+    });
+
+    const dt = $('diffTabs');
+    dt.replaceChildren();
+    [['*', 'すべての難易度'], ...DIFF_NAMES.map((d) => [d, d])].forEach(([d, label]) => {
+      const b = el('button', d === '*' ? '' : `dbtn db-${d.replace(':', '').toUpperCase()}`, label);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(d === '*' ? currentDiffs === null : !!currentDiffs?.has(d)));
+      b.onclick = () => {
+        if (d === '*') currentDiffs = null;
+        else if (currentDiffs === null) currentDiffs = new Set([d]);
+        else if (currentDiffs.has(d)) { currentDiffs.delete(d); if (!currentDiffs.size) currentDiffs = null; }
+        else currentDiffs.add(d);
+        page = 1;
+        renderTabs();
+        renderList();
+      };
+      dt.appendChild(b);
+    });
+  }
+
+  function pager(totalPages) {
+    const box = el('nav', 'pager');
+    box.setAttribute('aria-label', 'ページ切り替え');
+    if (totalPages <= 1) return box;
+    const go = (n) => { page = n; renderList(); $('count').scrollIntoView({ block: 'start' }); };
+    const btn = (label, n, opts = {}) => {
+      const b = el('button', opts.current ? 'current' : '', label);
+      b.type = 'button';
+      if (opts.current) b.setAttribute('aria-current', 'page');
+      if (opts.disabled) b.disabled = true;
+      else if (!opts.current) b.onclick = () => go(n);
+      return b;
+    };
+    box.appendChild(btn('« 前へ', page - 1, { disabled: page === 1 }));
+    const nums = new Set([1, totalPages]);
+    for (let n = page - 2; n <= page + 2; n++) if (n >= 1 && n <= totalPages) nums.add(n);
+    let prev = 0;
+    [...nums].sort((a, b) => a - b).forEach((n) => {
+      if (n - prev > 1) box.appendChild(el('span', 'gap', '…'));
+      box.appendChild(btn(String(n), n, { current: n === page }));
+      prev = n;
+    });
+    box.appendChild(btn('次へ »', page + 1, { disabled: page === totalPages }));
+    return box;
+  }
+
+  function renderList() {
+    const q = query.trim().toLowerCase();
+    const items = all.filter((s) => (currentLevel === '*' || s.level === currentLevel)
+      && (currentDiffs === null || currentDiffs.has(s.diff))
+      && (!q || s.name.toLowerCase().includes(q)));
+
+    const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+    page = Math.min(Math.max(page, 1), totalPages);
+    const start = (page - 1) * PAGE_SIZE;
+    const shown = items.slice(start, start + PAGE_SIZE);
+    $('count').textContent = items.length > PAGE_SIZE
+      ? `${items.length} 譜面中 ${start + 1}〜${start + shown.length} 件目（押すと計算します）`
+      : `${items.length} 譜面（押すと計算します）`;
+
+    const list = el('div', 'list');
+    if (!items.length) list.appendChild(el('div', 'empty', 'この条件の譜面はありません。'));
+    shown.forEach((s) => {
+      const row = el('button', 'r' + (selected === s ? ' selected' : ''));
+      row.type = 'button';
+      const main = el('div');
+      const nm = el('div', 'name', s.name);
+      if (s.genre) nm.appendChild(el('span', 'genre', `（${s.genre}）`));
+      main.append(nm, chipsOf(s, currentLevel === '*'));
+      row.append(jacketEl(s.img), main, el('span', 'go', '計算 ›'));
+      row.onclick = () => {
+        selected = s;
+        renderCalc();
+        renderList();
+        $('calc').scrollIntoView({ block: 'start', behavior: 'smooth' });
+      };
+      list.appendChild(row);
+    });
+    $('listBox').replaceChildren(pager(totalPages), list, pager(totalPages));
+  }
+
+  // ===== 読み込み =====
+  async function load() {
+    const [consts, jmap, overrides] = await Promise.all([
+      fetchJson(CONST_URL), fetchJson(JACKETS_URL), fetchJson(OVERRIDES_URL),
+    ]);
+    if (!consts) {
+      $('status').textContent = '譜面定数表を読み込めませんでした。';
+      $('status').classList.add('error');
+      return;
+    }
+    const jackets = jmap ? new Map(Object.entries(jmap)) : null;
+    const diffOrder = (d) => DIFF_NAMES.indexOf(d);
+    all = Object.entries(consts)
+      .map(([key, c]) => {
+        const p = key.split('|');
+        if (p.length < 3 || typeof c !== 'number') return null;
+        const [name, kind, diff, maxStr] = p;
+        const max = maxStr ? Number(maxStr) : null;
+        const level = levelOfConst(c);
+        const song = resolveSong(jackets, overrides, name, kind, diffOrder(diff), level, max);
+        return { name, kind, diff, c, level, max, img: song?.img ?? null, genre: song?.genre ?? null };
+      })
+      .filter(Boolean)
+      // 並び順：定数の高い順 → 曲名順
+      .sort((a, b) => b.c - a.c || a.name.localeCompare(b.name, 'ja'));
+
+    currentLevel = '*';
+    $('status').textContent = `${all.length} 譜面のデータを読み込みました。`;
+    $('app').hidden = false;
+    let timer = null;
+    $('search').addEventListener('input', (e) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => { query = e.target.value; page = 1; renderList(); }, 250);
+    });
+    renderTabs();
+    renderList();
+  }
+
+  load();
+})();
+</script>
+</body>
+</html>

@@ -33,6 +33,17 @@
   //   「☆6まで」「☆5まで」は、RATE_MODES の rankShift だけ区切りを下げて判定する
   //   colors: 文字色のグラデーション（ライト表示）。dark: ダーク表示のときのグラデーション（明るめの同系色）
   const RANK_MODES = RATE_MODES.map((m) => m.id);
+
+  // オマケ：対象の譜面を絞って計算するレート（計算式は同じ。ランク・ランキング登録・おすすめ楽曲はなし）
+  //   filter: 対象にする譜面。label: 画面や画像に添える短い名前
+  const BONUS_COUNT_MARGIN = 1; // 達成譜面数を数えるとき、定数表にある最低レベルより何段階下まで読むか（定数表にない譜面への備え）
+  const BONUS_MODES = [
+    { id: 'expert', label: 'EXPERT', title: 'EXPERTのみレート', desc: 'EXPERT の譜面だけで計算します', filter: (s) => s.diff === 'EXPERT',
+      countDiff: 'EXPERT',
+      accent: { light: '#D0343D', dark: '#FF6B76' } }, // accent: 画像のアクセント色（EXPERT は赤。通常のレートの画像と見分けるため） // countDiff: ☆5・☆6・☆7達成譜面数も数える（その難易度の譜面があるレベルをすべて読み込む）
+    { id: 'st', label: 'ST', title: 'STのみレート', desc: 'スタンダード譜面だけで計算します（全難易度）', filter: (s) => s.kind === 'ST' },
+    { id: 'dx', label: 'DX', title: 'DXのみレート', desc: 'でらっくす譜面だけで計算します（全難易度）', filter: (s) => s.kind === 'DX' },
+  ];
   const RANKS = [
     { name: 'LEGEND',       min: 12, colors: ['#6A1BD8', '#D6246E', '#F2A007'], dark: ['#B98CFF', '#FF6FA8', '#FFC247'] },
     { name: 'RAINBOW PLUS', min: 11.5, colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'], dark: ['#FF6B8E', '#FFA640', '#F2CE3A', '#4FD9B0', '#6FA4FF', '#B58CFF'] },
@@ -641,6 +652,17 @@
     .dxr-top-btns { display: flex; gap: 6px; }
     .dxr-close[hidden] { display: none; }
     .dxr-menu { display: grid; gap: 12px; }
+    .dxr-bonus { margin-top: 24px; }
+    .dxr-bonus-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; cursor: pointer;
+      font: 700 14px/1.4 var(--num); letter-spacing: .08em; color: var(--sub); text-align: left;
+      background: var(--panel); border: 1px solid var(--line); padding: 10px 16px; }
+    .dxr-bonus-toggle[aria-expanded="true"] { color: var(--ink); }
+    .dxr-bonus-mark { font-size: 16px; line-height: 1; }
+    .dxr-bonus-body { padding-top: 10px; }
+    .dxr-bonus-body[hidden] { display: none; }
+    .dxr-bonus .dxr-menu { gap: 0; }
+    .dxr-bonus .dxr-menu-item { padding: 12px 16px; margin-top: -1px; border-left-width: 1px; }
+    .dxr-bonus .dxr-menu-title { font-size: 15px; }
     .dxr-menu-item {
       display: block; width: 100%; text-align: left; font: inherit; color: var(--ink); cursor: pointer;
       background: var(--bg); border: 1px solid var(--line); border-left: 4px solid var(--line); padding: 16px 18px;
@@ -709,6 +731,12 @@
       border: 1px solid var(--line); color: var(--ink); background: var(--bg);
     }
     .dxr-card .dxr-actions button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+    /* 保存済みのデータから表示（検証用） */
+    .dxr-off-select { display: block; width: 100%; margin-top: 4px; font: inherit; font-size: 16px; padding: 8px 10px;
+      border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+    .dxr-off-rate { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; }
+    .dxr-off-rate .dxr-plate-value { font-size: 30px; }
+    .dxr-off-rate .dxr-plate-label { margin-right: auto; }
     .dxr-diffmax-inline { display: none; background: transparent; color: var(--sub); padding-left: 2px; }
     .dxr-diffmax-inline.is-max { color: var(--gold); }
   `;
@@ -855,7 +883,7 @@
       );
       if (s.rareAdd > 0 && RARE_MODES.includes(mode.id)) {
         const rare = el('span', 'dxr-chip dxr-rare', `希少 +${s.rareAdd.toFixed(2)}`);
-        rare.title = `全国ランキング上位100人のうち☆6以上は ${s.rarePeople} 人`;
+        if (s.rarePeople !== undefined) rare.title = `全国ランキング上位100人のうち☆6以上は ${s.rarePeople} 人`;
         meta.appendChild(rare);
       }
       main.appendChild(meta);
@@ -1104,7 +1132,8 @@
     // 画像をまとめて読み込む
     const top = result.top.slice(0, cols * rows);
     const files = top.map((s) => resolveSong(jackets, s.name, s.kind, s.diff, s.level, s.max)?.img);
-    const ranked = RANK_MODES.includes(result.mode.id);
+    const accent = result.bonus?.accent?.[theme] ?? IMG.accent; // オマケで色の指定があればその色（EXPERT は赤）
+    const ranked = RANK_MODES.includes(result.mode.id) && !result.bonus; // オマケのレートにはランクを付けない
     const rankImg = ranked ? await loadImage(rankIconUrl(rankOf(result.rating, result.mode.id).name)) : null;
     // 検証ページ用：options.noImages なら画像を読み込まない（灰色の枠）。
     //   options.cors なら書き出せる形での読み込みを試し、だめなら通常の読み込み（表示のみ）にする
@@ -1125,7 +1154,7 @@
     ctx.save();
     ctx.lineWidth = 2;
     for (let r = 120, k = 0; r <= 760; r += 80, k++) {
-      ctx.strokeStyle = k === 3 ? IMG.accent : IMG.ring;
+      ctx.strokeStyle = k === 3 ? accent : IMG.ring;
       ctx.globalAlpha = k === 3 ? 0.6 : 1;
       ctx.beginPath(); ctx.arc(W, 0, r, 0, Math.PI * 2); ctx.stroke();
     }
@@ -1142,7 +1171,7 @@
     ctx.lineWidth = 2;
     ctx.strokeStyle = IMG.line;
     ctx.stroke();
-    ctx.fillStyle = IMG.accent; // 上辺のアクセント線
+    ctx.fillStyle = accent; // 上辺のアクセント線
     ctx.fillRect(hx, hy, W - pad * 2, 5);
 
     const iconSize = 136;
@@ -1183,10 +1212,12 @@
     ctx.textAlign = 'right';
     ctx.fillStyle = IMG.sub;
     ctx.font = `700 23px ${IMG.num}`;
-    ctx.fillText(`2fRATE${result.mode.label.replace("まで", "")}`, rx, iy + 36); // 例：2fRATE☆7
+    // 例：2fRATE☆7（オマケのレートは「2fRATE☆7 EXPERTのみ」。色の指定があるオマケはその色で書く）
+    if (result.bonus?.accent) ctx.fillStyle = accent;
+    ctx.fillText(`2fRATE${result.mode.label.replace("まで", "")}${result.bonus ? ` ${result.bonus.label}のみ` : ''}`, rx, iy + 36);
     ctx.font = `700 80px ${IMG.num}`;
     const rateText = result.rating.toFixed(3);
-    if (RANK_MODES.includes(result.mode.id)) {
+    if (ranked) {
       // ランクの色で描く（グラデーション。ダーク表示では明るめの同系色）
       const rank = rankOf(result.rating, result.mode.id);
       const tw = digitsWidth(rateText, 80);
@@ -1203,7 +1234,7 @@
         ctx.drawImage(rankImg, rx - tw - 12 - size, iy + 120 - 66, size, size);
       }
     } else {
-      ctx.fillStyle = IMG.accent;
+      ctx.fillStyle = accent;
       fillDigits(ctx, rateText, rx, iy + 120, 80);
     }
 
@@ -1911,7 +1942,9 @@
 
   function renderResult(ui, profile, results, info, jackets, extras = {}) {
     // プレイヤー情報：アイコン / 称号 / 名前
-    const player = profileEl(ui, profile);
+    const bonus = extras.bonus || null; // オマケのレート（対象を絞った計算）のとき
+    const bc = extras.bonusCounts || null; // オマケの達成譜面数
+    const player = profileEl(ui, profile, bonus ? `オマケ：${bonus.title}` : undefined);
 
     // レートの札（押すとそのレートのレート対象曲に切り替わる）
     const plates = el('div', 'dxr-plates');
@@ -1925,7 +1958,7 @@
           // [ランクのアイコン（後で実装）][レート値]
           const rate = el('span', 'dxr-plate-rate');
           const value = tnum(el('span', 'dxr-plate-value', rating.toFixed(3)));
-          if (RANK_MODES.includes(mode.id)) {
+          if (RANK_MODES.includes(mode.id) && !bonus) {
             const rank = rankOf(rating, mode.id);
             value.classList.add('dxr-ranked');
             value.style.cssText = rankCss(rank);
@@ -1966,6 +1999,8 @@
     const hasEst = results.some(({ top }) => top.some((s) => s.estimated));
     const note = el('p', 'dxr-note',
       `${info}。` +
+      (bonus ? `オマケのレートです（${bonus.desc}）。計算式は通常のレートと同じで、ランクの表示・ランキング登録・おすすめ楽曲はありません。` : '') +
+      (bc ? `達成譜面数は、プレイ済みの ${bonus.countDiff} 譜面（${bc.total} 譜面）から数えています（☆6達成は☆7を、☆5達成は☆6・☆7を含みます）。` : '') +
       (hasEst ? '定数の * は定数表にない譜面で、レベル表示からの概算値（下限）です。' : '') +
       '☆の小数は次の☆までの進み具合で、計算には0.5倍の重みで反映します。' +
       '「☆6まで」は☆7を☆6として、「☆5まで」は☆6以上を☆5として計算しています。' +
@@ -2012,7 +2047,21 @@
       });
     }
 
-    ui.body.append(player, plates, ...(counts ? [countBox] : []), shareBtn, showLabel, rankBtn, ...(SHOW_RECOMMEND ? [recBtn] : []), ...lists, note);
+    // オマケの達成譜面数（対象の難易度の全譜面から数えたもの）
+    if (bc) {
+      [[7, bc.star7], [6, bc.star6], [5, bc.star5]].forEach(([stars, n]) => {
+        const card = el('div', 'dxr-count');
+        const head = el('div', 'dxr-count-head');
+        head.append(el('span', `dxr-star-pill ${starClass(stars)}`, `☆${stars}`), document.createTextNode('達成'));
+        const num = el('div', 'dxr-count-num', String(n));
+        num.appendChild(el('small', '', '譜面'));
+        card.append(head, num, el('div', 'dxr-count-sub', `${bonus.countDiff} ${bc.total} 譜面中`));
+        countBox.appendChild(card);
+      });
+    }
+
+    ui.body.append(player, plates, ...(counts || bc ? [countBox] : []), shareBtn, showLabel,
+      ...(bonus ? [] : [rankBtn, ...(SHOW_RECOMMEND ? [recBtn] : [])]), ...lists, note);
   }
 
   // ============================================================
@@ -2776,12 +2825,188 @@
     };
     item('レート計算・ランキング登録', '2fRATE を計算して、レート対象曲の一覧・画像化・ランキング登録を行います', () => go('rating'), true);
     item('マイページ', '達成人数で見る自分の達成譜面・おすすめ楽曲・ランキングの設定（自動登録）・お気に入り譜面・PINの変更', () => go('mypage'), false);
-    ui.body.append(player, menu);
+    // オマケ（対象の譜面を絞ったレート）は別枠にする
+    const main = menu.cloneNode(false);
+    main.append(...menu.childNodes);
+    BONUS_MODES.forEach((b) => item(b.title, `${b.desc}。画像化もできます（ランキング登録は対象外）`, () => go('bonus:' + b.id), false));
+    //   普段は「オマケ」の見出しだけを出しておき、押したときに中身を開く
+    const bonusBox = el('div', 'dxr-bonus');
+    const bonusToggle = el('button', 'dxr-bonus-toggle');
+    bonusToggle.type = 'button';
+    const bonusMark = el('span', 'dxr-bonus-mark', '＋');
+    bonusMark.setAttribute('aria-hidden', 'true');
+    bonusToggle.append(el('span', '', 'オマケ'), bonusMark);
+    const bonusBody = el('div', 'dxr-bonus-body');
+    bonusBody.append(
+      el('p', 'dxr-card-desc', '対象の譜面を絞って計算するレートです。計算式は通常のレートと同じです。'),
+      menu);
+    const setBonusOpen = (open) => {
+      bonusBody.hidden = !open;
+      bonusToggle.setAttribute('aria-expanded', String(open));
+      bonusMark.textContent = open ? '－' : '＋';
+    };
+    bonusToggle.onclick = () => setBonusOpen(bonusBody.hidden);
+    setBonusOpen(false);
+    bonusBox.append(bonusToggle, bonusBody);
+    ui.body.append(player, main, bonusBox);
   }
 
   // ============================================================
   //  メイン処理
   // ============================================================
+
+  // ============================================================
+  //  保存済みのデータから表示（検証用）
+  //   maimaiでらっくすNET にログインできないとき（メンテナンス中など）に、ランキングに保存されている
+  //   ベスト枠（公開している人のみ）からレート対象曲の一覧と画像を作る。スコアの読み込みや登録は行わない。
+  //   称号はランキングに保存していないので、画面で入力した文字と色を画像に載せる。
+  // ============================================================
+  const ICON_BASE = 'https://maimaidx.jp/maimai-mobile/img/Icon/';
+  const RATE_FIELD = { full: 'rateFull', cap6: 'rateCap6', cap5: 'rateCap5' };
+
+  function renderOffline(ui) {
+    const card = el('div', 'dxr-card');
+    card.append(
+      el('h3', '', '保存済みのデータから表示（検証用）'),
+      el('p', 'dxr-card-desc', 'ランキングに保存されているベスト枠（公開している人のみ）から、レート対象曲の一覧と画像を作ります。' +
+        'ログインは不要です。称号は保存していないため、画像に載せたい場合は下の欄に入力してください。'));
+    const msg = el('p', 'dxr-card-desc', 'ランキングを読み込み中…');
+    card.appendChild(msg);
+    ui.body.replaceChildren(card);
+
+    // 保存されているベスト枠の1譜面 → 一覧・画像を作る処理が使う形
+    const toSong = (t, modeId) => ({
+      name: String(t.name ?? ''), kind: t.kind === 'ST' || t.kind === 'DX' ? t.kind : '?', diff: String(t.diff ?? ''), level: t.level,
+      cur: Number(t.score) || 0, max: Number(t.max) || 0,
+      c: Number(t.const) || 0, estimated: !!t.estimated,
+      stars: Math.floor(Number(t.star) || 0),
+      rareAdd: Number(t.rare) || 0,
+      values: { [modeId]: Number(t.value) || 0 },
+    });
+
+    (async () => {
+      let users, jackets;
+      try {
+        const [data, map] = await Promise.all([
+          fetch(RANKING_API + '?t=' + Date.now()).then((r) => r.json()),
+          loadJacketMap(),
+        ]);
+        if (!data.ok) throw new Error(data.error || 'ランキングを取得できませんでした。');
+        users = (data.list || []).filter((r) => r.hasTop50).sort((a, b) => (b.rateFull || 0) - (a.rateFull || 0));
+        if (!users.length) throw new Error('ベスト枠を公開している記録がありません。');
+        jackets = map;
+      } catch (e) {
+        msg.textContent = 'エラー: ' + e.message;
+        msg.className = 'dxr-err';
+        console.error(e);
+        return;
+      }
+
+      let modeId = RATE_MODES[0].id;
+      const cache = new Map(); // 公開ID → ベスト枠
+      let showId = 0;
+
+      const tabs = el('div', 'dxr-tabs');
+      const field = el('label', 'dxr-field', 'ユーザー（☆7まで のレートが高い順）');
+      const select = el('select', 'dxr-off-select');
+      users.forEach((u) => {
+        const o = el('option', '', `${(Number(u.rateFull) || 0).toFixed(3)}　${u.name}`);
+        o.value = u.id;
+        select.appendChild(o);
+      });
+      field.appendChild(select);
+      // 称号（ランキングには保存していないので、画像に載せる文字と色を自分で入れる）
+      const trophyField = el('label', 'dxr-field', '画像に載せる称号（空なら称号なし）');
+      const trophyInput = el('input');
+      trophyInput.type = 'text';
+      trophyInput.maxLength = 40;
+      trophyField.appendChild(trophyInput);
+      const rankField = el('label', 'dxr-field', '称号の色');
+      const rankSelect = el('select', 'dxr-off-select');
+      [['Normal', 'ノーマル'], ['Bronze', 'ブロンズ'], ['Silver', 'シルバー'], ['Gold', 'ゴールド'], ['Rainbow', 'レインボー']].forEach(([v, t]) => {
+        const o = el('option', '', t);
+        o.value = v;
+        rankSelect.appendChild(o);
+      });
+      rankField.appendChild(rankSelect);
+      const out = el('div');
+      msg.textContent = '';
+      card.append(tabs, field, trophyField, rankField, out);
+
+      const show = async () => {
+        const my = ++showId;
+        const u = users.find((x) => x.id === select.value);
+        const mode = RATE_MODES.find((m) => m.id === modeId);
+        out.replaceChildren(el('p', 'dxr-card-desc', 'ベスト枠を読み込み中…'));
+        try {
+          let data = cache.get(u.id);
+          if (!data) {
+            data = await fetch(RANKING_API + '?top50=' + encodeURIComponent(u.id) + '&t=' + Date.now()).then((r) => r.json());
+            if (!data.ok) throw new Error(data.error || 'ベスト枠を取得できませんでした。');
+            cache.set(u.id, data);
+          }
+          if (my !== showId) return;
+          // 以前の版で登録された記録は、☆7まで の配列だけが入っている
+          const frames = Array.isArray(data.top50) ? { full: data.top50 } : (data.top50 || {});
+          const list = frames[modeId];
+          if (!Array.isArray(list) || !list.length) {
+            out.replaceChildren(el('p', 'dxr-card-desc', `この記録には「${mode.label}」のレート対象曲がありません（以前の版で登録された記録です）。`));
+            return;
+          }
+          const profile = {
+            name: u.name, trophy: '', trophyRank: '',
+            icon: /^[0-9a-f]{16}\.png$/i.test(u.icon || '') ? ICON_BASE + u.icon : '',
+          };
+          const result = { mode, rating: Number(u[RATE_FIELD[modeId]]) || 0, top: list.map((t) => toSong(t, modeId)) };
+
+          // レート値（ランクの色・アイコンつき）
+          const rateRow = el('div', 'dxr-off-rate');
+          const rank = rankOf(result.rating, modeId);
+          const value = tnum(el('span', 'dxr-plate-value dxr-ranked', result.rating.toFixed(3)));
+          value.style.cssText = rankCss(rank);
+          value.title = rank.name;
+          const icon = el('span', 'dxr-rank-icon');
+          icon.innerHTML = rankIconSvg(rank.name); // ツール内で作った固定のSVGのみ
+          rateRow.append(el('span', 'dxr-plate-label', `${u.name} ／ 2fRATE${mode.label.replace('まで', '')}`), icon, value);
+
+          const share = el('button', 'dxr-share', `「${mode.label}」のレート対象曲を画像にする`);
+          share.type = 'button';
+          share.style.margin = '12px 0 8px';
+          const opt = el('label', 'dxr-share-opt');
+          opt.style.margin = '0 0 12px';
+          const check = el('input');
+          check.type = 'checkbox';
+          check.checked = true;
+          opt.append(check, document.createTextNode('画像にプレイヤー名と称号を載せる'));
+          // 称号は、押した時点で入力されている文字と色を使う
+          share.onclick = () => openShareImage(
+            { ...profile, trophy: trophyInput.value.trim(), trophyRank: rankSelect.value },
+            result, jackets, share, { hideProfile: !check.checked });
+
+          out.replaceChildren(rateRow, share, opt, buildList(result.top, mode, jackets));
+        } catch (e) {
+          if (my !== showId) return;
+          const err = el('p', 'dxr-err', 'エラー: ' + e.message);
+          out.replaceChildren(err);
+          console.error(e);
+        }
+      };
+
+      RATE_MODES.forEach((m) => {
+        const b = el('button', 'dxr-tab', m.label);
+        b.type = 'button';
+        b.setAttribute('aria-pressed', String(m.id === modeId));
+        b.onclick = () => {
+          modeId = m.id;
+          tabs.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+          show();
+        };
+        tabs.appendChild(b);
+      });
+      select.onchange = show;
+      show();
+    })();
+  }
 
   // 画像の検証用：検証ページ（image_test.html）から読み込まれたときは、画面を作らずに
   // 画像を描く関数だけを渡して終わる（スコアの読み込みや登録は行わない）
@@ -2811,6 +3036,7 @@
   } catch (e) {
     ui.status('エラー: ' + e.message, true);
     console.error(e);
+    renderOffline(ui); // ログインできないときは、保存済みのデータからの表示（検証用）を出す
     return;
   }
 
@@ -2822,6 +3048,7 @@
     ui.status('');
     ui.setBack(() => { navId++; renderMenu(ui, profile, go); });
     if (where === 'mypage') renderMyPage(ui, profile, { getLastRun: () => lastRun, computeRating: computeForMyPage });
+    else if (where.startsWith('bonus:')) runBonus(BONUS_MODES.find((b) => 'bonus:' + b.id === where));
     else runRating();
   };
   renderMenu(ui, profile, go);
@@ -2858,8 +3085,25 @@
     }
   }
 
+  // オマケ：対象の譜面を絞って計算する（ランキング登録・自動登録・おすすめ楽曲の保存は行わない）
+  async function runBonus(bonus) {
+    const myNav = navId;
+    const left = () => myNav !== navId; // メニューに戻った
+    try {
+      const run = await computeRating((t) => ui.status(`【${bonus.title}】${t}`), left, bonus);
+      if (!run || left()) return;
+      ui.status('');
+      renderResult(ui, profile, run.results.map((r) => ({ ...r, bonus })), run.info, run.jackets, { bonus, bonusCounts: run.bonusCounts });
+    } catch (e) {
+      if (left()) return;
+      ui.status('エラー: ' + e.message, true);
+      console.error(e);
+    }
+  }
+
   // スコアを読み込んでレートを計算する（画面は作らない）。途中で left() が true になったら null
-  async function computeRating(status, left) {
+  //   bonus を渡すと、その対象の譜面だけで計算する（オマケのレート）
+  async function computeRating(status, left, bonus = null) {
     // 譜面定数表の読み込み（任意）
     let constTable = {};
     if (CONST_URL) {
@@ -2889,10 +3133,27 @@
     let lastLevel = LEVEL_MAX;
     let rateLevel = null; // レート対象曲が確定したレベル（読み込み中の表示に使う）
 
-    for (let n = LEVEL_MAX; n >= 1; n--) {
+    // オマケで達成譜面数も数える場合：定数表から、その難易度の譜面があるレベルの範囲を出す
+    //   （例：EXPERT は 13+ が最高なので、Lv14 以上のページは読まない）。定数表を読めなかったときは全レベルを読む
+    let startLevel = LEVEL_MAX;
+    let countMin = null; // 達成譜面数のために、ここまでは読み込む
+    if (bonus?.countDiff) {
+      const levelNoOf = (c) => { for (let n = LEVEL_MAX; n > 1; n--) if (c >= levelInfo(n).min) return n; return 1; };
+      const cs = Object.entries(constTable)
+        .filter(([k, c]) => k.split('|')[2] === bonus.countDiff && typeof c === 'number').map(([, c]) => c);
+      countMin = 1;
+      if (cs.length) {
+        startLevel = levelNoOf(Math.max(...cs));
+        countMin = Math.max(1, levelNoOf(Math.min(...cs)) - BONUS_COUNT_MARGIN);
+      }
+    }
+    lastLevel = startLevel;
+
+    for (let n = startLevel; n >= 1; n--) {
       if (left()) return;
       status(`Lv${levelInfo(n).label} を取得中…（${++fetched}ページ目）` +
-        (rateLevel !== null ? '　☆5・☆6・☆7達成譜面数の集計のため、Lv10+ まで読み込みます' : ''));
+        (rateLevel !== null && !bonus ? '　☆5・☆6・☆7達成譜面数の集計のため、Lv10+ まで読み込みます' : '') +
+        (countMin !== null ? `　☆5・☆6・☆7達成譜面数の集計のため、Lv${levelInfo(countMin).label} まで読み込みます` : ''));
       // レコードのページと、そのレベルの全国ランキング集計（GitHub。なくても続行）を同時に読み込む
       const [res, lvStats] = await Promise.all([
         fetch(LEVEL_URL(n), { credentials: 'same-origin' }),
@@ -2902,7 +3163,8 @@
       if (!res.ok) throw new Error(`Lv${levelInfo(n).label} の取得に失敗しました (HTTP ${res.status})`);
       lvStats.forEach((v, k) => stats.set(k, v));
 
-      scored.push(...parsePage(await res.text(), n).map((s) => score(s, constTable, stats)));
+      const parsed = parsePage(await res.text(), n);
+      scored.push(...(bonus ? parsed.filter(bonus.filter) : parsed).map((s) => score(s, constTable, stats)));
       lastLevel = n;
 
       // すべてのレートで「下のレベルはもう上位に入れない」状態になったら打ち切る
@@ -2912,12 +3174,16 @@
       });
       if (allDone && rateLevel === null) rateLevel = n;
       // レート対象曲が確定し、☆6・☆7の集計に必要なレベル（10+）まで取得したら終了
-      if (n === 1 || (allDone && n <= COUNT_MIN_LEVEL)) break;
+      //   オマケのレートは達成譜面数を集計しないので、レート対象曲が確定した時点で終了
+      //   達成譜面数も数えるオマケは、その難易度の最低レベルまで読んで終了（それより下に対象の譜面はない）
+      if (n === 1 || (countMin !== null ? n <= countMin : allDone && (bonus || n <= COUNT_MIN_LEVEL))) break;
       await sleep(WAIT_MS);
     }
 
     if (scored.length === 0) {
-      throw new Error('スコアを1件も読み取れませんでした。ログイン状態を確認してください。');
+      throw new Error(bonus
+        ? `対象の譜面（${bonus.label}）のスコアを1件も読み取れませんでした。`
+        : 'スコアを1件も読み取れませんでした。ログイン状態を確認してください。');
     }
 
     // レートの種類ごとに上位 TOP_N を選んで平均
@@ -2936,8 +3202,15 @@
       scored,
       stats,
       jackets,
-      counts: countStars(scored),
-      info: `Lv15〜Lv${levelInfo(lastLevel).label} の ${fetched} ページを取得し、${scored.length} 譜面から計算`,
+      counts: bonus ? null : countStars(scored),
+      // オマケの達成譜面数（☆6達成は☆7を、☆5達成は☆6・☆7を含む）。total は読み込んだ対象の譜面数
+      bonusCounts: bonus?.countDiff ? {
+        star7: scored.filter((s) => s.stars >= 7).length,
+        star6: scored.filter((s) => s.stars >= 6).length,
+        star5: scored.filter((s) => s.stars >= 5).length,
+        total: scored.length,
+      } : null,
+      info: `Lv${levelInfo(startLevel).label}〜Lv${levelInfo(lastLevel).label} の ${fetched} ページを取得し、${bonus ? `${bonus.label} の ` : ''}${scored.length} 譜面から計算`,
     };
   }
 })();

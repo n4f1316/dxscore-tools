@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2fRATE のしくみ（β版）</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="2fRATE の☆の決まり方、単曲レート値の計算式、ランクの一覧です。">
+<link rel="icon" href="logo/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="logo/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="logo/apple-touch-icon.png">
+<link rel="stylesheet" href="2frate.css?v=20261116g">
+<script src="2frate-theme.js?v=20261116g"></script>
+</head>
+<body class="pg-doc pg-about">
+<div class="wrap">
+  <header class="site-head">
+    <a class="site-logo" href="./" aria-label="2fRATE トップへ">2fRATE</a>
+    <button type="button" class="theme-toggle"></button>
+  </header>
+  <h1>レートとランクのしくみ</h1>
+  <p class="lead">2fRATE がどのように計算されているかをまとめています。</p>
+
+  <h2>☆の決まり方</h2>
+  <div class="card">
+    <p>☆は、でらっくスコアの取得率（現在のでらっくスコア ÷ 最大値）で決まります。</p>
+    <div class="tblw" style="margin-top:10px">
+      <table>
+        <thead><tr><th>☆</th><th>取得率</th></tr></thead>
+        <tbody>
+          <tr><td><span class="star s7">☆7</span></td><td>100%（理論値）</td></tr>
+          <tr><td><span class="star s56">☆6</span></td><td>99% 以上</td></tr>
+          <tr><td><span class="star s56">☆5</span></td><td>97% 以上</td></tr>
+          <tr><td><span class="star s34">☆4</span></td><td>95% 以上</td></tr>
+          <tr><td><span class="star s34">☆3</span></td><td>93% 以上</td></tr>
+          <tr><td><span class="star s12">☆2</span></td><td>90% 以上</td></tr>
+          <tr><td><span class="star s12">☆1</span></td><td>85% 以上</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>計算には☆を小数第一位まで使います。小数部分は「次の☆までの進み具合」を10段階で表したもの（切り捨て）です。たとえば☆6の範囲（99%〜100%）のちょうど中間なら☆6.5、理論値まであと少しでも☆6.9です。☆1未満（85%未満）の譜面は0として扱います。</p>
+  </div>
+
+  <h2>単曲レート値</h2>
+  <div class="card">
+    <p>譜面ごとの値（単曲レート値）は、次の式で計算します。</p>
+    <div class="formula">
+      （譜面定数 × 譜面定数 × <span class="v">☆の整数部分</span><br>
+      　＋ 譜面定数 × 譜面定数 × <span class="v">☆の小数部分</span> × 0.5）÷ 100<br>
+      　＋ <span class="bonus">0.1（☆がレートの上限に達したときだけ）</span><br>
+      　＋ <span class="rare">希少ボーナス（下記。☆7まで・☆6まで のみ）</span>
+    </div>
+    <p>☆の小数部分は半分の重みで加わります。☆がそのレートの上限（☆7まで なら☆7、☆6まで なら☆6、☆5まで なら☆5）に達した譜面には、さらに 0.1 のボーナスがつきます。下の表は「☆7まで」の例です。</p>
+    <div class="tblw">
+      <table>
+        <thead><tr><th>譜面定数</th><th>☆6.0</th><th>☆6.4</th><th>☆6.9</th><th>☆7.0</th></tr></thead>
+        <tbody>
+          <tr><td>13.8</td><td>11.426</td><td>11.807</td><td>12.283</td><td>13.431</td></tr>
+          <tr><td>15.0</td><td>13.500</td><td>13.950</td><td>14.512</td><td>15.850</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="sub">好きな譜面の値は <a href="calculator.html">単曲レート計算</a> で調べられます。</p>
+  </div>
+
+  <h2>希少ボーナス</h2>
+  <div class="card">
+    <p>でらっくスコアの全国ランキング（上位100人）で☆6以上（☆6＋☆7）を達成している人が少ない譜面は、自分が☆6以上を達成していると、「☆7まで」「☆6まで」の単曲レート値に次の値が加わります。「☆5まで」には加わりません。</p>
+    <div class="tblw">
+      <table>
+        <thead><tr><th>上位100人のうち☆6以上の人数</th><th>加算</th></tr></thead>
+        <tbody>
+          <tr><td>3人以下</td><td>＋0.15</td></tr>
+          <tr><td>10人以下</td><td>＋0.10</td></tr>
+          <tr><td>20人以下</td><td>＋0.05</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>人数は、全国ランキングを定期的に集計したデータから求めています（集計データがない譜面には加算されません）。対象の譜面は <a href="viewer.html">譜面データビューア</a> の「希少ボーナス対象のみ」で確認できます。</p>
+  </div>
+
+  <h2>2fRATE</h2>
+  <div class="card">
+    <p>単曲レート値の高い上位50譜面（レート対象曲）の平均が 2fRATE です。50譜面に満たない場合も50で割ります。</p>
+    <ul style="margin-top:10px">
+      <li><b>☆7まで</b>：上の式そのままのレートです。☆7（理論値）の譜面に 0.1 のボーナスがつきます。希少ボーナスも加わります。</li>
+      <li><b>☆6まで</b>：☆7の譜面を☆6.0として計算します。☆6.0以上の譜面に 0.1 のボーナスがつきます。希少ボーナスも加わります。</li>
+      <li><b>☆5まで</b>：☆5を超える譜面を☆5.0として計算します。☆5.0以上の譜面に 0.1 のボーナスがつきます（希少ボーナスはありません）。</li>
+    </ul>
+    <p>レート対象曲は、レートの種類ごとに別々に選びます。</p>
+  </div>
+
+  <h2>ランク</h2>
+  <p class="sub" style="margin:-4px 0 10px">3種類の 2fRATE それぞれにランクがあり、表示している値（小数第3位まで）で決まります。区切りは「☆7まで」が LEGEND 12.000 以上、「☆6まで」が 11.500 以上、「☆5まで」が 10.500 以上で、それより下はどれも 0.500 刻みです。</p>
+  <div class="tbl-rank">
+    <table>
+      <thead><tr><th>ランク</th><th>☆7まで</th><th>☆6まで</th><th>☆5まで</th></tr></thead>
+      <tbody id="ranks"></tbody>
+    </table>
+  </div>
+
+  <footer>2fRATE（非公式）・<a href="./">トップ</a>・<a href="https://github.com/n4f1316/dxscore-tools">GitHub</a><br>© 2026 なふ（2fRATE）。2fRATE のプログラム・デザイン・ロゴの無断転載・無断使用を禁じます。</footer>
+</div>
+<script>
+(() => {
+  'use strict';
+  // ランク（2fRATE の「☆7まで」と同じ区切りと色）
+  const RANKS = [
+    { name: 'LEGEND',        min: 12,   colors: ['#6A1BD8', '#D6246E', '#F2A007'], dark: ['#B98CFF', '#FF6FA8', '#FFC247'], glow: 'rgba(242,160,7,.55)' },
+    { name: 'RAINBOW PLUS',  min: 11.5, colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'], dark: ['#FF6B8E', '#FFA640', '#F2CE3A', '#4FD9B0', '#6FA4FF', '#B58CFF'], glow: 'rgba(255,196,0,.6)' },
+    { name: 'RAINBOW',       min: 11,   colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'], dark: ['#FF6B8E', '#FFA640', '#F2CE3A', '#4FD9B0', '#6FA4FF', '#B58CFF'] },
+    { name: 'PLATINUM PLUS', min: 10.5, colors: ['#4F8AA6', '#8FBED4', '#4F8AA6'], dark: ['#8FC4DC', '#D5EEF8', '#8FC4DC'], glow: 'rgba(120,190,225,.65)' },
+    { name: 'PLATINUM',      min: 10,   colors: ['#4F8AA6', '#8FBED4', '#4F8AA6'], dark: ['#8FC4DC', '#D5EEF8', '#8FC4DC'] },
+    { name: 'GOLD PLUS',     min: 9.5,  colors: ['#B8860B', '#E0B32E', '#B8860B'], dark: ['#E0B32E', '#FFE58A', '#E0B32E'], glow: 'rgba(240,190,40,.6)' },
+    { name: 'GOLD',          min: 9,    colors: ['#B8860B', '#E0B32E', '#B8860B'], dark: ['#E0B32E', '#FFE58A', '#E0B32E'] },
+    { name: 'SILVER PLUS',   min: 8.5,  colors: ['#6F7C8B', '#A7B2BE', '#6F7C8B'], dark: ['#A7B2BE', '#E3E8EE', '#A7B2BE'], glow: 'rgba(150,165,185,.7)' },
+    { name: 'SILVER',        min: 8,    colors: ['#6F7C8B', '#A7B2BE', '#6F7C8B'], dark: ['#A7B2BE', '#E3E8EE', '#A7B2BE'] },
+    { name: 'BRONZE PLUS',   min: 7.5,  colors: ['#8E4E22', '#C07A45', '#8E4E22'], dark: ['#C98A58', '#F0BE98', '#C98A58'], glow: 'rgba(205,125,65,.55)' },
+    { name: 'BRONZE',        min: 7,    colors: ['#8E4E22', '#C07A45', '#8E4E22'], dark: ['#C98A58', '#F0BE98', '#C98A58'] },
+    { name: 'WAKABA',        min: -Infinity, colors: ['#3E9B3A', '#7CBF3F'], dark: ['#6FCB6A', '#B4E36C'] },
+  ];
+  const rankOf = (v) => RANKS.find((r) => Math.round(v * 1000) / 1000 >= r.min);
+
+  // ランクのアイコン（SVG）。デフォルメ調：太めの角丸の線、ベタ塗り（ツヤなし）
+  function rankIconSvg(rankName) {
+    const plus = rankName.endsWith(' PLUS');
+    const base = rankName.replace(' PLUS', '');
+    // ✧ の形（4方向にとがった星。辺は内側にくぼませる）
+    const sparkle = (cx, cy, r) => {
+      const q = r * 0.18;
+      return `M${cx} ${cy - r} Q${cx + q} ${cy - q} ${cx + r} ${cy} Q${cx + q} ${cy + q} ${cx} ${cy + r}` +
+        ` Q${cx - q} ${cy + q} ${cx - r} ${cy} Q${cx - q} ${cy - q} ${cx} ${cy - r} Z`;
+    };
+    const MEDAL = {            // [中央の✧, 本体, 縁取り]
+      BRONZE:   ['#F6D2B3', '#C9844F', '#8E4E22'],
+      SILVER:   ['#FFFFFF', '#BAC4CF', '#6F7C8B'],
+      GOLD:     ['#FFF2A8', '#F2C531', '#B07D0A'],
+      PLATINUM: ['#F4FCFF', '#A6D6EC', '#4F8AA6'],
+    };
+    let body = '';
+    let edge = '#2B2350'; // 「+」の縁取りの色（ランクの色）
+    if (base === 'WAKABA') {
+      // 初心者マーク（若葉マーク）
+      body = `
+        <path d="M14 10 L32 22 L32 57 L14 42 Z" fill="#FFD43B" stroke="#D99A00" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M50 10 L32 22 L32 57 L50 42 Z" fill="#4CBB4F" stroke="#2E8B3A" stroke-width="4" stroke-linejoin="round"/>`;
+      edge = '#2E8B3A';
+    } else if (MEDAL[base]) {
+      // 丸いメダル（色違い）。中央に ✧
+      const [light, mid, dark] = MEDAL[base];
+      body = `
+        <circle cx="32" cy="34" r="24" fill="${mid}" stroke="${dark}" stroke-width="4"/>
+        <path d="${sparkle(32, 34, 13)}" fill="${light}" stroke="${dark}" stroke-width="2.5" stroke-linejoin="round"/>`;
+      edge = dark;
+    } else if (base === 'RAINBOW') {
+      // 虹（四分円の形。6色の帯をすき間なく重ね、端はまっすぐ切る）
+      const bands = ['#F0384A', '#FF7A1A', '#FFC93C', '#2CC24A', '#1F6BFF', '#7D55B8'];
+      const cx = 51, cy = 51, R = 38, w = (R - 8) / bands.length; // 外側の半径38、内側の穴の半径8（全体が中央に来る位置）
+      body = bands.map((c, i) => {
+        const r = R - w / 2 - i * w;
+        return `<path d="M${cx - r} ${cy} A${r} ${r} 0 0 1 ${cx} ${cy - r}" fill="none" stroke="${c}" stroke-width="${(w + 0.4).toFixed(2)}" stroke-linecap="butt"/>`;
+      }).join('');
+      // 外側の縁取り（虹全体の輪郭）
+      const ri = R - w * bands.length; // 内側の穴の半径
+      const line = '#4A3B7A';
+      body += `<path d="M${cx - R} ${cy} A${R} ${R} 0 0 1 ${cx} ${cy - R} L${cx} ${cy - ri} A${ri} ${ri} 0 0 0 ${cx - ri} ${cy} Z"` +
+        ` fill="none" stroke="${line}" stroke-width="3.5" stroke-linejoin="round"/>`;
+      edge = line;
+    } else if (base === 'LEGEND') {
+      // 王冠
+      body = `
+        <path d="M10 25 L21 37 L32 18 L43 37 L54 25 L50 50 L14 50 Z" fill="#F2C531" stroke="#B07D0A" stroke-width="4" stroke-linejoin="round"/>
+        <rect x="13" y="45" width="38" height="9" rx="4.5" fill="#F2C531" stroke="#B07D0A" stroke-width="4"/>
+        <circle cx="10" cy="22" r="4.5" fill="#F2C531" stroke="#B07D0A" stroke-width="3"/>
+        <circle cx="32" cy="14" r="4.5" fill="#F2C531" stroke="#B07D0A" stroke-width="3"/>
+        <circle cx="54" cy="22" r="4.5" fill="#F2C531" stroke="#B07D0A" stroke-width="3"/>
+        <circle cx="32" cy="36" r="4.2" fill="#E0348C" stroke="#9C1D5E" stroke-width="2"/>`;
+      edge = '#B07D0A';
+    }
+    // PLUS は右上に「+」（白い + をランクの色で縁取り）
+    const badge = plus ? `
+        <path d="M50 6 V20 M43 13 H57" stroke="${edge}" stroke-width="10" stroke-linecap="round"/>
+        <path d="M50 6 V20 M43 13 H57" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round"/>` : '';
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">${body}${badge}</svg>`;
+  }
+
+  // レートの種類ごとに区切りを下げる量（☆6まで は 0.5、☆5まで は 1.5）
+  const SHIFTS = [0, 0.5, 1.5];
+  const box = document.getElementById('ranks');
+  RANKS.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    const cell = document.createElement('div');
+    cell.className = 'rk-cell';
+    const ic = document.createElement('div');
+    ic.className = 'rk-ic';
+    ic.innerHTML = rankIconSvg(r.name); // ページ内で作る固定のSVGのみ
+    const nm = document.createElement('span');
+    nm.className = 'rk-name';
+    nm.textContent = r.name;
+    nm.classList.add('rank-grad');
+    nm.style.setProperty('--g', `linear-gradient(90deg, ${r.colors.join(', ')})`);
+    nm.style.setProperty('--gd', `linear-gradient(90deg, ${(r.dark || r.colors).join(', ')})`);
+    cell.append(ic, nm);
+    td.appendChild(cell);
+    tr.appendChild(td);
+    SHIFTS.forEach((sh) => {
+      const c = document.createElement('td');
+      c.textContent = Number.isFinite(r.min)
+        ? `${(r.min - sh).toFixed(3)}〜`
+        : `〜${(RANKS[i - 1].min - sh - 0.001).toFixed(3)}`;
+      tr.appendChild(c);
+    });
+    box.appendChild(tr);
+  });
+})();
+</script>
+</body>
+</html>

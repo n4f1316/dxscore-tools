@@ -33,7 +33,7 @@
     <button type="button" class="theme-toggle"></button>
   </header>
   <div class="page-title"><h1>IMAGE TEST</h1><span>画像の検証（α版）</span></div>
-  <p class="lead">ランキングに保存されているベスト枠（公開している人のみ）から、ブックマークレット（β版）と同じ処理でレート対象曲の画像を描きます。右上の「表示」を切り替えると、画像もその配色で描き直します。</p>
+  <p class="lead">ランキングに保存されているベスト枠（公開している人のみ）から、ブックマークレット（α版）と同じ処理でレート対象曲の画像を描きます。右上の「表示」を切り替えると、画像もその配色で描き直します。</p>
 
   <div class="tabs" id="modeTabs" role="group" aria-label="レートの種類"></div>
   <div class="it-row">
@@ -70,7 +70,7 @@
   'use strict';
   const RANKING_API = 'https://2frate.want131611.workers.dev/';
   const ICON_BASE = 'https://maimaidx.jp/maimai-mobile/img/Icon/';
-  const BOOKMARKLET = '../beta/dxscore_rating.js'; // 画像を描く処理はここから借りる（同じコードで検証するため）
+  const BOOKMARKLET = './dxscore_rating.js'; // 画像を描く処理は同じフォルダーの α版から借りる（同じコードで検証するため）
 
   const $ = (id) => document.getElementById(id);
   const status = (t, isError = false) => {
@@ -84,9 +84,9 @@
     window.__2fRATE_PREVIEW__ = resolve;
     const s = document.createElement('script');
     s.src = BOOKMARKLET + '?' + Date.now();
-    s.onerror = () => reject(new Error('ブックマークレット（β版）を読み込めませんでした。'));
+    s.onerror = () => reject(new Error('ブックマークレット（α版）を読み込めませんでした。'));
     document.head.appendChild(s);
-    setTimeout(() => reject(new Error('ブックマークレット（β版）が検証用の読み込みに対応していません（古い版の可能性があります）。')), 15000);
+    setTimeout(() => reject(new Error('ブックマークレット（α版）が検証用の読み込みに対応していません（古い版の可能性があります）。')), 15000);
   });
 
   let tool, jackets, users = [], modeId = 'full';
