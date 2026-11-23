@@ -1156,9 +1156,11 @@
   async function buildShareImage(profile, result, jackets, options = {}) {
     const layout = IMAGE_LAYOUTS[options.layout] ? options.layout : 'standard';
     const compact = layout === 'compact';
-    // options.compactStyle：コンパクトの形の配色（検証ページ用。0：今の配色、1：難易度の色、2：ジャケットの色をぼかして背景に、
-    //   3：右の列を水色・楽曲名を濃い帯に、4：画像全体の背景を水色に、5：☆の色の枠）。通常の形では使わない
-    const cstyle = compact ? (Number(options.compactStyle) || 0) : 0;
+    // options.compactStyle：配色（省略時は 1）。0：色なし（以前の配色）、1：難易度の色（標準）。
+    //   2〜5 は検証ページ用でコンパクトの形だけ（2：ジャケットの色をぼかして背景に、3：右の列を水色・楽曲名を濃い帯に、
+    //   4：画像全体の背景を水色に、5：☆の色の枠）。通常の形は 0 か 1 だけ
+    const styleNo = Number(options.compactStyle ?? 1);
+    const cstyle = compact ? (Number.isInteger(styleNo) && styleNo >= 0 && styleNo <= 5 ? styleNo : 1) : (styleNo === 0 ? 0 : 1);
     const { cols, rows, pad, gap, headH, footH } = IMG;
     const { cellW, jacket: J, cellH } = IMAGE_LAYOUTS[layout];
     const W = pad * 2 + cols * cellW + (cols - 1) * gap;
@@ -1300,27 +1302,30 @@
       ctx.strokeStyle = IMG.line;
       ctx.stroke();
 
+      // 難易度の色（配色 1）：枠の背景を難易度の色で薄く塗る
+      //   Re:MASTER は MASTER と同じ紫にせず、白地（ダークは薄い藤色）に藤色の枠で見分ける（Re:MASTER のラベルと同じ考え方）
+      const isReM = s.diff === 'Re:MASTER';
+      const DIFF_TINT = DIFF_COLOR[s.diff] ?? '#8A3FD1';
+      const RE_LINE = theme === 'dark' ? '#D9B8FF' : '#B98CF0';
+      if (cstyle === 1) {
+        if (isReM) {
+          if (theme === 'dark') {
+            ctx.save(); ctx.globalAlpha = 0.16; ctx.fillStyle = '#D9B8FF'; ctx.fillRect(x + 1, y + 1, cellW - 2, cellH - 2); ctx.restore();
+          } else {
+            ctx.fillStyle = '#FFFFFF'; ctx.fillRect(x + 1, y + 1, cellW - 2, cellH - 2);
+          }
+          ctx.save(); ctx.lineWidth = 2; ctx.strokeStyle = RE_LINE; ctx.strokeRect(x + 1, y + 1, cellW - 2, cellH - 2); ctx.restore();
+        } else {
+          ctx.save(); ctx.globalAlpha = theme === 'dark' ? 0.28 : 0.14; ctx.fillStyle = DIFF_TINT; ctx.fillRect(x + 1, y + 1, cellW - 2, cellH - 2); ctx.restore();
+        }
+        // 通常の形は上端に難易度の色の線（コンパクトの形は、下の楽曲名の帯を難易度の色にする）
+        if (!compact) { ctx.fillStyle = isReM ? RE_LINE : DIFF_TINT; ctx.fillRect(x, y, cellW, 5); }
+      }
+
       // ---- コンパクトの形：ジャケット（左上。種別・難易度を重ねる）、右に 定数・☆・MAX-xx・単曲レート値、下に楽曲名 ----
       if (compact) {
         const jx = x + 8, jy = y + 8;
         const V = cstyle; // コンパクトの配色（検証用。0 が今の配色）
-        const DIFF_TINT = DIFF_COLOR[s.diff] ?? '#8A3FD1';
-        if (V === 1) { // 難易度の色
-          if (s.diff === 'Re:MASTER') {
-            // Re:MASTER は MASTER と同じ紫にせず、白地（ダークは薄い藤色）に藤色の枠と線で見分ける（Re:MASTER のラベルと同じ考え方）
-            if (theme === 'dark') {
-              ctx.save(); ctx.globalAlpha = 0.16; ctx.fillStyle = '#D9B8FF'; ctx.fillRect(x + 1, y + 1, cellW - 2, cellH - 2); ctx.restore();
-            } else {
-              ctx.fillStyle = '#FFFFFF'; ctx.fillRect(x + 1, y + 1, cellW - 2, cellH - 2);
-            }
-            ctx.save(); ctx.lineWidth = 2; ctx.strokeStyle = theme === 'dark' ? '#D9B8FF' : '#B98CF0';
-            ctx.strokeRect(x + 1, y + 1, cellW - 2, cellH - 2); ctx.restore();
-            ctx.fillStyle = theme === 'dark' ? '#D9B8FF' : '#B98CF0'; ctx.fillRect(x, y, cellW, 5);
-          } else {
-            ctx.save(); ctx.globalAlpha = theme === 'dark' ? 0.28 : 0.14; ctx.fillStyle = DIFF_TINT; ctx.fillRect(x + 1, y + 1, cellW - 2, cellH - 2); ctx.restore();
-            ctx.fillStyle = DIFF_TINT; ctx.fillRect(x, y, cellW, 5);
-          }
-        }
         if (V === 2 && jacketImgs[i]) { // ジャケットの色をぼかして背景に
           const t = document.createElement('canvas'); t.width = 6; t.height = 6; t.getContext('2d').drawImage(jacketImgs[i], 0, 0, 6, 6);
           ctx.save(); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
@@ -1399,11 +1404,24 @@
         ctx.fillStyle = IMG.ink;
         fillDigits(ctx, vText, (cx0 + cx1) / 2 + digitsWidth(vText, 28) / 2, jy + (J + 54) / 2 + 4, 28);
         // ジャケットの下：楽曲名（枠の幅いっぱい。長い場合は末尾を「…」で省略）
+        //   上の情報と区切るため、配色 1 では難易度の色の帯にし、それ以外（3 を除く）は仕切り線を引く
+        const bandY = jy + J + 4, bandH = y + cellH - 1 - bandY;
+        let nameColor = IMG.ink;
+        if (cstyle === 1) {
+          ctx.fillStyle = isReM ? (theme === 'dark' ? '#D9B8FF' : '#E9DCFF') : DIFF_TINT;
+          ctx.fillRect(x + 1, bandY, cellW - 2, bandH);
+          nameColor = isReM ? (theme === 'dark' ? '#0E0B1F' : '#4A1F8A') : '#FFFFFF';
+        } else if (cstyle === 3) {
+          nameColor = '#FFFFFF';
+        } else {
+          ctx.fillStyle = IMG.line;
+          ctx.fillRect(x + 1, bandY, cellW - 2, 1);
+        }
         ctx.font = `700 17px ${IMG.font}`;
-        ctx.fillStyle = (cstyle === 3) ? '#FFFFFF' : IMG.ink;
+        ctx.fillStyle = nameColor;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(fitText(ctx, s.name, cellW - 16), jx, jy + J + 18);
+        ctx.fillText(fitText(ctx, s.name, cellW - 16), jx, bandY + bandH / 2 + 1);
         return;
       }
 
