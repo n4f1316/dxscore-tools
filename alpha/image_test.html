@@ -8,8 +8,8 @@
 <link rel="icon" href="logo/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="logo/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="logo/apple-touch-icon.png">
-<link rel="stylesheet" href="2frate.css?v=20261124a">
-<script src="2frate-theme.js?v=20261124a"></script>
+<link rel="stylesheet" href="2frate.css?v=20261124b">
+<script src="2frate-theme.js?v=20261124b"></script>
 <style>
   /* このページだけの部品（検証用） */
   .it-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 12px; font-size: 13px; }
@@ -43,6 +43,16 @@
   <div class="it-row">
     <label>画像の形
       <select id="layout"><option value="standard">通常</option><option value="compact">コンパクト</option></select>
+    </label>
+    <label>コンパクトの配色（検証用）
+      <select id="cstyle">
+        <option value="0">現在</option>
+        <option value="1">案1 難易度の色</option>
+        <option value="2">案2 ジャケットの色をぼかして背景に</option>
+        <option value="3">案3 右の列を水色・楽曲名を濃い帯に</option>
+        <option value="4">案4 画像全体の背景を水色に</option>
+        <option value="5">案5 ☆の色の枠</option>
+      </select>
     </label>
     <label><input type="checkbox" id="hide"> 名前と称号を載せない</label>
     <label><input type="checkbox" id="withImg"> ジャケット入りで表示（保存不可の場合あり）</label>
@@ -152,7 +162,7 @@
       const profile = { name: u.name, icon, trophy: $('trophy').value.trim(), trophyRank: $('trophyRank').value };
       const result = { mode, rating: Number(u[RATE_KEY[modeId]]) || 0, top: list.map((t) => toSong(t, modeId)) };
       tool.setTheme(document.documentElement.dataset.theme);
-      const base = { hideProfile: $('hide').checked, layout: $('layout').value };
+      const base = { hideProfile: $('hide').checked, layout: $('layout').value, compactStyle: Number($('cstyle').value) };
       // まずジャケット入りで描き、書き出せるか試す。書き出せないときは灰色の枠で描き直して、保存できる画像にする
       let canvas = await tool.buildShareImage(profile, result, jackets, { ...base, cors: true });
       let url = toUrl(canvas);
@@ -226,6 +236,8 @@
     $('save').onclick = save;
     $('hide').onchange = draw;
     $('layout').onchange = draw;
+    // 配色を選んだら、コンパクトの形に切り替えて描き直す（配色はコンパクトの形だけで使う）
+    $('cstyle').onchange = () => { if ($('cstyle').value !== '0') $('layout').value = 'compact'; draw(); };
     $('withImg').onchange = draw;
     $('trophy').onchange = draw;
     $('trophyRank').onchange = draw;

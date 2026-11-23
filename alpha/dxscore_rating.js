@@ -1156,6 +1156,9 @@
   async function buildShareImage(profile, result, jackets, options = {}) {
     const layout = IMAGE_LAYOUTS[options.layout] ? options.layout : 'standard';
     const compact = layout === 'compact';
+    // options.compactStyle：コンパクトの形の配色（検証ページ用。0：今の配色、1：難易度の色、2：ジャケットの色をぼかして背景に、
+    //   3：右の列を水色・楽曲名を濃い帯に、4：画像全体の背景を水色に、5：☆の色の枠）。通常の形では使わない
+    const cstyle = compact ? (Number(options.compactStyle) || 0) : 0;
     const { cols, rows, pad, gap, headH, footH } = IMG;
     const { cellW, jacket: J, cellH } = IMAGE_LAYOUTS[layout];
     const W = pad * 2 + cols * cellW + (cols - 1) * gap;
@@ -1193,7 +1196,7 @@
     ]);
 
     // 背景
-    ctx.fillStyle = IMG.bg;
+    ctx.fillStyle = (cstyle === 4) ? (theme === 'dark' ? '#0A2236' : '#CDEBF3') : IMG.bg;
     ctx.fillRect(0, 0, W, H);
     // 背景のリング（右上と左下。枠の背面に見える軽いアクセント）
     ctx.save();
@@ -1300,6 +1303,27 @@
       // ---- コンパクトの形：ジャケット（左上。種別・難易度を重ねる）、右に 定数・☆・MAX-xx・単曲レート値、下に楽曲名 ----
       if (compact) {
         const jx = x + 8, jy = y + 8;
+        const V = cstyle; // コンパクトの配色（検証用。0 が今の配色）
+        const DIFF_TINT = DIFF_COLOR[s.diff] ?? '#8A3FD1';
+        if (V === 1) { // 難易度の色
+          ctx.save(); ctx.globalAlpha = theme === 'dark' ? 0.28 : 0.14; ctx.fillStyle = DIFF_TINT; ctx.fillRect(x + 1, y + 1, cellW - 2, cellH - 2); ctx.restore();
+          ctx.fillStyle = DIFF_TINT; ctx.fillRect(x, y, cellW, 5);
+        }
+        if (V === 2 && jacketImgs[i]) { // ジャケットの色をぼかして背景に
+          const t = document.createElement('canvas'); t.width = 6; t.height = 6; t.getContext('2d').drawImage(jacketImgs[i], 0, 0, 6, 6);
+          ctx.save(); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(t, x + 1, y + 1, cellW - 2, cellH - 2);
+          ctx.globalAlpha = theme === 'dark' ? 0.5 : 0.55; ctx.fillStyle = IMG.bg; ctx.fillRect(x + 1, y + 1, cellW - 2, cellH - 2); ctx.restore();
+        }
+        if (V === 3) { // 右の列を水色、楽曲名を濃い帯に
+          ctx.fillStyle = theme === 'dark' ? '#123049' : '#D7EEF5'; ctx.fillRect(jx + J + 3, y + 1, x + cellW - 1 - (jx + J + 3), J + 11);
+          ctx.fillStyle = theme === 'dark' ? '#2A2550' : '#12101F'; ctx.fillRect(x + 1, jy + J + 4, cellW - 2, y + cellH - 1 - (jy + J + 4));
+        }
+        if (V === 5) { // ☆の色の枠
+          ctx.save(); ctx.lineWidth = 4;
+          ctx.strokeStyle = s.stars >= 7 ? rainbow(ctx, x, cellW) : (s.stars >= 1 ? starPillColor(s.stars) : IMG.line);
+          ctx.strokeRect(x + 2, y + 2, cellW - 4, cellH - 4); ctx.restore();
+        }
         ctx.save();
         roundRect(ctx, jx, jy, J, J);
         ctx.clip();
@@ -1352,7 +1376,7 @@
           ctx.fillText(text, xLeft + boxW / 2, jy + 6 + 13);
         };
         box(cx1 - boxW, starText, s.stars >= 7 ? (lx, w) => rainbow(ctx, lx, w) : sc, s.stars >= 1 ? DARK_INK : IMG.sub);
-        box(cx1 - boxW * 2 - 3, constText, IMG.panel, IMG.ink);
+        box(cx1 - boxW * 2 - 3, constText, (cstyle === 3) ? IMG.bg : IMG.panel, IMG.ink);
         ctx.font = `700 17px ${IMG.num}`;
         ctx.fillStyle = s.cur >= s.max ? (theme === 'dark' ? '#FFD86B' : '#8A5A00') : IMG.sub;
         ctx.textAlign = 'right';
@@ -1364,7 +1388,7 @@
         fillDigits(ctx, vText, (cx0 + cx1) / 2 + digitsWidth(vText, 28) / 2, jy + (J + 54) / 2 + 4, 28);
         // ジャケットの下：楽曲名（枠の幅いっぱい。長い場合は末尾を「…」で省略）
         ctx.font = `700 17px ${IMG.font}`;
-        ctx.fillStyle = IMG.ink;
+        ctx.fillStyle = (cstyle === 3) ? '#FFFFFF' : IMG.ink;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
         ctx.fillText(fitText(ctx, s.name, cellW - 16), jx, jy + J + 18);
