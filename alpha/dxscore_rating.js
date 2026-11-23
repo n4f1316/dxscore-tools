@@ -502,7 +502,13 @@
     .dxr-plate-rate { display: flex; align-items: center; gap: 6px; }
     .dxr-rank-icon { display: inline-flex; flex: none; width: 38px; height: 38px; }
     .dxr-rank-icon svg { width: 100%; height: 100%; }
-    .dxr-plate-hint { display: block; font-size: 11px; color: var(--sub); }
+    .dxr-plate-hint { display: block; font-size: 11px; font-weight: 700; color: var(--sub); }
+    .dxr-plate[aria-pressed="true"] { background: var(--panel); }
+    .dxr-plate[aria-pressed="true"] .dxr-plate-hint { color: var(--accent); }
+    .dxr-plates-caption { margin: 0 0 6px; font-size: 12px; font-weight: 700; color: var(--sub); }
+    .dxr-list-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; margin: 4px 0 8px; }
+    .dxr-list-title { font-weight: 800; font-size: 15px; }
+    .dxr-list-head .dxr-tabs { margin: 0; }
 
     /* ☆6・☆7達成譜面数 */
     .dxr-counts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin: -6px 0 18px; }
@@ -657,7 +663,7 @@
       .dxr-plate-value { font-size: 22px; }
       .dxr-rank-icon { width: 24px; height: 24px; }
       .dxr-plate-rate { gap: 3px; }
-      .dxr-plate-hint { display: none; }
+      .dxr-plate-hint { font-size: 10px; }
       .dxr-icon { width: 56px; height: 56px; }
       .dxr-player { font-size: 20px; }
       .dxr-star-pill { min-width: 0; padding: 3px 5px; font-size: 12px; }
@@ -2139,7 +2145,7 @@
           rate.appendChild(value);
           return rate;
         })(),
-        el('span', 'dxr-plate-hint', '押すとレート対象曲を表示')
+        el('span', 'dxr-plate-hint', '')
       );
       b.onclick = () => select(i);
       plates.appendChild(b);
@@ -2148,10 +2154,27 @@
     let selected = 0;
     const shareBtn = el('button', 'dxr-share', '');
     shareBtn.type = 'button';
+    // 一覧の上にも同じ切り替えを置く（どのレートの表を見ているか、すぐ分かるように）
+    const listHead = el('div', 'dxr-list-head');
+    const listTitle = el('span', 'dxr-list-title', '');
+    const listTabs = el('div', 'dxr-tabs');
+    const listTabBtns = results.map(({ mode }, i) => {
+      const t = el('button', 'dxr-tab dxr-tab-sm', mode.label);
+      t.type = 'button';
+      t.onclick = () => select(i);
+      listTabs.appendChild(t);
+      return t;
+    });
+    listHead.append(listTitle, listTabs);
     function select(i) {
       selected = i;
       lists.forEach((l, j) => { l.style.display = i === j ? '' : 'none'; });
-      buttons.forEach((b, j) => b.setAttribute('aria-pressed', String(i === j)));
+      buttons.forEach((b, j) => {
+        b.setAttribute('aria-pressed', String(i === j));
+        b.querySelector('.dxr-plate-hint').textContent = i === j ? '▼ 表示中' : '押して切り替え';
+      });
+      listTabBtns.forEach((t, j) => t.setAttribute('aria-pressed', String(i === j)));
+      listTitle.textContent = `「${results[i].mode.label}」のレート対象曲`;
       shareBtn.textContent = `「${results[i].mode.label}」のレート対象曲を画像にする`;
     }
     select(0);
@@ -2229,8 +2252,9 @@
       });
     }
 
-    ui.body.append(player, plates, ...(counts || bc ? [countBox] : []), layoutSel.el, shareBtn, showLabel,
-      ...(bonus ? [] : [rankBtn, ...(SHOW_RECOMMEND ? [recBtn] : [])]), ...lists, note);
+    const platesCaption = el('p', 'dxr-plates-caption', '3種類のレートを計算しました。押すと、下の表と画像化するレートが切り替わります。');
+    ui.body.append(player, platesCaption, plates, ...(counts || bc ? [countBox] : []), layoutSel.el, shareBtn, showLabel,
+      ...(bonus ? [] : [rankBtn, ...(SHOW_RECOMMEND ? [recBtn] : [])]), listHead, ...lists, note);
   }
 
   // ============================================================
@@ -2659,8 +2683,8 @@
     };
 
     function loginView() {
-      card.replaceChildren(el('h3', '', 'ランキングの設定・お気に入り譜面・PINの変更'),
-        el('p', 'dxr-card-desc', 'ランキングに登録したユーザー名とPINで入ります。ランキングに載せる名前や自動登録の設定、お気に入り譜面（ランキングページに表示）、PINの変更ができます。'));
+      card.replaceChildren(el('h3', '', '保存した記録・ランキングの設定・お気に入り譜面・PINの変更'),
+        el('p', 'dxr-card-desc', 'ランキングに登録したユーザー名とPINで入ります。最後に保存した記録の確認、ランキングに載せる名前や自動登録の設定、お気に入り譜面（ランキングページに表示）、PINの変更ができます。'));
       const user = field(card, 'ユーザー名', 'text', savedUser, '', { autocomplete: 'username', autocapitalize: 'off', spellcheck: 'false' });
       const pin = field(card, 'PIN', 'password', '', '', { inputmode: 'numeric', autocomplete: 'current-password' });
       const err = el('div', 'dxr-err');
@@ -2699,6 +2723,35 @@
       head.appendChild(out);
       card.appendChild(head);
       card.appendChild(el('p', 'dxr-card-desc', `ユーザー名：${auth.username}`));
+
+      // ---- 最後に保存した記録（押したときに読み込む） ----
+      const recBox = el('div', 'dxr-sub');
+      card.appendChild(recBox);
+      recBox.append(el('h4', '', '最後に保存した記録'),
+        el('p', 'dxr-card-desc', 'ランキングに最後に登録・更新したときのレートとレート対象曲です（ベスト枠を公開していなくても、自分は見られます）。'));
+      const recBtn = el('button', 'dxr-rank-open', '保存した記録を見る');
+      recBtn.type = 'button';
+      recBtn.style.margin = '4px 0 0';
+      const recOut = el('div');
+      recBox.append(recBtn, recOut);
+      recBtn.onclick = async () => {
+        recBtn.disabled = true;
+        recOut.replaceChildren(el('p', 'dxr-card-desc', '読み込み中…'));
+        try {
+          const [rec, jackets] = await Promise.all([
+            callRanking({ action: 'myRecord', username: auth.username, pin: auth.pin }, () => {
+              recOut.replaceChildren(el('p', 'dxr-card-desc', '混み合っています。送り直しています…'));
+            }),
+            loadJacketMap(),
+          ]);
+          if (!rec.ok) throw new Error(rec.error || '記録を読み込めませんでした。');
+          recBtn.remove();
+          recOut.replaceChildren(savedRecordView(rec, profile, jackets));
+        } catch (e) {
+          recBtn.disabled = false;
+          recOut.replaceChildren(el('p', 'dxr-err', 'エラー: ' + e.message));
+        }
+      };
 
       // ---- ランキングの設定（表示名・匿名・ベスト枠の公開・自動登録） ----
       const setBox = el('div', 'dxr-sub');
@@ -2993,7 +3046,7 @@
       menu.appendChild(b);
     };
     item('レート計算・ランキング登録', '2fRATE を計算して、レート対象曲の一覧・画像化・ランキング登録を行います', () => go('rating'), true);
-    item('マイページ', '達成人数で見る自分の達成譜面・おすすめ楽曲・ランキングの設定（自動登録）・お気に入り譜面・PINの変更', () => go('mypage'), false);
+    item('マイページ', '最後に保存した記録・達成人数で見る自分の達成譜面・おすすめ楽曲・ランキングの設定（自動登録）・お気に入り譜面・PINの変更', () => go('mypage'), false);
     // オマケ（対象の譜面を絞ったレート）は別枠にする
     const main = menu.cloneNode(false);
     main.append(...menu.childNodes);
@@ -3033,6 +3086,84 @@
   const ICON_BASE = 'https://maimaidx.jp/maimai-mobile/img/Icon/';
   const RATE_FIELD = { full: 'rateFull', cap6: 'rateCap6', cap5: 'rateCap5' };
 
+  // 保存されているベスト枠の1譜面 → 一覧・画像を作る処理が使う形
+  const savedSong = (t, modeId) => ({
+    name: String(t.name ?? ''), kind: t.kind === 'ST' || t.kind === 'DX' ? t.kind : '?', diff: String(t.diff ?? ''), level: t.level,
+    cur: Number(t.score) || 0, max: Number(t.max) || 0,
+    c: Number(t.const) || 0, estimated: !!t.estimated,
+    stars: Math.floor(Number(t.star) || 0),
+    rareAdd: Number(t.rare) || 0,
+    values: { [modeId]: Number(t.value) || 0 },
+  });
+
+  // 日時（ISO形式）を「2026/11/22 04:00」の形にする
+  const fmtDate = (iso) => {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    const p2 = (v) => String(v).padStart(2, '0');
+    return `${d.getFullYear()}/${p2(d.getMonth() + 1)}/${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
+  };
+
+  // マイページ：最後にランキングへ保存した記録（レート・達成譜面数・3種類のレート対象曲）を表示する部分
+  //   rec は Worker の myRecord の答え。profile は画像に載せるプレイヤー情報（maimaiでらっくすNET の今の情報）
+  function savedRecordView(rec, profile, jackets) {
+    const box = el('div');
+    const counts = rec.counts;
+    box.appendChild(el('p', 'dxr-card-desc',
+      `保存した日時：${fmtDate(rec.updatedAt) || '不明'}` +
+      (counts ? `　／　☆7達成 ${counts.star7Mas + counts.star7Remas}・☆6達成 ${counts.star6Mas + counts.star6Remas}` +
+        (counts.star5Mas !== null && counts.star5Mas !== undefined ? `・☆5達成 ${counts.star5Mas + counts.star5Remas}` : '') + ' 譜面' : '')));
+    // 以前の版で登録された記録は、☆7まで の配列だけが入っている
+    const frames = Array.isArray(rec.top50) ? { full: rec.top50 } : (rec.top50 || {});
+    const tabs = el('div', 'dxr-tabs');
+    const out = el('div');
+    let modeId = RATE_MODES[0].id;
+    const show = () => {
+      const mode = RATE_MODES.find((m) => m.id === modeId);
+      const rating = Number(rec[RATE_FIELD[modeId]]) || 0;
+      const rateRow = el('div', 'dxr-off-rate');
+      const rank = rankOf(rating, modeId);
+      const value = tnum(el('span', 'dxr-plate-value dxr-ranked', rating.toFixed(3)));
+      value.style.cssText = rankCss(rank);
+      value.title = rank.name;
+      const icon = el('span', 'dxr-rank-icon');
+      icon.innerHTML = rankIconSvg(rank.name); // ツール内で作った固定のSVGのみ
+      rateRow.append(el('span', 'dxr-plate-label', `2fRATE${mode.label.replace('まで', '')}`), icon, value);
+      const list = frames[modeId];
+      if (!Array.isArray(list) || !list.length) {
+        out.replaceChildren(rateRow, el('p', 'dxr-card-desc', `この記録には「${mode.label}」のレート対象曲が保存されていません（以前の版で登録した記録です）。`));
+        return;
+      }
+      const result = { mode, rating, top: list.map((t) => savedSong(t, modeId)) };
+      const share = el('button', 'dxr-share', `「${mode.label}」のレート対象曲を画像にする`);
+      share.type = 'button';
+      share.style.margin = '0 0 8px';
+      const opt = el('label', 'dxr-share-opt');
+      opt.style.margin = '0 0 12px';
+      const check = el('input');
+      check.type = 'checkbox';
+      check.checked = true;
+      opt.append(check, document.createTextNode('画像にプレイヤー名と称号を載せる'));
+      const layoutSel = layoutPicker();
+      share.onclick = () => openShareImage(profile, result, jackets, share, { hideProfile: !check.checked, layout: layoutSel.get() });
+      out.replaceChildren(rateRow, layoutSel.el, share, opt, buildList(result.top, mode, jackets));
+    };
+    RATE_MODES.forEach((m) => {
+      const b = el('button', 'dxr-tab', m.label);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(m.id === modeId));
+      b.onclick = () => {
+        modeId = m.id;
+        tabs.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        show();
+      };
+      tabs.appendChild(b);
+    });
+    box.append(tabs, out);
+    show();
+    return box;
+  }
+
   function renderOffline(ui) {
     const card = el('div', 'dxr-card');
     card.append(
@@ -3043,15 +3174,7 @@
     card.appendChild(msg);
     ui.body.replaceChildren(card);
 
-    // 保存されているベスト枠の1譜面 → 一覧・画像を作る処理が使う形
-    const toSong = (t, modeId) => ({
-      name: String(t.name ?? ''), kind: t.kind === 'ST' || t.kind === 'DX' ? t.kind : '?', diff: String(t.diff ?? ''), level: t.level,
-      cur: Number(t.score) || 0, max: Number(t.max) || 0,
-      c: Number(t.const) || 0, estimated: !!t.estimated,
-      stars: Math.floor(Number(t.star) || 0),
-      rareAdd: Number(t.rare) || 0,
-      values: { [modeId]: Number(t.value) || 0 },
-    });
+    const toSong = savedSong;
 
     (async () => {
       let users, jackets;
