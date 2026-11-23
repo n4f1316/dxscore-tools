@@ -1306,8 +1306,20 @@
         const V = cstyle; // コンパクトの配色（検証用。0 が今の配色）
         const DIFF_TINT = DIFF_COLOR[s.diff] ?? '#8A3FD1';
         if (V === 1) { // 難易度の色
-          ctx.save(); ctx.globalAlpha = theme === 'dark' ? 0.28 : 0.14; ctx.fillStyle = DIFF_TINT; ctx.fillRect(x + 1, y + 1, cellW - 2, cellH - 2); ctx.restore();
-          ctx.fillStyle = DIFF_TINT; ctx.fillRect(x, y, cellW, 5);
+          if (s.diff === 'Re:MASTER') {
+            // Re:MASTER は MASTER と同じ紫にせず、白地（ダークは薄い藤色）に藤色の枠と線で見分ける（Re:MASTER のラベルと同じ考え方）
+            if (theme === 'dark') {
+              ctx.save(); ctx.globalAlpha = 0.16; ctx.fillStyle = '#D9B8FF'; ctx.fillRect(x + 1, y + 1, cellW - 2, cellH - 2); ctx.restore();
+            } else {
+              ctx.fillStyle = '#FFFFFF'; ctx.fillRect(x + 1, y + 1, cellW - 2, cellH - 2);
+            }
+            ctx.save(); ctx.lineWidth = 2; ctx.strokeStyle = theme === 'dark' ? '#D9B8FF' : '#B98CF0';
+            ctx.strokeRect(x + 1, y + 1, cellW - 2, cellH - 2); ctx.restore();
+            ctx.fillStyle = theme === 'dark' ? '#D9B8FF' : '#B98CF0'; ctx.fillRect(x, y, cellW, 5);
+          } else {
+            ctx.save(); ctx.globalAlpha = theme === 'dark' ? 0.28 : 0.14; ctx.fillStyle = DIFF_TINT; ctx.fillRect(x + 1, y + 1, cellW - 2, cellH - 2); ctx.restore();
+            ctx.fillStyle = DIFF_TINT; ctx.fillRect(x, y, cellW, 5);
+          }
         }
         if (V === 2 && jacketImgs[i]) { // ジャケットの色をぼかして背景に
           const t = document.createElement('canvas'); t.width = 6; t.height = 6; t.getContext('2d').drawImage(jacketImgs[i], 0, 0, 6, 6);
