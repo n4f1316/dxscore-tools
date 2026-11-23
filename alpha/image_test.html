@@ -54,6 +54,18 @@
         <option value="5">案5 ☆の色の枠</option>
       </select>
     </label>
+    <label>楽曲名の区切り（コンパクト・案1）
+      <select id="nstyle">
+        <option value="0">難易度の色の線（2px）</option>
+        <option value="1">A 淡い1pxの線</option>
+        <option value="2">B 短いアクセント線</option>
+        <option value="3">C 下の段を少し濃く</option>
+        <option value="4">D 点線</option>
+        <option value="5">E 楽曲名の左に縦のアクセント</option>
+        <option value="6">楽曲名を枠の外に（縦のアクセントつき）</option>
+        <option value="7">楽曲名を枠の外に（アクセントなし）</option>
+      </select>
+    </label>
     <label><input type="checkbox" id="hide"> 名前と称号を載せない</label>
     <label><input type="checkbox" id="withImg"> ジャケット入りで表示（保存不可の場合あり）</label>
     <label>称号（テスト用）<input type="text" id="trophy" placeholder="空なら称号なし" maxlength="40"></label>
@@ -162,7 +174,7 @@
       const profile = { name: u.name, icon, trophy: $('trophy').value.trim(), trophyRank: $('trophyRank').value };
       const result = { mode, rating: Number(u[RATE_KEY[modeId]]) || 0, top: list.map((t) => toSong(t, modeId)) };
       tool.setTheme(document.documentElement.dataset.theme);
-      const base = { hideProfile: $('hide').checked, layout: $('layout').value, compactStyle: Number($('cstyle').value) };
+      const base = { hideProfile: $('hide').checked, layout: $('layout').value, compactStyle: Number($('cstyle').value), nameStyle: Number($('nstyle').value) };
       // まずジャケット入りで描き、書き出せるか試す。書き出せないときは灰色の枠で描き直して、保存できる画像にする
       let canvas = await tool.buildShareImage(profile, result, jackets, { ...base, cors: true });
       let url = toUrl(canvas);
@@ -236,6 +248,8 @@
     $('save').onclick = save;
     $('hide').onchange = draw;
     $('layout').onchange = draw;
+    // 区切りはコンパクトの形・案1の配色で使うので、選んだらその組み合わせにして描き直す
+    $('nstyle').onchange = () => { $('layout').value = 'compact'; $('cstyle').value = '1'; draw(); };
     // 案2〜5 はコンパクトの形だけの配色なので、選んだらコンパクトの形に切り替えて描き直す
     $('cstyle').onchange = () => { if (Number($('cstyle').value) >= 2) $('layout').value = 'compact'; draw(); };
     $('withImg').onchange = draw;

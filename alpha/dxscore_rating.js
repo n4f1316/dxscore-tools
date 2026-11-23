@@ -594,6 +594,8 @@
     .dxr-lcard[aria-pressed="true"] .dxr-lcard-name { color: var(--accent); }
     .dxr-lcard-desc { font-size: 11px; font-weight: 700; color: var(--sub); line-height: 1.4; }
     .dxr-share-layout + .dxr-share { margin-top: 0; }
+    .dxr-name-style { margin: 8px 0 0; }
+    .dxr-name-style[hidden] { display: none; }
     .dxr-off-rate + .dxr-share-layout { margin-top: 12px; }
     @media (max-width: 520px) {
       .dxr-lcard { flex-direction: column; gap: 4px; padding: 8px 6px; text-align: center; }
@@ -1161,6 +1163,11 @@
     //   4：画像全体の背景を水色に、5：☆の色の枠）。通常の形は 0 か 1 だけ
     const styleNo = Number(options.compactStyle ?? 1);
     const cstyle = compact ? (Number.isInteger(styleNo) && styleNo >= 0 && styleNo <= 5 ? styleNo : 1) : (styleNo === 0 ? 0 : 1);
+    // options.nameStyle：コンパクトの形での楽曲名の区切り（検証用。配色 1 のとき）
+    //   0：難易度の色の線（2px）、1：淡い1pxの線、2：短いアクセント線、3：下の段を少し濃く、4：点線、
+    //   5：楽曲名の左に縦のアクセント、6：楽曲名を枠の外に（縦のアクセントつき）、7：楽曲名を枠の外に（アクセントなし）
+    const nameNo = Number(options.nameStyle ?? 0);
+    const nstyle = compact && cstyle === 1 && Number.isInteger(nameNo) && nameNo >= 0 && nameNo <= 7 ? nameNo : 0;
     const { cols, rows, pad, gap, headH, footH } = IMG;
     const { cellW, jacket: J, cellH } = IMAGE_LAYOUTS[layout];
     const W = pad * 2 + cols * cellW + (cols - 1) * gap;
@@ -1295,7 +1302,9 @@
       const x = pad + col * (cellW + gap);
       const y = gy + row * (cellH + gap);
 
-      roundRect(ctx, x, y, cellW, cellH);
+      const OUT = compact && (nstyle === 6 || nstyle === 7); // 楽曲名だけを枠の外に出す（区切り 6・7）
+      const boxH = OUT ? J + 16 : cellH;
+      roundRect(ctx, x, y, cellW, boxH);
       ctx.fillStyle = IMG.bg;
       ctx.fill();
       ctx.lineWidth = 1.5;
@@ -1310,13 +1319,13 @@
       if (cstyle === 1) {
         if (isReM) {
           if (theme === 'dark') {
-            ctx.save(); ctx.globalAlpha = 0.16; ctx.fillStyle = '#D9B8FF'; ctx.fillRect(x + 1, y + 1, cellW - 2, cellH - 2); ctx.restore();
+            ctx.save(); ctx.globalAlpha = 0.16; ctx.fillStyle = '#D9B8FF'; ctx.fillRect(x + 1, y + 1, cellW - 2, boxH - 2); ctx.restore();
           } else {
-            ctx.fillStyle = '#FFFFFF'; ctx.fillRect(x + 1, y + 1, cellW - 2, cellH - 2);
+            ctx.fillStyle = '#FFFFFF'; ctx.fillRect(x + 1, y + 1, cellW - 2, boxH - 2);
           }
-          ctx.save(); ctx.lineWidth = 2; ctx.strokeStyle = RE_LINE; ctx.strokeRect(x + 1, y + 1, cellW - 2, cellH - 2); ctx.restore();
+          ctx.save(); ctx.lineWidth = 2; ctx.strokeStyle = RE_LINE; ctx.strokeRect(x + 1, y + 1, cellW - 2, boxH - 2); ctx.restore();
         } else {
-          ctx.save(); ctx.globalAlpha = theme === 'dark' ? 0.28 : 0.14; ctx.fillStyle = DIFF_TINT; ctx.fillRect(x + 1, y + 1, cellW - 2, cellH - 2); ctx.restore();
+          ctx.save(); ctx.globalAlpha = theme === 'dark' ? 0.28 : 0.14; ctx.fillStyle = DIFF_TINT; ctx.fillRect(x + 1, y + 1, cellW - 2, boxH - 2); ctx.restore();
         }
         // 通常の形は上端に難易度の色の線（コンパクトの形は、楽曲名との区切りの線を難易度の色にする）
         if (!compact) { ctx.fillStyle = isReM ? RE_LINE : DIFF_TINT; ctx.fillRect(x, y, cellW, 5); }
@@ -1407,9 +1416,28 @@
         //   上の情報と区切るため、配色 1 では難易度の色の線（2px）、それ以外（3 を除く）は灰色の細い線を引く
         const bandY = jy + J + 4, bandH = y + cellH - 1 - bandY;
         let nameColor = IMG.ink;
+        let nameX = jx;
         if (cstyle === 1) {
-          ctx.fillStyle = isReM ? RE_LINE : DIFF_TINT;
-          ctx.fillRect(x + 8, bandY, cellW - 16, 2);
+          const lc = isReM ? RE_LINE : DIFF_TINT;
+          const L = nstyle;
+          if (L === 1) { // A：淡い1pxの線
+            ctx.save(); ctx.globalAlpha = 0.45; ctx.fillStyle = lc; ctx.fillRect(x + 8, bandY, cellW - 16, 1); ctx.restore();
+          } else if (L === 2) { // B：短いアクセント線
+            ctx.fillStyle = lc; ctx.fillRect(x + 8, bandY, 28, 2);
+          } else if (L === 3) { // C：下の段だけ少し濃く（2トーン）
+            ctx.save(); ctx.globalAlpha = isReM ? (theme === 'dark' ? 0.14 : 0.18) : (theme === 'dark' ? 0.22 : 0.12); ctx.fillStyle = isReM ? RE_LINE : DIFF_TINT;
+            ctx.fillRect(x + 1, bandY, cellW - 2, bandH); ctx.restore();
+          } else if (L === 4) { // D：点線
+            ctx.save(); ctx.globalAlpha = 0.7; ctx.fillStyle = lc;
+            for (let dx = x + 8; dx < x + cellW - 8; dx += 6) ctx.fillRect(dx, bandY, 2, 1);
+            ctx.restore();
+          } else if (L === 6 || L === 7) { // 楽曲名だけを枠の外（下）に出す。6 は縦のアクセントつき
+            if (L === 6) { ctx.fillStyle = lc; ctx.fillRect(x, y + boxH + (cellH - boxH) / 2 - 8, 3, 16); nameX = x + 9; } else nameX = x + 2;
+          } else if (L === 5) { // E：楽曲名の左に縦のアクセント
+            ctx.fillStyle = lc; ctx.fillRect(jx, bandY + bandH / 2 - 8, 3, 16); nameX = jx + 9;
+          } else {
+            ctx.fillStyle = lc; ctx.fillRect(x + 8, bandY, cellW - 16, 2);
+          }
         } else if (cstyle === 3) {
           nameColor = '#FFFFFF';
         } else {
@@ -1420,7 +1448,7 @@
         ctx.fillStyle = nameColor;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(fitText(ctx, s.name, cellW - 16), jx, bandY + bandH / 2 + 1);
+        ctx.fillText(fitText(ctx, s.name, cellW - 16 - (nameX - jx)), nameX, OUT ? y + boxH + (cellH - boxH) / 2 + 1 : bandY + bandH / 2 + 1);
         return;
       }
 
@@ -1564,7 +1592,20 @@
       cards.appendChild(b);
     });
     box.appendChild(cards);
-    return { el: box, get: () => current };
+    // α版の検証用：コンパクトの形での楽曲名の区切りを選ぶ（コンパクトを選んでいるときだけ表示）
+    const NAME_STYLES = ['難易度の色の線（2px）', '淡い1pxの線', '短いアクセント線', '下の段を少し濃く', '点線',
+      '楽曲名の左に縦のアクセント', '楽曲名を枠の外に（縦のアクセントつき）', '楽曲名を枠の外に（アクセントなし）'];
+    const nameLab = el('label', 'dxr-field dxr-name-style', '楽曲名の区切り（α版の検証用）');
+    const nameSel = el('select', 'dxr-off-select');
+    NAME_STYLES.forEach((t, k) => { const o = el('option', '', t); o.value = String(k); nameSel.appendChild(o); });
+    try { const v = localStorage.getItem('dxr-name-style'); if (v && Number(v) >= 0 && Number(v) < NAME_STYLES.length) nameSel.value = v; } catch { /* なし */ }
+    nameSel.onchange = () => { try { localStorage.setItem('dxr-name-style', nameSel.value); } catch { /* 保存できなくても続ける */ } };
+    nameLab.appendChild(nameSel);
+    box.appendChild(nameLab);
+    const syncName = () => { nameLab.hidden = current !== 'compact'; };
+    cards.querySelectorAll('button').forEach((b) => b.addEventListener('click', syncName));
+    syncName();
+    return { el: box, get: () => current, opts: () => ({ layout: current, nameStyle: Number(nameSel.value) }) };
   }
 
   async function openShareImage(profile, result, jackets, button, options = {}) {
@@ -2239,7 +2280,7 @@
     showLabel.append(showCb, document.createTextNode('画像にプレイヤー名と称号を載せる'));
     const layoutSel = layoutPicker();
     shareBtn.onclick = () =>
-      openShareImage(profile, results[selected], jackets, shareBtn, { hideProfile: !showCb.checked, layout: layoutSel.get() });
+      openShareImage(profile, results[selected], jackets, shareBtn, { hideProfile: !showCb.checked, ...layoutSel.opts() });
 
     const hasEst = results.some(({ top }) => top.some((s) => s.estimated));
     const note = el('p', 'dxr-note',
@@ -3198,7 +3239,7 @@
       check.checked = true;
       opt.append(check, document.createTextNode('画像にプレイヤー名と称号を載せる'));
       const layoutSel = layoutPicker();
-      share.onclick = () => openShareImage(profile, result, jackets, share, { hideProfile: !check.checked, layout: layoutSel.get() });
+      share.onclick = () => openShareImage(profile, result, jackets, share, { hideProfile: !check.checked, ...layoutSel.opts() });
       out.replaceChildren(rateRow, layoutSel.el, share, opt, buildList(result.top, mode, jackets));
     };
     RATE_MODES.forEach((m) => {
@@ -3327,7 +3368,7 @@
           // 称号は、押した時点で入力されている文字と色を使う
           share.onclick = () => openShareImage(
             { ...profile, trophy: trophyInput.value.trim(), trophyRank: rankSelect.value },
-            result, jackets, share, { hideProfile: !check.checked, layout: layoutSel.get() });
+            result, jackets, share, { hideProfile: !check.checked, ...layoutSel.opts() });
 
           out.replaceChildren(rateRow, layoutSel.el, share, opt, buildList(result.top, mode, jackets));
         } catch (e) {
