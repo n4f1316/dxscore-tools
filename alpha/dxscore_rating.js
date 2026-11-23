@@ -1318,7 +1318,7 @@
         } else {
           ctx.save(); ctx.globalAlpha = theme === 'dark' ? 0.28 : 0.14; ctx.fillStyle = DIFF_TINT; ctx.fillRect(x + 1, y + 1, cellW - 2, cellH - 2); ctx.restore();
         }
-        // 通常の形は上端に難易度の色の線（コンパクトの形は、下の楽曲名の帯を難易度の色にする）
+        // 通常の形は上端に難易度の色の線（コンパクトの形は、楽曲名との区切りの線を難易度の色にする）
         if (!compact) { ctx.fillStyle = isReM ? RE_LINE : DIFF_TINT; ctx.fillRect(x, y, cellW, 5); }
       }
 
@@ -1404,13 +1404,12 @@
         ctx.fillStyle = IMG.ink;
         fillDigits(ctx, vText, (cx0 + cx1) / 2 + digitsWidth(vText, 28) / 2, jy + (J + 54) / 2 + 4, 28);
         // ジャケットの下：楽曲名（枠の幅いっぱい。長い場合は末尾を「…」で省略）
-        //   上の情報と区切るため、配色 1 では難易度の色の帯にし、それ以外（3 を除く）は仕切り線を引く
+        //   上の情報と区切るため、配色 1 では難易度の色の線（2px）、それ以外（3 を除く）は灰色の細い線を引く
         const bandY = jy + J + 4, bandH = y + cellH - 1 - bandY;
         let nameColor = IMG.ink;
         if (cstyle === 1) {
-          ctx.fillStyle = isReM ? (theme === 'dark' ? '#D9B8FF' : '#E9DCFF') : DIFF_TINT;
-          ctx.fillRect(x + 1, bandY, cellW - 2, bandH);
-          nameColor = isReM ? (theme === 'dark' ? '#0E0B1F' : '#4A1F8A') : '#FFFFFF';
+          ctx.fillStyle = isReM ? RE_LINE : DIFF_TINT;
+          ctx.fillRect(x + 8, bandY, cellW - 16, 2);
         } else if (cstyle === 3) {
           nameColor = '#FFFFFF';
         } else {
