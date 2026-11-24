@@ -502,7 +502,13 @@
     .dxr-plate-rate { display: flex; align-items: center; gap: 6px; }
     .dxr-rank-icon { display: inline-flex; flex: none; width: 38px; height: 38px; }
     .dxr-rank-icon svg { width: 100%; height: 100%; }
-    .dxr-plate-hint { display: block; font-size: 11px; color: var(--sub); }
+    .dxr-plate-hint { display: block; font-size: 11px; font-weight: 700; color: var(--sub); }
+    .dxr-plate[aria-pressed="true"] { background: var(--panel); }
+    .dxr-plate[aria-pressed="true"] .dxr-plate-hint { color: var(--accent); }
+    .dxr-plates-caption { margin: 0 0 6px; font-size: 12px; font-weight: 700; color: var(--sub); }
+    .dxr-list-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; margin: 4px 0 8px; }
+    .dxr-list-title { font-weight: 800; font-size: 15px; }
+    .dxr-list-head .dxr-tabs { margin: 0; }
 
     /* ☆6・☆7達成譜面数 */
     .dxr-counts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin: -6px 0 18px; }
@@ -574,9 +580,25 @@
       margin: -8px 0 16px; font-size: 13px; font-weight: 700; color: var(--sub); cursor: pointer;
     }
     .dxr-share-opt input { width: 16px; height: 16px; accent-color: var(--accent); }
-    .dxr-share-layout { display: flex; align-items: center; justify-content: center; gap: 10px; margin: -8px 0 16px; }
-    .dxr-share-layout .dxr-tabs { margin: 0; }
-    .dxr-share-layout-label { font-size: 13px; font-weight: 700; color: var(--sub); }
+    /* 画像の形を選ぶカード（構成図つき）。「画像にする」ボタンの上に置く */
+    .dxr-share-layout { margin: -6px 0 8px; }
+    .dxr-share-layout-label { font-size: 12px; font-weight: 700; color: var(--sub); margin: 0 0 4px; }
+    .dxr-lcards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .dxr-lcard { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 8px 10px; cursor: pointer;
+      font: inherit; color: var(--ink); text-align: left; background: var(--bg); border: 1px solid var(--line); }
+    .dxr-lcard[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+    .dxr-lcard-fig { display: flex; align-items: center; justify-content: center; flex: none; width: 96px; height: 60px; }
+    .dxr-lcard-fig svg { display: block; }
+    .dxr-lcard-text { display: flex; flex-direction: column; min-width: 0; }
+    .dxr-lcard-name { font-size: 14px; font-weight: 800; line-height: 1.3; }
+    .dxr-lcard[aria-pressed="true"] .dxr-lcard-name { color: var(--accent); }
+    .dxr-lcard-desc { font-size: 11px; font-weight: 700; color: var(--sub); line-height: 1.4; }
+    .dxr-share-layout + .dxr-share { margin-top: 0; }
+    .dxr-off-rate + .dxr-share-layout { margin-top: 12px; }
+    @media (max-width: 520px) {
+      .dxr-lcard { flex-direction: column; gap: 4px; padding: 8px 6px; text-align: center; }
+      .dxr-lcard-text { align-items: center; }
+    }
     .dxr-rank-open {
       display: block; width: 100%; margin: -6px 0 16px; padding: 9px 16px;
       font: inherit; font-weight: 800; color: var(--accent); background: var(--bg); border: 1px solid var(--accent); cursor: pointer;
@@ -641,7 +663,7 @@
       .dxr-plate-value { font-size: 22px; }
       .dxr-rank-icon { width: 24px; height: 24px; }
       .dxr-plate-rate { gap: 3px; }
-      .dxr-plate-hint { display: none; }
+      .dxr-plate-hint { font-size: 10px; }
       .dxr-icon { width: 56px; height: 56px; }
       .dxr-player { font-size: 20px; }
       .dxr-star-pill { min-width: 0; padding: 3px 5px; font-size: 12px; }
@@ -1124,8 +1146,8 @@
   // 画像の形。standard：今までの形（ジャケット大）、compact：ジャケットを小さくして文字を右と下に置く形
   //   どちらも 5列×10行。compact は縦が短く、横は少し広い
   const IMAGE_LAYOUTS = {
-    standard: { label: '通常', cellW: 240, jacket: 224, cellH: 320 },
-    compact: { label: 'コンパクト', cellW: 264, jacket: 136, cellH: 184 }, // 横幅は通常より少し広い（1432px）
+    standard: { label: '通常', desc: 'ジャケット大・縦長', cellW: 240, jacket: 224, cellH: 320 },
+    compact: { label: 'コンパクト', desc: 'ジャケット小・短め', cellW: 264, jacket: 136, cellH: 184 }, // 横幅は通常より少し広い（1432px）
   };
   const LAYOUT_KEY = 'dxr-image-layout'; // 最後に選んだ形（この端末のブラウザに保存）
   const loadLayout = () => {
@@ -1485,25 +1507,55 @@
   }
 
   // 別タブに画像を表示する（スマホは長押しで保存、PCはダウンロードボタン）
-  // 画像の形を選ぶ切り替え（通常／コンパクト）。get() で選んでいる形を返す
+  // 画像の形を選ぶカード用の、1曲ぶんの構成図（文字は省き、色の付いた札と線で位置だけを表す）
+  //   色は実際の画像と同じ（DX：橙、MAS：紫、☆：黄）。枠・ジャケット・文字の線は表示（ダーク／ライト）に合わせる
+  const LAYOUT_DIAGRAMS = {
+    standard: '<svg viewBox="0 0 120 152" width="47" height="60" aria-hidden="true">' +
+      '<rect x="0.5" y="0.5" width="119" height="151" style="fill:var(--bg);stroke:var(--line)"/>' +
+      '<rect x="6" y="6" width="108" height="108" style="fill:var(--ph)"/>' +
+      '<rect x="9" y="9" width="18" height="12" fill="#0E0B1F"/>' +
+      '<rect x="79" y="9" width="32" height="12" fill="#0E0B1F"/><rect x="83" y="13.5" width="24" height="3" fill="#FFFFFF"/>' +
+      '<rect x="9" y="99" width="14" height="12" fill="#B8460B"/><rect x="25" y="99" width="22" height="12" fill="#8A3FD1"/>' +
+      '<rect x="91" y="99" width="20" height="12" fill="#FFFFFF" stroke="#0E0B1F" stroke-width="0.8"/>' +
+      '<rect x="7" y="121" width="60" height="6" style="fill:var(--sub)"/>' +
+      '<rect x="6" y="134" width="28" height="13" fill="#FFD86B"/>' +
+      '<rect x="70" y="134" width="44" height="13" style="fill:var(--ink)"/></svg>',
+    compact: '<svg viewBox="0 0 160 100" width="96" height="60" aria-hidden="true">' +
+      '<rect x="0.5" y="0.5" width="159" height="99" style="fill:var(--bg);stroke:var(--line)"/>' +
+      '<rect x="6" y="6" width="72" height="72" style="fill:var(--ph)"/>' +
+      '<rect x="9" y="9" width="16" height="11" fill="#0E0B1F"/>' +
+      '<rect x="9" y="64" width="13" height="11" fill="#B8460B"/><rect x="24" y="64" width="20" height="11" fill="#8A3FD1"/>' +
+      '<rect x="96" y="8" width="28" height="13" style="fill:var(--panel);stroke:var(--line)"/><rect x="126" y="8" width="28" height="13" fill="#FFD86B"/>' +
+      '<rect x="126" y="28" width="28" height="7" style="fill:var(--sub)"/>' +
+      '<rect x="95" y="46" width="48" height="14" style="fill:var(--ink)"/>' +
+      '<rect x="7" y="86" width="60" height="6" style="fill:var(--sub)"/></svg>',
+  };
+
+  // 画像の形を選ぶカード（通常／コンパクト）。get() で選んでいる形を返す
   function layoutPicker() {
     let current = loadLayout();
     const box = el('div', 'dxr-share-layout');
-    box.appendChild(el('span', 'dxr-share-layout-label', '画像の形'));
-    const tabs = el('div', 'dxr-tabs');
+    box.appendChild(el('div', 'dxr-share-layout-label', '画像の形（1曲ぶんの構成）'));
+    const cards = el('div', 'dxr-lcards');
     Object.entries(IMAGE_LAYOUTS).forEach(([id, l]) => {
-      const b = el('button', 'dxr-tab dxr-tab-sm', l.label);
+      const b = el('button', 'dxr-lcard');
       b.type = 'button';
       b.setAttribute('aria-pressed', String(id === current));
+      b.setAttribute('aria-label', `画像の形：${l.label}（${l.desc}）`);
+      const fig = el('span', 'dxr-lcard-fig');
+      fig.innerHTML = LAYOUT_DIAGRAMS[id]; // ツール内で作った固定のSVGのみ
+      const text = el('span', 'dxr-lcard-text');
+      text.append(el('span', 'dxr-lcard-name', l.label), el('span', 'dxr-lcard-desc', l.desc));
+      b.append(fig, text);
       b.onclick = () => {
         current = id;
         try { localStorage.setItem(LAYOUT_KEY, id); } catch { /* 保存できない環境では、この画面の間だけ */ }
-        tabs.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        cards.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
       };
-      tabs.appendChild(b);
+      cards.appendChild(b);
     });
-    box.appendChild(tabs);
-    return { el: box, get: () => current };
+    box.appendChild(cards);
+    return { el: box, get: () => current, opts: () => ({ layout: current }) };
   }
 
   async function openShareImage(profile, result, jackets, button, options = {}) {
@@ -2137,7 +2189,7 @@
           rate.appendChild(value);
           return rate;
         })(),
-        el('span', 'dxr-plate-hint', '押すとレート対象曲を表示')
+        el('span', 'dxr-plate-hint', '')
       );
       b.onclick = () => select(i);
       plates.appendChild(b);
@@ -2146,10 +2198,27 @@
     let selected = 0;
     const shareBtn = el('button', 'dxr-share', '');
     shareBtn.type = 'button';
+    // 一覧の上にも同じ切り替えを置く（どのレートの表を見ているか、すぐ分かるように）
+    const listHead = el('div', 'dxr-list-head');
+    const listTitle = el('span', 'dxr-list-title', '');
+    const listTabs = el('div', 'dxr-tabs');
+    const listTabBtns = results.map(({ mode }, i) => {
+      const t = el('button', 'dxr-tab dxr-tab-sm', mode.label);
+      t.type = 'button';
+      t.onclick = () => select(i);
+      listTabs.appendChild(t);
+      return t;
+    });
+    listHead.append(listTitle, listTabs);
     function select(i) {
       selected = i;
       lists.forEach((l, j) => { l.style.display = i === j ? '' : 'none'; });
-      buttons.forEach((b, j) => b.setAttribute('aria-pressed', String(i === j)));
+      buttons.forEach((b, j) => {
+        b.setAttribute('aria-pressed', String(i === j));
+        b.querySelector('.dxr-plate-hint').textContent = i === j ? '▼ 表示中' : '押して切り替え';
+      });
+      listTabBtns.forEach((t, j) => t.setAttribute('aria-pressed', String(i === j)));
+      listTitle.textContent = `「${results[i].mode.label}」のレート対象曲`;
       shareBtn.textContent = `「${results[i].mode.label}」のレート対象曲を画像にする`;
     }
     select(0);
@@ -2161,7 +2230,7 @@
     showLabel.append(showCb, document.createTextNode('画像にプレイヤー名と称号を載せる'));
     const layoutSel = layoutPicker();
     shareBtn.onclick = () =>
-      openShareImage(profile, results[selected], jackets, shareBtn, { hideProfile: !showCb.checked, layout: layoutSel.get() });
+      openShareImage(profile, results[selected], jackets, shareBtn, { hideProfile: !showCb.checked, ...layoutSel.opts() });
 
     const hasEst = results.some(({ top }) => top.some((s) => s.estimated));
     const note = el('p', 'dxr-note',
@@ -2227,8 +2296,9 @@
       });
     }
 
-    ui.body.append(player, plates, ...(counts || bc ? [countBox] : []), shareBtn, showLabel, layoutSel.el,
-      ...(bonus ? [] : [rankBtn, ...(SHOW_RECOMMEND ? [recBtn] : [])]), ...lists, note);
+    const platesCaption = el('p', 'dxr-plates-caption', '3種類のレートを計算しました。押すと、下の表と画像化するレートが切り替わります。');
+    ui.body.append(player, platesCaption, plates, ...(counts || bc ? [countBox] : []), layoutSel.el, shareBtn, showLabel,
+      ...(bonus ? [] : [rankBtn, ...(SHOW_RECOMMEND ? [recBtn] : [])]), listHead, ...lists, note);
   }
 
   // ============================================================
@@ -3138,7 +3208,7 @@
 
           const share = el('button', 'dxr-share', `「${mode.label}」のレート対象曲を画像にする`);
           share.type = 'button';
-          share.style.margin = '12px 0 8px';
+          share.style.margin = '0 0 8px';
           const opt = el('label', 'dxr-share-opt');
           opt.style.margin = '0 0 12px';
           const check = el('input');
@@ -3149,9 +3219,9 @@
           // 称号は、押した時点で入力されている文字と色を使う
           share.onclick = () => openShareImage(
             { ...profile, trophy: trophyInput.value.trim(), trophyRank: rankSelect.value },
-            result, jackets, share, { hideProfile: !check.checked, layout: layoutSel.get() });
+            result, jackets, share, { hideProfile: !check.checked, ...layoutSel.opts() });
 
-          out.replaceChildren(rateRow, share, opt, layoutSel.el, buildList(result.top, mode, jackets));
+          out.replaceChildren(rateRow, layoutSel.el, share, opt, buildList(result.top, mode, jackets));
         } catch (e) {
           if (my !== showId) return;
           const err = el('p', 'dxr-err', 'エラー: ' + e.message);
