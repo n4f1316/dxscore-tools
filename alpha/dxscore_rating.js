@@ -1166,7 +1166,7 @@
     // options.nameStyle：コンパクトの形での楽曲名の区切り（検証用。配色 1 のとき）
     //   0：難易度の色の線（2px）、1：淡い1pxの線、2：短いアクセント線、3：下の段を少し濃く、4：点線、
     //   5：楽曲名の左に縦のアクセント、6：楽曲名を枠の外に（縦のアクセントつき）、7：楽曲名を枠の外に（アクセントなし）
-    const nameNo = Number(options.nameStyle ?? 0);
+    const nameNo = Number(options.nameStyle ?? 5); // 標準は 5（E：楽曲名の左に縦のアクセント）
     const nstyle = compact && cstyle === 1 && Number.isInteger(nameNo) && nameNo >= 0 && nameNo <= 7 ? nameNo : 0;
     const { cols, rows, pad, gap, headH, footH } = IMG;
     const { cellW, jacket: J, cellH } = IMAGE_LAYOUTS[layout];
@@ -1417,6 +1417,7 @@
         const bandY = jy + J + 4, bandH = y + cellH - 1 - bandY;
         let nameColor = IMG.ink;
         let nameX = jx;
+        let accent = null; // 楽曲名の左の縦のアクセント（区切り 5・6）
         if (cstyle === 1) {
           const lc = isReM ? RE_LINE : DIFF_TINT;
           const L = nstyle;
@@ -1432,9 +1433,9 @@
             for (let dx = x + 8; dx < x + cellW - 8; dx += 6) ctx.fillRect(dx, bandY, 2, 1);
             ctx.restore();
           } else if (L === 6 || L === 7) { // 楽曲名だけを枠の外（下）に出す。6 は縦のアクセントつき
-            if (L === 6) { ctx.fillStyle = lc; ctx.fillRect(x, y + boxH + (cellH - boxH) / 2 - 8, 3, 16); nameX = x + 9; } else nameX = x + 2;
+            if (L === 6) { accent = { x, color: lc }; nameX = x + 9; } else nameX = x + 2;
           } else if (L === 5) { // E：楽曲名の左に縦のアクセント
-            ctx.fillStyle = lc; ctx.fillRect(jx, bandY + bandH / 2 - 8, 3, 16); nameX = jx + 9;
+            accent = { x: jx, color: lc }; nameX = jx + 9;
           } else {
             ctx.fillStyle = lc; ctx.fillRect(x + 8, bandY, cellW - 16, 2);
           }
@@ -1448,7 +1449,17 @@
         ctx.fillStyle = nameColor;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(fitText(ctx, s.name, cellW - 16 - (nameX - jx)), nameX, OUT ? y + boxH + (cellH - boxH) / 2 + 1 : bandY + bandH / 2 + 1);
+        const nameY = OUT ? y + boxH + (cellH - boxH) / 2 + 1 : bandY + bandH / 2 + 1;
+        if (accent) {
+          // 縦のアクセントは、楽曲名の文字（漢字の高さ）の上端から下端に合わせる。書体によって文字の上下の位置が違うので、実際に測る
+          const m = ctx.measureText('楽');
+          const top = nameY - (m.actualBoundingBoxAscent || 8);
+          const h = (m.actualBoundingBoxAscent || 8) + (m.actualBoundingBoxDescent || 8);
+          ctx.fillStyle = accent.color;
+          ctx.fillRect(accent.x, Math.round(top), 3, Math.round(h));
+          ctx.fillStyle = nameColor;
+        }
+        ctx.fillText(fitText(ctx, s.name, cellW - 16 - (nameX - jx)), nameX, nameY);
         return;
       }
 
@@ -1598,6 +1609,7 @@
     const nameLab = el('label', 'dxr-field dxr-name-style', '楽曲名の区切り（α版の検証用）');
     const nameSel = el('select', 'dxr-off-select');
     NAME_STYLES.forEach((t, k) => { const o = el('option', '', t); o.value = String(k); nameSel.appendChild(o); });
+    nameSel.value = '5'; // 標準は E
     try { const v = localStorage.getItem('dxr-name-style'); if (v && Number(v) >= 0 && Number(v) < NAME_STYLES.length) nameSel.value = v; } catch { /* なし */ }
     nameSel.onchange = () => { try { localStorage.setItem('dxr-name-style', nameSel.value); } catch { /* 保存できなくても続ける */ } };
     nameLab.appendChild(nameSel);
