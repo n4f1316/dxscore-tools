@@ -1095,6 +1095,13 @@
     return t + '…';
   }
 
+  // 色（#RRGGBB）を白に近づける（t：0〜1。ダーク表示の難易度の色を淡くするのに使う）
+  const mixWhite = (hex, t) => {
+    const n = parseInt(hex.slice(1), 16);
+    const ch = (v) => Math.round(v + (255 - v) * t).toString(16).padStart(2, '0');
+    return `#${ch(n >> 16)}${ch((n >> 8) & 255)}${ch(n & 255)}`;
+  };
+
   // 数字を1文字ずつ同じ幅で、右端 xRight にそろえて描く（画面の tnum と同じ幅）。全体の幅を返す
   const digitsWidth = (text, size) => [...text].reduce((w, ch) => w + (ch === '.' ? 0.28 : 0.6) * size, 0);
   function fillDigits(ctx, text, xRight, y, size) {
@@ -1315,17 +1322,17 @@
       //   Re:MASTER は MASTER と同じ紫にせず、白地（ダークは薄い藤色）に藤色の枠で見分ける（Re:MASTER のラベルと同じ考え方）
       const isReM = s.diff === 'Re:MASTER';
       const DIFF_TINT = DIFF_COLOR[s.diff] ?? '#8A3FD1';
-      const RE_LINE = theme === 'dark' ? '#D9B8FF' : '#B98CF0';
+      const RE_LINE = '#B98CF0'; // Re:MASTER の枠と線（白地なので、ダークでもライトと同じ藤色）
+      // 枠の中の文字の色。Re:MASTER の枠は白地なので、ダークでもライトの文字色にする
+      const P = isReM
+        ? { ink: '#12101F', sub: '#55516E', panel: '#E6E7EC', gold: '#8A5A00' }
+        : { ink: IMG.ink, sub: IMG.sub, panel: IMG.panel, gold: theme === 'dark' ? '#FFD86B' : '#8A5A00' };
       if (cstyle === 1) {
         if (isReM) {
-          if (theme === 'dark') {
-            ctx.save(); ctx.globalAlpha = 0.16; ctx.fillStyle = '#D9B8FF'; ctx.fillRect(x + 1, y + 1, cellW - 2, boxH - 2); ctx.restore();
-          } else {
-            ctx.fillStyle = '#FFFFFF'; ctx.fillRect(x + 1, y + 1, cellW - 2, boxH - 2);
-          }
+          ctx.fillStyle = '#FFFFFF'; ctx.fillRect(x + 1, y + 1, cellW - 2, boxH - 2); // ダークでも白地
           ctx.save(); ctx.lineWidth = 2; ctx.strokeStyle = RE_LINE; ctx.strokeRect(x + 1, y + 1, cellW - 2, boxH - 2); ctx.restore();
         } else {
-          ctx.save(); ctx.globalAlpha = theme === 'dark' ? 0.28 : 0.14; ctx.fillStyle = DIFF_TINT; ctx.fillRect(x + 1, y + 1, cellW - 2, boxH - 2); ctx.restore();
+          ctx.save(); ctx.globalAlpha = theme === 'dark' ? 0.32 : 0.14; ctx.fillStyle = theme === 'dark' ? mixWhite(DIFF_TINT, 0.45) : DIFF_TINT; ctx.fillRect(x + 1, y + 1, cellW - 2, boxH - 2); ctx.restore();
         }
         // 通常の形は上端に難易度の色の線（コンパクトの形は、楽曲名との区切りの線を難易度の色にする）
         if (!compact) { ctx.fillStyle = isReM ? RE_LINE : DIFF_TINT; ctx.fillRect(x, y, cellW, 5); }
@@ -1401,21 +1408,21 @@
           ctx.textBaseline = 'middle';
           ctx.fillText(text, xLeft + boxW / 2, jy + 6 + 13);
         };
-        box(cx1 - boxW, starText, s.stars >= 7 ? (lx, w) => rainbow(ctx, lx, w) : sc, s.stars >= 1 ? DARK_INK : IMG.sub);
-        box(cx1 - boxW * 2 - 3, constText, (cstyle === 3) ? IMG.bg : IMG.panel, IMG.ink);
+        box(cx1 - boxW, starText, s.stars >= 7 ? (lx, w) => rainbow(ctx, lx, w) : sc, s.stars >= 1 ? DARK_INK : P.sub);
+        box(cx1 - boxW * 2 - 3, constText, (cstyle === 3) ? IMG.bg : P.panel, P.ink);
         ctx.font = `700 17px ${IMG.num}`;
-        ctx.fillStyle = s.cur >= s.max ? (theme === 'dark' ? '#FFD86B' : '#8A5A00') : IMG.sub;
+        ctx.fillStyle = s.cur >= s.max ? P.gold : P.sub;
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
         ctx.fillText(maxLabelOf(s), cx1, jy + 50);
         const vText = s.values[result.mode.id].toFixed(3);
         ctx.font = `700 28px ${IMG.num}`;
-        ctx.fillStyle = IMG.ink;
+        ctx.fillStyle = P.ink;
         fillDigits(ctx, vText, (cx0 + cx1) / 2 + digitsWidth(vText, 28) / 2, jy + (J + 54) / 2 + 4, 28);
         // ジャケットの下：楽曲名（枠の幅いっぱい。長い場合は末尾を「…」で省略）
         //   上の情報と区切るため、配色 1 では難易度の色の線（2px）、それ以外（3 を除く）は灰色の細い線を引く
         const bandY = jy + J + 4, bandH = y + cellH - 1 - bandY;
-        let nameColor = IMG.ink;
+        let nameColor = P.ink;
         let nameX = jx;
         let accent = null; // 楽曲名の左の縦のアクセント（区切り 5・6）
         if (cstyle === 1) {
@@ -1515,7 +1522,7 @@
       // 1段目：楽曲名（長い場合は末尾を「…」で省略）
       const r0 = jy + J + 8;
       ctx.font = `700 20px ${IMG.font}`;
-      ctx.fillStyle = IMG.ink;
+      ctx.fillStyle = P.ink;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       ctx.fillText(fitText(ctx, s.name, J), jx, r0 + 14);
@@ -1524,10 +1531,10 @@
       const r2 = r0 + 36;
       const sc = starPillColor(s.stars);
       pill(ctx, jx, r2, `☆${starDisplay(s.cur, s.max)}`, {
-        bg: s.stars >= 7 ? (lx, w) => rainbow(ctx, lx, w) : sc, fg: s.stars >= 1 ? DARK_INK : IMG.sub, h: 34, size: 19, padX: 12,
+        bg: s.stars >= 7 ? (lx, w) => rainbow(ctx, lx, w) : sc, fg: s.stars >= 1 ? DARK_INK : P.sub, h: 34, size: 19, padX: 12,
       });
       ctx.font = `700 29px ${IMG.num}`;
-      ctx.fillStyle = IMG.ink;
+      ctx.fillStyle = P.ink;
       ctx.textAlign = 'right';
       ctx.textBaseline = 'middle';
       fillDigits(ctx, s.values[result.mode.id].toFixed(3), jx + J, r2 + 18, 29);
