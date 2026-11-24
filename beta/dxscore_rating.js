@@ -574,6 +574,9 @@
       margin: -8px 0 16px; font-size: 13px; font-weight: 700; color: var(--sub); cursor: pointer;
     }
     .dxr-share-opt input { width: 16px; height: 16px; accent-color: var(--accent); }
+    .dxr-share-layout { display: flex; align-items: center; justify-content: center; gap: 10px; margin: -8px 0 16px; }
+    .dxr-share-layout .dxr-tabs { margin: 0; }
+    .dxr-share-layout-label { font-size: 13px; font-weight: 700; color: var(--sub); }
     .dxr-rank-open {
       display: block; width: 100%; margin: -6px 0 16px; padding: 9px 16px;
       font: inherit; font-weight: 800; color: var(--accent); background: var(--bg); border: 1px solid var(--accent); cursor: pointer;
@@ -1068,6 +1071,13 @@
     return t + '…';
   }
 
+  // 色（#RRGGBB）を白に近づける（t：0〜1。ダーク表示の難易度の色を淡くするのに使う）
+  const mixWhite = (hex, t) => {
+    const n = parseInt(hex.slice(1), 16);
+    const ch = (v) => Math.round(v + (255 - v) * t).toString(16).padStart(2, '0');
+    return `#${ch(n >> 16)}${ch((n >> 8) & 255)}${ch(n & 255)}`;
+  };
+
   // 数字を1文字ずつ同じ幅で、右端 xRight にそろえて描く（画面の tnum と同じ幅）。全体の幅を返す
   const digitsWidth = (text, size) => [...text].reduce((w, ch) => w + (ch === '.' ? 0.28 : 0.6) * size, 0);
   function fillDigits(ctx, text, xRight, y, size) {
@@ -1111,8 +1121,30 @@
   // options.hideProfile が true なら、プレイヤー名と称号を載せない（アイコンとレートは載せる）
   const rankIconUrl = (name) => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(rankIconSvg(name));
 
+  // 画像の形。standard：今までの形（ジャケット大）、compact：ジャケットを小さくして文字を右と下に置く形
+  //   どちらも 5列×10行。compact は縦が短く、横は少し広い
+  const IMAGE_LAYOUTS = {
+    standard: { label: '通常', cellW: 240, jacket: 224, cellH: 320 },
+    compact: { label: 'コンパクト', cellW: 264, jacket: 136, cellH: 184 }, // 横幅は通常より少し広い（1432px）
+  };
+  const LAYOUT_KEY = 'dxr-image-layout'; // 最後に選んだ形（この端末のブラウザに保存）
+  const loadLayout = () => {
+    try { const v = localStorage.getItem(LAYOUT_KEY); if (IMAGE_LAYOUTS[v]) return v; } catch { /* 読めない環境では通常 */ }
+    return 'standard';
+  };
+  // 難易度の短い書き方（コンパクトの形で使う）
+  const SHORT_DIFF = { BASIC: 'BAS', ADVANCED: 'ADV', EXPERT: 'EXP', MASTER: 'MAS', 'Re:MASTER': 'Re:MAS' };
+  // MAX-xx の表記（でらっくスコアが満点なら MAX）
+  const maxLabelOf = (s) => (s.cur >= s.max ? 'MAX' : `MAX-${(s.max - s.cur).toLocaleString('en-US')}`);
+
+  // options.layout：画像の形（'standard' / 'compact'。省略時は standard）
   async function buildShareImage(profile, result, jackets, options = {}) {
-    const { cols, rows, pad, gap, cellW, jacket: J, cellH, headH, footH } = IMG;
+    const layout = IMAGE_LAYOUTS[options.layout] ? options.layout : 'standard';
+    const compact = layout === 'compact';
+    // 配色：枠の背景を難易度の色で薄く塗る（通常・コンパクト共通）
+    //   コンパクトの形では、楽曲名の左に難易度の色の縦のアクセントを置く
+    const { cols, rows, pad, gap, headH, footH } = IMG;
+    const { cellW, jacket: J, cellH } = IMAGE_LAYOUTS[layout];
     const W = pad * 2 + cols * cellW + (cols - 1) * gap;
     const H = pad * 2 + headH + rows * cellH + (rows - 1) * gap + footH;
     const canvas = document.createElement('canvas');
@@ -1238,7 +1270,7 @@
       fillDigits(ctx, rateText, rx, iy + 120, 80);
     }
 
-    // ---- 譜面の一覧（5列×10行） ----
+    // ---- 譜面の一覧（5列×10行。形は layout による） ----
     const gy = pad + headH;
     top.forEach((s, i) => {
       const col = i % cols, row = Math.floor(i / cols);
@@ -1252,6 +1284,116 @@
       ctx.strokeStyle = IMG.line;
       ctx.stroke();
 
+      // 難易度の色：枠の背景を難易度の色で薄く塗る
+      //   Re:MASTER は MASTER と同じ紫にせず、白地（ダークは薄い藤色）に藤色の枠で見分ける（Re:MASTER のラベルと同じ考え方）
+      const isReM = s.diff === 'Re:MASTER';
+      const DIFF_TINT = DIFF_COLOR[s.diff] ?? '#8A3FD1';
+      const RE_LINE = '#B98CF0'; // Re:MASTER の枠と線（白地なので、ダークでもライトと同じ藤色）
+      // 枠の中の文字の色。Re:MASTER の枠は白地なので、ダークでもライトの文字色にする
+      const P = isReM
+        ? { ink: '#12101F', sub: '#55516E', panel: '#E6E7EC', gold: '#8A5A00' }
+        : { ink: IMG.ink, sub: IMG.sub, panel: IMG.panel, gold: theme === 'dark' ? '#FFD86B' : '#8A5A00' };
+      {
+        if (isReM) {
+          ctx.fillStyle = '#FFFFFF'; ctx.fillRect(x + 1, y + 1, cellW - 2, cellH - 2); // ダークでも白地
+          ctx.save(); ctx.lineWidth = 2; ctx.strokeStyle = RE_LINE; ctx.strokeRect(x + 1, y + 1, cellW - 2, cellH - 2); ctx.restore();
+        } else {
+          ctx.save(); ctx.globalAlpha = theme === 'dark' ? 0.32 : 0.14; ctx.fillStyle = theme === 'dark' ? mixWhite(DIFF_TINT, 0.45) : DIFF_TINT; ctx.fillRect(x + 1, y + 1, cellW - 2, cellH - 2); ctx.restore();
+        }
+        // 通常の形は上端に難易度の色の線（コンパクトの形は、楽曲名との区切りの線を難易度の色にする）
+        if (!compact) { ctx.fillStyle = isReM ? RE_LINE : DIFF_TINT; ctx.fillRect(x, y, cellW, 5); }
+      }
+
+      // ---- コンパクトの形：ジャケット（左上。種別・難易度を重ねる）、右に 定数・☆・MAX-xx・単曲レート値、下に楽曲名 ----
+      if (compact) {
+        const jx = x + 8, jy = y + 8;
+        ctx.save();
+        roundRect(ctx, jx, jy, J, J);
+        ctx.clip();
+        if (jacketImgs[i]) ctx.drawImage(jacketImgs[i], jx, jy, J, J);
+        else { ctx.fillStyle = IMG.ph; ctx.fillRect(jx, jy, J, J); }
+        ctx.restore();
+        // ジャケットの上：順位（左上）、下部に DX/ST・難易度（左）
+        pill(ctx, jx + 4, jy + 4, `#${i + 1}`, { bg: 'rgba(14,11,31,.9)', fg: '#FFFFFF', h: 22, size: 13, padX: 6 });
+        ctx.save();
+        roundRect(ctx, jx, jy, J, J);
+        ctx.clip();
+        const shade = ctx.createLinearGradient(0, jy + J - 48, 0, jy + J);
+        shade.addColorStop(0, 'rgba(14,11,31,0)');
+        shade.addColorStop(1, 'rgba(14,11,31,.75)');
+        ctx.fillStyle = shade;
+        ctx.fillRect(jx, jy + J - 48, J, 48);
+        ctx.restore();
+        const r1 = jy + J - 26;
+        if (s.rareAdd > 0 && RARE_MODES.includes(result.mode.id)) {
+          pill(ctx, jx + 3, r1 - 24, `希少 +${s.rareAdd.toFixed(2)}`, {
+            bg: DARK_INK, fg: '#FFD86B', border: '#FFD86B', h: 21, size: 12, padX: 5, font: IMG.font,
+          });
+        }
+        const isRe = s.diff === 'Re:MASTER';
+        let px = jx + 3;
+        px += pill(ctx, px, r1, s.kind, { bg: s.kind === 'ST' ? '#1565B0' : '#B8460B', fg: '#FFFFFF', h: 23, size: 13, padX: 5 }) + 2;
+        px += pill(ctx, px, r1, SHORT_DIFF[s.diff] ?? s.diff, {
+          bg: isRe ? '#FFFFFF' : DIFF_COLOR[s.diff] ?? '#999', fg: isRe ? '#6B2FB3' : '#FFFFFF',
+          border: isRe ? '#6B2FB3' : null, h: 23, size: 13, padX: 5,
+        });
+
+        // 右の列：1段目 譜面定数と☆、2段目 MAX-xx（どちらも右寄せ）、3段目 単曲レート値（中央）
+        const cx0 = jx + J + 8, cx1 = x + cellW - 8;
+        const sc = starPillColor(s.stars);
+        //   定数と☆は、同じ文字の大きさ・同じ幅の枠にして、文字を枠の中央に置く（どの譜面でも位置がそろう）
+        const starText = `☆${starDisplay(s.cur, s.max)}`;
+        const constText = `${s.c.toFixed(1)}${s.estimated ? '*' : ''}`;
+        ctx.font = `700 14px ${IMG.num}`;
+        const boxW = Math.ceil(Math.max(
+          ctx.measureText('☆0.0').width, ctx.measureText('00.0').width,
+          ctx.measureText(starText).width, ctx.measureText(constText).width)) + 10;
+        const box = (xLeft, text, bg, fg) => {
+          roundRect(ctx, xLeft, jy + 6, boxW, 24);
+          ctx.fillStyle = typeof bg === 'function' ? bg(xLeft, boxW) : bg;
+          ctx.fill();
+          ctx.font = `700 14px ${IMG.num}`;
+          ctx.fillStyle = fg;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(text, xLeft + boxW / 2, jy + 6 + 13);
+        };
+        box(cx1 - boxW, starText, s.stars >= 7 ? (lx, w) => rainbow(ctx, lx, w) : sc, s.stars >= 1 ? DARK_INK : P.sub);
+        box(cx1 - boxW * 2 - 3, constText, P.panel, P.ink);
+        ctx.font = `700 17px ${IMG.num}`;
+        ctx.fillStyle = s.cur >= s.max ? P.gold : P.sub;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(maxLabelOf(s), cx1, jy + 50);
+        const vText = s.values[result.mode.id].toFixed(3);
+        ctx.font = `700 28px ${IMG.num}`;
+        ctx.fillStyle = P.ink;
+        fillDigits(ctx, vText, (cx0 + cx1) / 2 + digitsWidth(vText, 28) / 2, jy + (J + 54) / 2 + 4, 28);
+        // ジャケットの下：楽曲名（枠の幅いっぱい。長い場合は末尾を「…」で省略）
+        //   楽曲名の左に、難易度の色（Re:MASTER は藤色）の縦のアクセントを置く
+        const bandY = jy + J + 4, bandH = y + cellH - 1 - bandY;
+        const nameColor = P.ink;
+        const accent = { x: jx, color: isReM ? RE_LINE : DIFF_TINT };
+        const nameX = jx + 9;
+        ctx.font = `700 17px ${IMG.font}`;
+        ctx.fillStyle = nameColor;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        const nameY = bandY + bandH / 2 + 1;
+        {
+          // 縦のアクセントは、楽曲名の文字（漢字の高さ）の上端から下端に合わせる。書体によって文字の上下の位置が違うので、実際に測る
+          const m = ctx.measureText('楽');
+          const top = nameY - (m.actualBoundingBoxAscent || 8);
+          const h = (m.actualBoundingBoxAscent || 8) + (m.actualBoundingBoxDescent || 8);
+          ctx.fillStyle = accent.color;
+          ctx.fillRect(accent.x, Math.round(top), 3, Math.round(h));
+          ctx.fillStyle = nameColor;
+        }
+        ctx.fillText(fitText(ctx, s.name, cellW - 16 - (nameX - jx)), nameX, nameY);
+        return;
+      }
+
+      // ---- 通常の形 ----
       // ジャケット
       const jx = x + 8, jy = y + 8;
       ctx.save();
@@ -1261,8 +1403,11 @@
       else { ctx.fillStyle = IMG.ph; ctx.fillRect(jx, jy, J, J); }
       ctx.restore();
 
-      // 順位（ジャケット左上）
+      // 順位（ジャケット左上）と MAX-xx（ジャケット右上。満点は金色の MAX）
       pill(ctx, jx + 6, jy + 6, `#${i + 1}`, { bg: 'rgba(14,11,31,.9)', fg: '#FFFFFF', h: 32, size: 18, padX: 11 });
+      pill(ctx, jx + J - 6, jy + 6, maxLabelOf(s), {
+        bg: 'rgba(14,11,31,.9)', fg: s.cur >= s.max ? '#FFD86B' : '#FFFFFF', h: 32, size: 17, padX: 10, align: 'right',
+      });
 
       // ジャケット下部：DX/ST・難易度（左）、譜面定数（右）
       // 文字が絵柄に埋もれないよう、下側を暗くしてからラベルを置く
@@ -1300,7 +1445,7 @@
       // 1段目：楽曲名（長い場合は末尾を「…」で省略）
       const r0 = jy + J + 8;
       ctx.font = `700 20px ${IMG.font}`;
-      ctx.fillStyle = IMG.ink;
+      ctx.fillStyle = P.ink;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       ctx.fillText(fitText(ctx, s.name, J), jx, r0 + 14);
@@ -1309,10 +1454,10 @@
       const r2 = r0 + 36;
       const sc = starPillColor(s.stars);
       pill(ctx, jx, r2, `☆${starDisplay(s.cur, s.max)}`, {
-        bg: s.stars >= 7 ? (lx, w) => rainbow(ctx, lx, w) : sc, fg: s.stars >= 1 ? DARK_INK : IMG.sub, h: 34, size: 19, padX: 12,
+        bg: s.stars >= 7 ? (lx, w) => rainbow(ctx, lx, w) : sc, fg: s.stars >= 1 ? DARK_INK : P.sub, h: 34, size: 19, padX: 12,
       });
       ctx.font = `700 29px ${IMG.num}`;
-      ctx.fillStyle = IMG.ink;
+      ctx.fillStyle = P.ink;
       ctx.textAlign = 'right';
       ctx.textBaseline = 'middle';
       fillDigits(ctx, s.values[result.mode.id].toFixed(3), jx + J, r2 + 18, 29);
@@ -1340,6 +1485,27 @@
   }
 
   // 別タブに画像を表示する（スマホは長押しで保存、PCはダウンロードボタン）
+  // 画像の形を選ぶ切り替え（通常／コンパクト）。get() で選んでいる形を返す
+  function layoutPicker() {
+    let current = loadLayout();
+    const box = el('div', 'dxr-share-layout');
+    box.appendChild(el('span', 'dxr-share-layout-label', '画像の形'));
+    const tabs = el('div', 'dxr-tabs');
+    Object.entries(IMAGE_LAYOUTS).forEach(([id, l]) => {
+      const b = el('button', 'dxr-tab dxr-tab-sm', l.label);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(id === current));
+      b.onclick = () => {
+        current = id;
+        try { localStorage.setItem(LAYOUT_KEY, id); } catch { /* 保存できない環境では、この画面の間だけ */ }
+        tabs.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      };
+      tabs.appendChild(b);
+    });
+    box.appendChild(tabs);
+    return { el: box, get: () => current };
+  }
+
   async function openShareImage(profile, result, jackets, button, options = {}) {
     // ポップアップがブロックされないよう、押した瞬間に先にタブを開いておく
     const win = window.open('', '_blank');
@@ -1993,8 +2159,9 @@
     showCb.type = 'checkbox';
     showCb.checked = true;
     showLabel.append(showCb, document.createTextNode('画像にプレイヤー名と称号を載せる'));
+    const layoutSel = layoutPicker();
     shareBtn.onclick = () =>
-      openShareImage(profile, results[selected], jackets, shareBtn, { hideProfile: !showCb.checked });
+      openShareImage(profile, results[selected], jackets, shareBtn, { hideProfile: !showCb.checked, layout: layoutSel.get() });
 
     const hasEst = results.some(({ top }) => top.some((s) => s.estimated));
     const note = el('p', 'dxr-note',
@@ -2060,7 +2227,7 @@
       });
     }
 
-    ui.body.append(player, plates, ...(counts || bc ? [countBox] : []), shareBtn, showLabel,
+    ui.body.append(player, plates, ...(counts || bc ? [countBox] : []), shareBtn, showLabel, layoutSel.el,
       ...(bonus ? [] : [rankBtn, ...(SHOW_RECOMMEND ? [recBtn] : [])]), ...lists, note);
   }
 
@@ -2978,12 +3145,13 @@
           check.type = 'checkbox';
           check.checked = true;
           opt.append(check, document.createTextNode('画像にプレイヤー名と称号を載せる'));
+          const layoutSel = layoutPicker();
           // 称号は、押した時点で入力されている文字と色を使う
           share.onclick = () => openShareImage(
             { ...profile, trophy: trophyInput.value.trim(), trophyRank: rankSelect.value },
-            result, jackets, share, { hideProfile: !check.checked });
+            result, jackets, share, { hideProfile: !check.checked, layout: layoutSel.get() });
 
-          out.replaceChildren(rateRow, share, opt, buildList(result.top, mode, jackets));
+          out.replaceChildren(rateRow, share, opt, layoutSel.el, buildList(result.top, mode, jackets));
         } catch (e) {
           if (my !== showId) return;
           const err = el('p', 'dxr-err', 'エラー: ' + e.message);
@@ -3015,6 +3183,7 @@
       edition: EDITION,
       modes: RATE_MODES,
       buildShareImage,
+      layouts: IMAGE_LAYOUTS,
       loadJacketMap,
       setTheme: (t) => { theme = t === 'dark' ? 'dark' : 'light'; },
     });
