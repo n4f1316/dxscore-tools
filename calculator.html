@@ -4,118 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>2fRATE 単曲レート計算</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap">
-<style>
-  :root {
-    --ink: #2B2350; --sub: #6E6892; --faint: #9A94B8; --line: #E4DFF3; --bg: #F6F4FC; --card: #FFFFFF;
-    --pink: #E0348C; --cyan: #1FA9C9;
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; background: var(--bg); color: var(--ink); }
-  body {
-    font: 14px/1.6 "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
-    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
-  }
-  .wrap { max-width: 820px; margin: 0 auto; padding: 18px 14px 48px; }
-  h1 { font-size: 20px; font-weight: 800; margin: 0; }
-  .lead { color: var(--sub); font-size: 13px; margin: 4px 0 0; }
-  .status { margin-top: 12px; color: var(--sub); font-size: 13px; }
-  .status.error { color: #E0434B; font-weight: 700; }
-
-  button { font: inherit; font-weight: 700; padding: 6px 14px; border-radius: 999px; cursor: pointer;
-    border: 1.5px solid var(--line); background: var(--card); color: var(--ink); }
-  button:focus-visible, input:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
-  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; }
-  .tabs button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
-  .diffs button { padding: 4px 12px; font-size: 13px; }
-  .diffs button.dbtn[aria-pressed="true"] { color: #fff; border-color: transparent; }
-  .diffs button.db-BASIC[aria-pressed="true"] { background: #2E9E5B; }
-  .diffs button.db-ADVANCED[aria-pressed="true"] { background: #D98E04; }
-  .diffs button.db-EXPERT[aria-pressed="true"] { background: #E0434B; }
-  .diffs button.db-MASTER[aria-pressed="true"] { background: #8E44D6; }
-  .diffs button.db-REMASTER[aria-pressed="true"] { background: #F1E6FD; color: #8E44D6; box-shadow: inset 0 0 0 2px #B68BE0; }
-  .search { width: 100%; margin-top: 12px; font: inherit; padding: 8px 14px; border-radius: 999px;
-    border: 1.5px solid var(--line); background: var(--card); color: var(--ink); }
-  .count { font-size: 12px; font-weight: 700; color: var(--sub); margin: 12px 2px 6px; }
-
-  /* 計算パネル */
-  .calc { margin-top: 16px; background: var(--card); border: 2px solid var(--pink); border-radius: 20px; padding: 16px; }
-  .calc[hidden] { display: none; }
-  .calc-head { display: flex; gap: 14px; align-items: center; }
-  .calc-head .jacket { width: 72px; height: 72px; border-radius: 12px; }
-  .calc-name { font-size: 18px; font-weight: 800; line-height: 1.35; word-break: break-word; }
-  .star-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
-  .star-row label { font-weight: 800; }
-  .star-input { width: 110px; font: inherit; font-size: 22px; font-weight: 800; text-align: center; padding: 6px 10px;
-    border-radius: 12px; border: 2px solid var(--line); color: var(--ink); }
-  .star-range { flex: 1 1 200px; accent-color: var(--pink); }
-  .hint { font-size: 12px; color: var(--sub); margin-top: 6px; }
-  .rare-note { font-size: 12px; color: var(--sub); margin-top: 8px; line-height: 1.7; }
-  .chip.rare { background: #2B2350; color: #FFE066; }
-  .results { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
-  .res { background: var(--bg); border-radius: 14px; padding: 10px 12px; }
-  .res-label { font-size: 12px; font-weight: 700; color: var(--sub); }
-  .res-value { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.2; }
-  .res.main .res-value { color: var(--pink); }
-  .res .res-value.ranked, .res.main .res-value.ranked { color: transparent; -webkit-background-clip: text; background-clip: text; display: inline-block; }
-  .quick { width: 100%; border-collapse: collapse; margin-top: 14px; font-variant-numeric: tabular-nums; font-size: 13px; }
-  .quick th, .quick td { padding: 5px 8px; border-bottom: 1px solid var(--line); text-align: right; }
-  .quick th:first-child, .quick td:first-child { text-align: left; }
-  .quick th { color: var(--sub); font-size: 12px; }
-  .quick tr.on td { background: #FDEAF3; font-weight: 800; }
-  .close { margin-left: auto; align-self: flex-start; white-space: nowrap; flex: none; }
-
-  /* 楽曲一覧 */
-  .list { background: var(--card); border: 1.5px solid var(--line); border-radius: 16px; overflow: hidden; }
-  .r { display: grid; grid-template-columns: 44px 1fr auto; gap: 10px; align-items: center; width: 100%;
-    padding: 8px 12px; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent;
-    text-align: left; font-weight: 500; }
-  .r:first-child { border-top: 0; }
-  .r:nth-child(even) { background: #FBFAFE; }
-  .r:hover { background: #F3EEFC; }
-  .r.selected { background: #FDEAF3; }
-  .jacket { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; display: block;
-    background: #EFECF9; box-shadow: 0 0 0 1px var(--line); }
-  .name { font-weight: 700; line-height: 1.35; word-break: break-word; }
-  .genre { font-size: 11px; font-weight: 700; color: var(--sub); margin-left: 2px; }
-  .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-  .chip { display: inline-block; font-size: 11px; font-weight: 700; line-height: 1; padding: 4px 7px;
-    border-radius: 6px; color: #fff; white-space: nowrap; }
-  .kind-DX { background: linear-gradient(90deg, #E0348C, #F29A2E); }
-  .kind-ST { background: #3B82C4; }
-  .diff-BASIC { background: #2E9E5B; }
-  .diff-ADVANCED { background: #D98E04; }
-  .diff-EXPERT { background: #E0434B; }
-  .diff-MASTER { background: #8E44D6; }
-  .diff-REMASTER { background: #fff; color: #8E44D6; box-shadow: inset 0 0 0 1.5px #B68BE0; }
-  .const { background: #EFECF9; color: var(--ink); }
-  .lv { background: transparent; color: var(--sub); padding-left: 2px; }
-  .go { font-size: 12px; font-weight: 800; color: var(--pink); white-space: nowrap; }
-  .empty { padding: 24px; text-align: center; color: var(--sub); }
-  .pager { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; margin: 10px 0; }
-  .pager:empty { display: none; }
-  .pager button { min-width: 40px; padding: 5px 10px; }
-  .pager button.current { background: var(--ink); border-color: var(--ink); color: #fff; cursor: default; }
-  .pager button:disabled { opacity: .4; cursor: default; }
-  .pager .gap { color: var(--sub); padding: 0 2px; }
-  .foot { margin-top: 18px; font-size: 12px; color: var(--sub); line-height: 1.8; }
-
-  @media (max-width: 520px) {
-    .results { grid-template-columns: 1fr; }
-    .res { display: flex; align-items: baseline; justify-content: space-between; }
-    .res-value { font-size: 22px; }
-    .r { grid-template-columns: 40px 1fr; }
-    .go { display: none; }
-    .jacket { width: 40px; height: 40px; }
-    .calc-head .jacket { width: 56px; height: 56px; }
-    .close { padding: 5px 10px; }
-  }
-</style>
+<link rel="icon" href="logo/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="logo/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="logo/apple-touch-icon.png">
+<link rel="stylesheet" href="2frate.css?v=20261116g">
+<script src="2frate-theme.js?v=20261116g"></script>
 </head>
-<body>
+<body class="pg-calc">
 <div class="wrap">
-  <a class="to-top" href="./" style="display:inline-block;margin-bottom:6px;font-size:13px;font-weight:800;color:#6E6892;text-decoration:none">← 2fRATE トップへ</a>
-  <h1>2fRATE 単曲レート計算</h1>
+  <header class="site-head">
+    <a class="site-logo" href="./" aria-label="2fRATE トップへ">2fRATE</a>
+    <button type="button" class="theme-toggle"></button>
+  </header>
+  <div class="page-title"><h1>CALCULATOR</h1><span>単曲レート計算</span></div>
   <p class="lead">楽曲を選んで☆の値を入れると、その譜面の単曲レート値がわかります。</p>
   <div class="status" id="status">データを読み込み中…</div>
 
@@ -201,26 +102,26 @@
 
   // ランク（2fRATE と同じ区切りと色）。min は「☆7まで」の区切り。☆6まで・☆5まで は MODES の shift だけ下げる
   const RANKS = [
-    { name: 'LEGEND',        min: 12,   colors: ['#6A1BD8', '#D6246E', '#F2A007'], glow: 'rgba(242,160,7,.55)' },
-    { name: 'RAINBOW PLUS',  min: 11.5, colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'], glow: 'rgba(255,196,0,.6)' },
-    { name: 'RAINBOW',       min: 11,   colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'] },
-    { name: 'PLATINUM PLUS', min: 10.5, colors: ['#4F8AA6', '#8FBED4', '#4F8AA6'], glow: 'rgba(120,190,225,.65)' },
-    { name: 'PLATINUM',      min: 10,   colors: ['#4F8AA6', '#8FBED4', '#4F8AA6'] },
-    { name: 'GOLD PLUS',     min: 9.5,  colors: ['#B8860B', '#E0B32E', '#B8860B'], glow: 'rgba(240,190,40,.6)' },
-    { name: 'GOLD',          min: 9,    colors: ['#B8860B', '#E0B32E', '#B8860B'] },
-    { name: 'SILVER PLUS',   min: 8.5,  colors: ['#6F7C8B', '#A7B2BE', '#6F7C8B'], glow: 'rgba(150,165,185,.7)' },
-    { name: 'SILVER',        min: 8,    colors: ['#6F7C8B', '#A7B2BE', '#6F7C8B'] },
-    { name: 'BRONZE PLUS',   min: 7.5,  colors: ['#8E4E22', '#C07A45', '#8E4E22'], glow: 'rgba(205,125,65,.55)' },
-    { name: 'BRONZE',        min: 7,    colors: ['#8E4E22', '#C07A45', '#8E4E22'] },
-    { name: 'WAKABA',        min: -Infinity, colors: ['#3E9B3A', '#7CBF3F'] },
+    { name: 'LEGEND',        min: 12,   colors: ['#6A1BD8', '#D6246E', '#F2A007'], dark: ['#B98CFF', '#FF6FA8', '#FFC247'], glow: 'rgba(242,160,7,.55)' },
+    { name: 'RAINBOW PLUS',  min: 11.5, colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'], dark: ['#FF6B8E', '#FFA640', '#F2CE3A', '#4FD9B0', '#6FA4FF', '#B58CFF'], glow: 'rgba(255,196,0,.6)' },
+    { name: 'RAINBOW',       min: 11,   colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'], dark: ['#FF6B8E', '#FFA640', '#F2CE3A', '#4FD9B0', '#6FA4FF', '#B58CFF'] },
+    { name: 'PLATINUM PLUS', min: 10.5, colors: ['#4F8AA6', '#8FBED4', '#4F8AA6'], dark: ['#8FC4DC', '#D5EEF8', '#8FC4DC'], glow: 'rgba(120,190,225,.65)' },
+    { name: 'PLATINUM',      min: 10,   colors: ['#4F8AA6', '#8FBED4', '#4F8AA6'], dark: ['#8FC4DC', '#D5EEF8', '#8FC4DC'] },
+    { name: 'GOLD PLUS',     min: 9.5,  colors: ['#B8860B', '#E0B32E', '#B8860B'], dark: ['#E0B32E', '#FFE58A', '#E0B32E'], glow: 'rgba(240,190,40,.6)' },
+    { name: 'GOLD',          min: 9,    colors: ['#B8860B', '#E0B32E', '#B8860B'], dark: ['#E0B32E', '#FFE58A', '#E0B32E'] },
+    { name: 'SILVER PLUS',   min: 8.5,  colors: ['#6F7C8B', '#A7B2BE', '#6F7C8B'], dark: ['#A7B2BE', '#E3E8EE', '#A7B2BE'], glow: 'rgba(150,165,185,.7)' },
+    { name: 'SILVER',        min: 8,    colors: ['#6F7C8B', '#A7B2BE', '#6F7C8B'], dark: ['#A7B2BE', '#E3E8EE', '#A7B2BE'] },
+    { name: 'BRONZE PLUS',   min: 7.5,  colors: ['#8E4E22', '#C07A45', '#8E4E22'], dark: ['#C98A58', '#F0BE98', '#C98A58'], glow: 'rgba(205,125,65,.55)' },
+    { name: 'BRONZE',        min: 7,    colors: ['#8E4E22', '#C07A45', '#8E4E22'], dark: ['#C98A58', '#F0BE98', '#C98A58'] },
+    { name: 'WAKABA',        min: -Infinity, colors: ['#3E9B3A', '#7CBF3F'], dark: ['#6FCB6A', '#B4E36C'] },
   ];
   const rankOf = (v, shift = 0) => RANKS.find((r) => Math.round(v * 1000) / 1000 >= r.min - shift);
   // 文字をランクの色（グラデーション＋PLUS などの光）にする
   function paintRank(node, v, shift = 0) {
     const rank = rankOf(v, shift);
-    node.classList.add('ranked');
-    node.style.backgroundImage = `linear-gradient(90deg, ${rank.colors.join(', ')})`;
-    node.style.filter = rank.glow ? `drop-shadow(0 0 3px ${rank.glow})` : '';
+    node.classList.add('rank-grad');
+    node.style.setProperty('--g', `linear-gradient(90deg, ${rank.colors.join(', ')})`);
+    node.style.setProperty('--gd', `linear-gradient(90deg, ${(rank.dark || rank.colors).join(', ')})`);
     node.title = rank.name;
   }
 
@@ -348,7 +249,7 @@
       results.replaceChildren(...MODES.map((m, i) => {
         const card = el('div', 'res' + (i === 0 ? ' main' : ''));
         const v = rateOf(s.c, starTenths, m.cap, rareAdd);
-        const val = el('div', 'res-value', v.toFixed(3));
+        const val = tnum(el('div', 'res-value', v.toFixed(3)));
         paintRank(val, v, m.shift); // ランクの色で表示（レートの種類ごとの区切り）
         card.append(el('div', 'res-label', m.label), val);
         return card;
@@ -362,7 +263,7 @@
         const tr = body.insertRow();
         if (t === starTenths) tr.className = 'on';
         tr.insertCell().textContent = `☆${(t / 10).toFixed(1)}`;
-        MODES.forEach((m) => { tr.insertCell().textContent = rateOf(s.c, t, m.cap, rareAdd).toFixed(3); });
+        MODES.forEach((m) => { const td = tr.insertCell(); td.textContent = rateOf(s.c, t, m.cap, rareAdd).toFixed(3); tnum(td); });
       });
     }
     input.addEventListener('input', () => update(false));

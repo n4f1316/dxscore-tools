@@ -4,153 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>2fRATE ランキング</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap">
-<style>
-  :root { --ink: #2B2350; --sub: #6E6892; --line: #E4DFF3; --bg: #F6F4FC; --card: #FFFFFF; --pink: #E0348C; --cyan: #1FA9C9; }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; background: var(--bg); color: var(--ink); }
-  body { font: 14px/1.6 "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
-    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px); }
-  .wrap { max-width: 760px; margin: 0 auto; padding: 18px 14px 48px; }
-  h1 { font-size: 22px; font-weight: 800; margin: 0; }
-  .lead { color: var(--sub); font-size: 13px; margin: 4px 0 0; }
-  .status { margin-top: 12px; color: var(--sub); font-size: 13px; }
-  .status.error { color: #E0434B; font-weight: 700; }
-  button { font: inherit; font-weight: 700; padding: 6px 14px; border-radius: 999px; cursor: pointer;
-    border: 1.5px solid var(--line); background: var(--card); color: var(--ink); }
-  button:focus-visible, input:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
-  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 0; }
-  .tabs button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
-  .search { width: 100%; margin-top: 12px; font: inherit; padding: 8px 14px; border-radius: 999px;
-    border: 1.5px solid var(--line); background: var(--card); color: var(--ink); }
-  .info { font-size: 12px; font-weight: 700; color: var(--sub); margin: 12px 2px 6px; }
-  .list { background: var(--card); border: 1.5px solid var(--line); border-radius: 16px; overflow: hidden; }
-  .r { display: grid; grid-template-columns: 40px 48px 1fr auto; gap: 12px; align-items: center;
-    padding: 10px 14px; border-top: 1px solid var(--line); }
-  .r:first-child { border-top: 0; }
-  .r:nth-child(even) { background: #FBFAFE; }
-  .pos { text-align: center; font-weight: 800; font-size: 18px; color: var(--sub); font-variant-numeric: tabular-nums; }
-  .pos.top1 { color: #C98A00; } .pos.top2 { color: #7D8A99; } .pos.top3 { color: #9C5A2B; }
-  .icon { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; background: #EFECF9; display: block; }
-  .name { font-weight: 800; font-size: 15px; line-height: 1.35; word-break: break-all; }
-  .name.anon { color: var(--sub); }
-  .meta { font-size: 11px; color: var(--sub); }
-  .rate { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
-  .rate-value { font-weight: 800; font-size: 22px; font-variant-numeric: tabular-nums; }
-  .rate-value.ranked { color: transparent; -webkit-background-clip: text; background-clip: text; display: inline-block; }
-  .rank-icon { width: 30px; height: 30px; flex: none; }
-  .rank-icon svg { width: 100%; height: 100%; display: block; }
-  .tab-break { display: none; }
-  .part-tabs { margin-top: 8px; }
-  .part-tabs button { font-size: 12px; padding: 4px 12px; }
-  .part-tabs[hidden] { display: none; }
-  @media (max-width: 520px) { .tab-break { display: block; flex-basis: 100%; height: 0; } }
-  .count-unit { font-size: 12px; font-weight: 700; color: var(--sub); margin-left: 3px; }
-  .rank-name { font-size: 10px; font-weight: 800; color: var(--sub); text-align: right; letter-spacing: .02em; }
-.pager { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; margin: 10px 0; }
-  .pager:empty { display: none; }
-  .pager button { min-width: 40px; padding: 5px 10px; }
-  .pager button.current { background: var(--ink); border-color: var(--ink); color: #fff; cursor: default; }
-  .pager button:disabled { opacity: .4; cursor: default; }
-  .pager .gap { color: var(--sub); padding: 0 2px; }
-  .empty { padding: 24px; text-align: center; color: var(--sub); }
-  .default-icon { overflow: hidden; }
-  .default-icon svg { display: block; }
-  /* ベスト枠（2fRATE 実行時の表と同じ形式） */
-  .bf-overlay { position: fixed; inset: 0; z-index: 50; background: rgba(43,35,80,.5); overflow: auto; padding: 16px 10px 40px; }
-  .bf-box { position: relative; max-width: 780px; margin: 0 auto; background: var(--bg); border-radius: 22px; padding: 16px; }
-  .bf-close { position: absolute; top: 14px; right: 14px; }
-  .bf-head { display: flex; align-items: center; gap: 14px; background: #fff; border: 2px solid var(--line); border-radius: 18px;
-    padding: 12px 16px; margin: 36px 0 14px; flex-wrap: wrap; }
-  .bf-icon { width: 64px; height: 64px; border-radius: 14px; object-fit: cover; background: #EFECF9; flex: none; }
-  .bf-who { flex: 1 1 160px; min-width: 0; }
-  .bf-name { font-size: 22px; font-weight: 800; word-break: break-all; line-height: 1.3; }
-  .bf-label { font-size: 12px; font-weight: 700; color: var(--sub); }
-  .bf-fav { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 12px; }
-  .bf-fav-jk { width: 40px; height: 40px; flex: none; border-radius: 8px; object-fit: cover; display: block; background: #EFECF9; box-shadow: 0 0 0 1px var(--line); }
-  .bf-fav-text { min-width: 0; flex: 1 1 auto; }
-  .bf-fav-top { display: flex; align-items: center; gap: 4px; }
-  /* 名前（1行目）・2fRATE☆n（2行目）の右に、2行分の高さでレートを置く。お気に入りはその下の行全体 */
-  .bf-who { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: center; }
-  .bf-who .bf-name { grid-column: 1; grid-row: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; word-break: normal; }
-  .bf-who .bf-label { grid-column: 1; grid-row: 2; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .bf-who .bf-rate { grid-column: 2; grid-row: 1 / span 2; }
-  .bf-who .bf-fav { grid-column: 1 / -1; grid-row: 3; }
-  .bf-fav-label { font-size: 11px; font-weight: 800; color: #fff; background: #E0348C; border-radius: 6px; padding: 3px 7px; line-height: 1.2; }
-  .bf-fav-name { font-weight: 700; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .bf-rate { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
-  .bf-rank-icon { width: 46px; height: 46px; flex: none; }
-  .bf-rank-icon svg { width: 100%; height: 100%; display: block; }
-  .bf-rate-value { line-height: 1; font-size: 46px; font-weight: 800; font-variant-numeric: tabular-nums; color: transparent;
-    -webkit-background-clip: text; background-clip: text; line-height: 1.1; }
-  .bf-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
-  .bf-tabs button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
-  .bf-list { background: #fff; border: 1.5px solid var(--line); border-radius: 16px; overflow: hidden; }
-  .bf-row { display: grid; grid-template-columns: 30px 44px 1fr 66px 72px 72px; gap: 10px; align-items: center;
-    padding: 9px 14px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
-  .bf-row:nth-child(even) { background: #FBFAFE; }
-  .bf-hrow { border-top: 0; background: var(--ink) !important; color: #fff; font-size: 11px; font-weight: 700; padding-top: 7px; padding-bottom: 7px; }
-  .bf-no { text-align: center; font-weight: 800; color: var(--sub); }
-  .bf-jk { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; display: block; background: #EFECF9; box-shadow: 0 0 0 1px var(--line); }
-  .bf-title { font-weight: 700; line-height: 1.35; word-break: break-word; }
-  .bf-genre { font-size: 11px; font-weight: 700; color: var(--sub); margin-left: 2px; }
-  .bf-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 4px; }
-  .bf-chip { font-size: 11px; font-weight: 700; line-height: 1; padding: 4px 7px; border-radius: 6px; color: #fff; white-space: nowrap; }
-  .bf-kind-DX { background: linear-gradient(90deg, #E0348C, #F29A2E); }
-  .bf-kind-ST { background: #3B82C4; }
-  .bf-diff.bf-remas { background: #fff; color: #8E44D6; box-shadow: inset 0 0 0 1.5px #B68BE0; }
-  .bf-const { background: #EFECF9; color: var(--ink); }
-  .bf-rare { background: #2B2350; color: #FFE066; }
-  .bf-maxinline { display: none; font-size: 11px; font-weight: 700; color: var(--sub); padding: 0 2px; line-height: 1.6; }
-  .bf-maxinline.is-max { color: #C98A00; }
-  .bf-c { text-align: center; }
-  .bf-r { text-align: right; }
-  .bf-hrow .bf-c, .bf-hrow .bf-r { text-align: center; }
-  .bf-maxcol { font-size: 12px; color: var(--sub); }
-  .bf-maxcol.is-max { color: #C98A00; font-weight: 800; }
-  .bf-hrow .bf-maxcol { color: #fff; font-size: 11px; }
-  .bf-star { display: inline-block; min-width: 3.6em; text-align: center; font-size: 13px; font-weight: 800; padding: 3px 7px;
-    border-radius: 999px; color: var(--ink); background: #EFECF9; }
-  .bf-star.g12 { background: #B5E05A; } .bf-star.g34 { background: #FF8C2E; } .bf-star.g56 { background: #FFE066; }
-  .bf-star.g7 { background: linear-gradient(90deg, #FF5E7E, #FFB347, #FFE66D, #7EE081, #5CC8FF, #A78BFA); }
-  .bf-value { font-weight: 800; font-size: 15px; }
-  .bf-empty { padding: 30px; text-align: center; color: var(--sub); }
-  /* ☆6・☆7達成譜面 */
-  .ac-row { grid-template-columns: 30px 44px 1fr 66px 76px 72px; }
-  .ac-search { width: 100%; margin: 0 0 10px; font: inherit; font-size: 16px; padding: 7px 14px; border-radius: 999px;
-    border: 1.5px solid var(--line); background: #fff; color: var(--ink); }
-  .ac-info { font-size: 12px; font-weight: 700; color: var(--sub); margin: 0 2px 6px; }
-  .ac-crange { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px; }
-  .ac-crange-label { font-size: 12px; font-weight: 800; color: var(--sub); }
-  .ac-crange select { font: inherit; font-weight: 700; font-size: 15px; padding: 4px 8px; border-radius: 10px;
-    border: 1.5px solid var(--line); background: #fff; color: var(--ink); }
-  .ac-crange button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
-  @media (max-width: 520px) {
-    .bf-row { grid-template-columns: 22px 40px 1fr 54px 60px; gap: 7px; padding: 9px 10px; }
-    .bf-row > .bf-maxcol { display: none; }
-    .ac-row { grid-template-columns: 22px 40px 1fr 54px 64px; }
-    .bf-maxinline { display: inline-block; }
-    .bf-jk { width: 40px; height: 40px; }
-    .bf-star { min-width: 0; padding: 3px 5px; font-size: 12px; }
-    .bf-head { gap: 10px; } .bf-icon { width: 52px; height: 52px; } .bf-name { font-size: 18px; }
-    .bf-who { column-gap: 6px; } .bf-rate { gap: 3px; } .bf-rate-value { font-size: 32px; } .bf-rank-icon { width: 30px; height: 30px; }
-    .bf-head .bf-icon { width: 44px; height: 44px; }
-  }
-  .bf-open { margin-top: 4px; margin-right: 4px; font-size: 11px; padding: 2px 10px; border-color: var(--pink); color: var(--pink); }
-  .foot { margin-top: 18px; font-size: 12px; color: var(--sub); line-height: 1.8; }
-  @media (max-width: 520px) {
-    .r { grid-template-columns: 30px 40px 1fr auto; gap: 8px; padding: 9px 10px; }
-    .icon { width: 40px; height: 40px; }
-    .pos { font-size: 16px; }
-    .rate-value { font-size: 18px; }
-    .rank-icon { width: 24px; height: 24px; }
-  }
-</style>
+<link rel="icon" href="logo/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="logo/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="logo/apple-touch-icon.png">
+<link rel="stylesheet" href="2frate.css?v=20261116g">
+<script src="2frate-theme.js?v=20261116g"></script>
 </head>
-<body>
+<body class="pg-ranking">
 <div class="wrap">
-  <a class="to-top" href="./" style="display:inline-block;margin-bottom:6px;font-size:13px;font-weight:800;color:#6E6892;text-decoration:none">← 2fRATE トップへ</a>
-  <h1>2fRATE ランキング</h1>
+  <header class="site-head">
+    <a class="site-logo" href="./" aria-label="2fRATE トップへ">2fRATE</a>
+    <button type="button" class="theme-toggle"></button>
+  </header>
+  <div class="page-title"><h1>RANKING</h1><span>ランキング</span></div>
   <p class="lead">2fRATE の「ランキングに登録」から登録された記録です。</p>
   <div class="status" id="status">ランキングを読み込み中…</div>
   <div id="app" hidden>
@@ -206,19 +72,25 @@
   };
 
   // ランク（2fRATE と同じ区切りと色）。min は「☆7まで」の区切りで、☆6まで・☆5まで は MODES の shift だけ下げて判定する
+  // colors はライト表示用、dark はダーク表示用（同じ並びで明るくした色）。paintRank で文字に塗る
+  const paintRank = (node, rank) => {
+    node.classList.add('rank-grad');
+    node.style.setProperty('--g', `linear-gradient(90deg, ${rank.colors.join(', ')})`);
+    node.style.setProperty('--gd', `linear-gradient(90deg, ${(rank.dark || rank.colors).join(', ')})`);
+  };
   const RANKS = [
-    { name: 'LEGEND',        min: 12,   colors: ['#6A1BD8', '#D6246E', '#F2A007'], glow: 'rgba(242,160,7,.55)' },
-    { name: 'RAINBOW PLUS',  min: 11.5, colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'], glow: 'rgba(255,196,0,.6)' },
-    { name: 'RAINBOW',       min: 11,   colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'] },
-    { name: 'PLATINUM PLUS', min: 10.5, colors: ['#4F8AA6', '#8FBED4', '#4F8AA6'], glow: 'rgba(120,190,225,.65)' },
-    { name: 'PLATINUM',      min: 10,   colors: ['#4F8AA6', '#8FBED4', '#4F8AA6'] },
-    { name: 'GOLD PLUS',     min: 9.5,  colors: ['#B8860B', '#E0B32E', '#B8860B'], glow: 'rgba(240,190,40,.6)' },
-    { name: 'GOLD',          min: 9,    colors: ['#B8860B', '#E0B32E', '#B8860B'] },
-    { name: 'SILVER PLUS',   min: 8.5,  colors: ['#6F7C8B', '#A7B2BE', '#6F7C8B'], glow: 'rgba(150,165,185,.7)' },
-    { name: 'SILVER',        min: 8,    colors: ['#6F7C8B', '#A7B2BE', '#6F7C8B'] },
-    { name: 'BRONZE PLUS',   min: 7.5,  colors: ['#8E4E22', '#C07A45', '#8E4E22'], glow: 'rgba(205,125,65,.55)' },
-    { name: 'BRONZE',        min: 7,    colors: ['#8E4E22', '#C07A45', '#8E4E22'] },
-    { name: 'WAKABA',        min: -Infinity, colors: ['#3E9B3A', '#7CBF3F'] },
+    { name: 'LEGEND',        min: 12,   colors: ['#6A1BD8', '#D6246E', '#F2A007'], dark: ['#B98CFF', '#FF6FA8', '#FFC247'], glow: 'rgba(242,160,7,.55)' },
+    { name: 'RAINBOW PLUS',  min: 11.5, colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'], dark: ['#FF6B8E', '#FFA640', '#F2CE3A', '#4FD9B0', '#6FA4FF', '#B58CFF'], glow: 'rgba(255,196,0,.6)' },
+    { name: 'RAINBOW',       min: 11,   colors: ['#FF3B6B', '#FF8A00', '#E8B400', '#1FB88E', '#2F7BFF', '#8A3FFC'], dark: ['#FF6B8E', '#FFA640', '#F2CE3A', '#4FD9B0', '#6FA4FF', '#B58CFF'] },
+    { name: 'PLATINUM PLUS', min: 10.5, colors: ['#4F8AA6', '#8FBED4', '#4F8AA6'], dark: ['#8FC4DC', '#D5EEF8', '#8FC4DC'], glow: 'rgba(120,190,225,.65)' },
+    { name: 'PLATINUM',      min: 10,   colors: ['#4F8AA6', '#8FBED4', '#4F8AA6'], dark: ['#8FC4DC', '#D5EEF8', '#8FC4DC'] },
+    { name: 'GOLD PLUS',     min: 9.5,  colors: ['#B8860B', '#E0B32E', '#B8860B'], dark: ['#E0B32E', '#FFE58A', '#E0B32E'], glow: 'rgba(240,190,40,.6)' },
+    { name: 'GOLD',          min: 9,    colors: ['#B8860B', '#E0B32E', '#B8860B'], dark: ['#E0B32E', '#FFE58A', '#E0B32E'] },
+    { name: 'SILVER PLUS',   min: 8.5,  colors: ['#6F7C8B', '#A7B2BE', '#6F7C8B'], dark: ['#A7B2BE', '#E3E8EE', '#A7B2BE'], glow: 'rgba(150,165,185,.7)' },
+    { name: 'SILVER',        min: 8,    colors: ['#6F7C8B', '#A7B2BE', '#6F7C8B'], dark: ['#A7B2BE', '#E3E8EE', '#A7B2BE'] },
+    { name: 'BRONZE PLUS',   min: 7.5,  colors: ['#8E4E22', '#C07A45', '#8E4E22'], dark: ['#C98A58', '#F0BE98', '#C98A58'], glow: 'rgba(205,125,65,.55)' },
+    { name: 'BRONZE',        min: 7,    colors: ['#8E4E22', '#C07A45', '#8E4E22'], dark: ['#C98A58', '#F0BE98', '#C98A58'] },
+    { name: 'WAKABA',        min: -Infinity, colors: ['#3E9B3A', '#7CBF3F'], dark: ['#6FCB6A', '#B4E36C'] },
   ];
   const rankOf = (v, shift = 0) => RANKS.find((r) => Math.round(v * 1000) / 1000 >= r.min - shift);
   // ベスト枠のデータを { full, cap6, cap5 } の形にそろえる（古い記録は☆7までの配列だけ）
@@ -298,9 +170,9 @@
   //   2fRATE の配色で、丸い顔と肩だけのシンプルな人型。どこにも通信しない固定のSVG
   const DEFAULT_ICON_SVG =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true">' +
-    '<rect width="64" height="64" fill="#E9E4F7"/>' +
-    '<circle cx="32" cy="25" r="11" fill="#B9AEDD"/>' +
-    '<path d="M12 60c0-11 9-19 20-19s20 8 20 19z" fill="#B9AEDD"/>' +
+    '<rect width="64" height="64" style="fill:var(--ph)"/>' +
+    '<circle cx="32" cy="25" r="11" style="fill:var(--sub)"/>' +
+    '<path d="M12 60c0-11 9-19 20-19s20 8 20 19z" style="fill:var(--sub)"/>' +
     '</svg>';
   function defaultIcon(cls) {
     const d = el('div', cls + ' default-icon');
@@ -310,10 +182,10 @@
   // カメラアイコン（maimai のカメラ機能で撮った写真をアイコンにしている人用。写真は表示しない）
   const CAMERA_ICON_SVG =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true">' +
-    '<rect width="64" height="64" fill="#E9E4F7"/>' +
-    '<path d="M24 19l3-5h10l3 5h7a5 5 0 0 1 5 5v19a5 5 0 0 1-5 5H17a5 5 0 0 1-5-5V24a5 5 0 0 1 5-5z" fill="#B9AEDD"/>' +
-    '<circle cx="32" cy="33" r="9" fill="#E9E4F7"/>' +
-    '<circle cx="32" cy="33" r="5.5" fill="#B9AEDD"/>' +
+    '<rect width="64" height="64" style="fill:var(--ph)"/>' +
+    '<path d="M24 19l3-5h10l3 5h7a5 5 0 0 1 5 5v19a5 5 0 0 1-5 5H17a5 5 0 0 1-5-5V24a5 5 0 0 1 5-5z" style="fill:var(--sub)"/>' +
+    '<circle cx="32" cy="33" r="9" style="fill:var(--ph)"/>' +
+    '<circle cx="32" cy="33" r="5.5" style="fill:var(--sub)"/>' +
     '</svg>';
   function cameraIcon(cls) {
     const d = el('div', cls + ' default-icon');
@@ -442,9 +314,8 @@
         const rank = rankOf(v, m.shift);
         const ic = el('span', 'bf-rank-icon');
         ic.innerHTML = rankIconSvg(rank.name); // ページ内で作る固定のSVGのみ
-        const val = el('span', 'bf-rate-value', v.toFixed(3));
-        val.style.backgroundImage = `linear-gradient(90deg, ${rank.colors.join(', ')})`;
-        if (rank.glow) val.style.filter = `drop-shadow(0 0 3px ${rank.glow})`;
+        const val = tnum(el('span', 'bf-rate-value', v.toFixed(3)));
+        paintRank(val, rank);
         val.title = rank.name;
         rate.append(ic, val);
       }
@@ -498,7 +369,7 @@
           main,
           star,
           el('div', 'bf-r bf-maxcol' + (isMax ? ' is-max' : ''), maxText),
-          el('div', 'bf-r bf-value', Number(t.value).toFixed(3))
+          tnum(el('div', 'bf-r bf-value', Number(t.value).toFixed(3)))
         );
         list.appendChild(row);
       });
@@ -879,20 +750,22 @@
       const rate = el('div', 'rate');
       const v = valueOf(r, mode);
       if (mode.count) {
-        const val = el('span', 'rate-value', String(v));
+        const val = tnum(el('span', 'rate-value', String(v)));
         val.appendChild(el('span', 'count-unit', '譜面'));
         rate.appendChild(val);
         right.append(rate, el('div', 'rank-name', `MAS ${r.counts[mode.mas]} ／ Re:MAS ${r.counts[mode.re]}`));
       } else {
-      const val = el('span', 'rate-value', v.toFixed(3));
+      const val = tnum(el('span', 'rate-value', v.toFixed(3)));
         const rank = rankOf(v, mode.shift);
         const ic = el('span', 'rank-icon');
         ic.innerHTML = rankIconSvg(rank.name); // ページ内で作る固定のSVGのみ
-        val.classList.add('ranked');
-        val.style.backgroundImage = `linear-gradient(90deg, ${rank.colors.join(', ')})`;
-        if (rank.glow) val.style.filter = `drop-shadow(0 0 3px ${rank.glow})`;
+        paintRank(val, rank);
         rate.append(ic, val);
-        right.append(rate, el('div', 'rank-name', rank.name));
+        const rn = el('div', 'rank-name');
+        const rnText = el('span', '', rank.name);
+        paintRank(rnText, rank);
+        rn.appendChild(rnText);
+        right.append(rate, rn);
       }
       row.appendChild(right);
       list.appendChild(row);

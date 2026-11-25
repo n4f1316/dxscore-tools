@@ -5,129 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>2fRATE</title>
 <meta name="description" content="maimai でらっくす のでらっくスコア☆から計算する非公式レート「2fRATE」のツール集です。">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap">
-<style>
-  :root { --ink: #2B2350; --sub: #6E6892; --line: #E4DFF3; --bg: #F6F4FC; --card: #FFFFFF; --pink: #E0348C; --cyan: #1FA9C9; }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; background: var(--bg); color: var(--ink); }
-  body { font: 15px/1.75 "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
-    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px); }
-  a { color: var(--pink); }
-  a:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; border-radius: 6px; }
-  .wrap { max-width: 860px; margin: 0 auto; padding: 0 16px 56px; }
-
-  /* ヒーロー */
-  .hero { display: flex; align-items: center; gap: 20px; padding: 36px 0 26px; flex-wrap: wrap; }
-  .logo { width: 88px; height: 88px; flex: none; }
-  .logo svg { display: block; width: 100%; height: 100%; }
-  .hero-text { flex: 1 1 280px; min-width: 0; }
-  .hero h1 { margin: 0; font-size: 40px; line-height: 1.15; font-weight: 800; letter-spacing: -.01em; }
-  .hero p { margin: 6px 0 0; color: var(--sub); font-weight: 700; }
-  .badge { display: inline-block; font-size: 11px; font-weight: 800; color: var(--sub); background: #EFECF9;
-    border-radius: 999px; padding: 2px 10px; margin-top: 8px; }
-
-  .about { background: var(--card); border: 1.5px solid var(--line); border-radius: 20px; padding: 18px 20px; }
-  .about p { margin: 0; }
-  .about p + p { margin-top: 8px; }
-  .about strong { color: var(--pink); }
-
-  h2 { font-size: 19px; font-weight: 800; margin: 34px 0 12px; display: flex; align-items: center; gap: 8px; }
-  h2::before { content: ""; width: 6px; height: 20px; border-radius: 3px; background: linear-gradient(var(--pink), var(--cyan)); }
-
-  /* ツールのカード */
-  .tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  .tool { display: flex; gap: 14px; align-items: flex-start; text-decoration: none; color: var(--ink);
-    background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; padding: 16px;
-    transition: border-color .15s, transform .15s, box-shadow .15s; }
-  .tool:hover { border-color: #CFC6EC; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(43,35,80,.08); }
-  .tool.main { grid-column: 1 / -1; border: 2px solid var(--pink); }
-  .tool-ic { width: 48px; height: 48px; border-radius: 14px; flex: none; display: grid; place-items: center; }
-  .tool-ic svg { width: 28px; height: 28px; display: block; }
-  .ic-pink { background: #FCE6F1; color: var(--pink); }
-  .ic-cyan { background: #E1F4F9; color: #1585A0; }
-  .ic-gold { background: #FFF4D6; color: #B07D0A; }
-  .ic-ink  { background: #EFECF9; color: var(--ink); }
-  .tool-body { min-width: 0; }
-  .tool-name { font-size: 17px; font-weight: 800; line-height: 1.4; }
-  .tool-desc { font-size: 13px; color: var(--sub); margin-top: 2px; line-height: 1.65; }
-  .tag { display: inline-block; font-size: 11px; font-weight: 800; border-radius: 6px; padding: 1px 7px; margin-left: 6px; vertical-align: 2px; }
-  .tag-bm { background: var(--pink); color: #fff; }
-  .tag-web { background: #EFECF9; color: var(--sub); }
-  .go { font-size: 13px; font-weight: 800; color: var(--pink); margin-top: 6px; }
-
-  /* はじめかた */
-  .steps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; counter-reset: s; }
-  .steps li { background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; padding: 16px; counter-increment: s; }
-  .steps li::before { content: counter(s); display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%;
-    background: var(--ink); color: #fff; font-weight: 800; margin-bottom: 8px; }
-  .steps b { display: block; font-size: 15px; }
-  .steps span { font-size: 13px; color: var(--sub); }
-
-  .notes { background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; padding: 14px 20px; font-size: 13px; color: var(--sub); }
-  .notes ul { margin: 0; padding-left: 1.2em; }
-  .notes li + li { margin-top: 4px; }
-
-  /* Discord */
-  .community { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; text-decoration: none; color: #fff;
-    background: #5865F2; border-radius: 18px; padding: 18px 20px;
-    transition: transform .15s, box-shadow .15s; }
-  .community:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(88,101,242,.3); }
-  .community-ic { width: 52px; height: 52px; border-radius: 16px; background: rgba(255,255,255,.14); display: grid; place-items: center; flex: none; }
-  .community-ic svg { width: 30px; height: 30px; display: block; }
-  .community-body { flex: 1 1 240px; min-width: 0; }
-  .community-name { font-size: 17px; font-weight: 800; line-height: 1.4; }
-  .community-desc { font-size: 13px; opacity: .92; line-height: 1.65; }
-  .community-go { flex: none; font-weight: 800; font-size: 14px; background: #fff; color: #5865F2; border-radius: 999px; padding: 8px 18px; }
-
-  /* 製作者 */
-  .author { display: flex; align-items: center; gap: 14px; margin-top: 10px; text-decoration: none; color: var(--ink);
-    background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; padding: 14px 20px;
-    transition: border-color .15s, transform .15s, box-shadow .15s; }
-  .author:hover { border-color: #CFC6EC; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(43,35,80,.08); }
-  .author-ic { width: 44px; height: 44px; border-radius: 12px; background: #000; color: #fff; display: grid; place-items: center; flex: none; }
-  .author-ic svg { width: 20px; height: 20px; display: block; }
-  .author-body { flex: 1 1 auto; min-width: 0; }
-  .author-label { font-size: 12px; font-weight: 700; color: var(--sub); }
-  .author-name { font-size: 16px; font-weight: 800; line-height: 1.4; }
-  .author-go { flex: none; font-size: 13px; font-weight: 800; color: var(--sub); }
-
-  footer { margin-top: 36px; text-align: center; font-size: 12px; color: var(--sub); }
-  footer a { color: var(--sub); }
-
-  @media (max-width: 640px) {
-    .hero { padding-top: 24px; gap: 14px; }
-    .logo { width: 68px; height: 68px; }
-    .hero h1 { font-size: 32px; }
-    .tools, .steps { grid-template-columns: 1fr; }
-  }
-</style>
+<link rel="icon" href="logo/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="logo/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="logo/apple-touch-icon.png">
+<link rel="stylesheet" href="2frate.css?v=20261116g">
+<script src="2frate-theme.js?v=20261116g"></script>
 </head>
-<body>
+<body class="pg-index">
 <div class="wrap">
+  <div class="site-head" style="justify-content:flex-end"><button type="button" class="theme-toggle"></button></div>
 
   <header class="hero">
-    <div class="logo" aria-hidden="true">
-      <svg viewBox="0 0 512 512">
-        <defs>
-          <linearGradient id="logo-rainbow" x1="0" x2="1" y1="0" y2="0">
-            <stop offset="0" stop-color="#FF5E7E"/><stop offset=".2" stop-color="#FFB347"/><stop offset=".4" stop-color="#FFE66D"/>
-            <stop offset=".6" stop-color="#7EE081"/><stop offset=".8" stop-color="#5CC8FF"/><stop offset="1" stop-color="#A78BFA"/>
-          </linearGradient>
-        </defs>
-        <rect width="512" height="512" rx="112" fill="#2B2350"/>
-        <polygon points="392.0,104.0 404.9,132.2 435.7,135.8 412.9,156.8 419.0,187.2 392.0,172.0 365.0,187.2 371.1,156.8 348.3,135.8 379.1,132.2"
-          fill="#E3A812" stroke="#E3A812" stroke-width="12" stroke-linejoin="round"/>
-        <text x="256" y="196" text-anchor="middle" dominant-baseline="central" letter-spacing="-7"
-          font-family="'M PLUS Rounded 1c', 'Hiragino Maru Gothic ProN', sans-serif" font-weight="800" font-size="200" fill="#FFFFFF">2f</text>
-        <rect x="106" y="372" width="36" height="24" rx="12" fill="#B5E05A"/>
-        <rect x="150" y="372" width="36" height="24" rx="12" fill="#B5E05A"/>
-        <rect x="194" y="372" width="36" height="24" rx="12" fill="#FF8C2E"/>
-        <rect x="238" y="372" width="36" height="24" rx="12" fill="#FF8C2E"/>
-        <rect x="282" y="372" width="36" height="24" rx="12" fill="#FFE066"/>
-        <rect x="326" y="372" width="36" height="24" rx="12" fill="#FFE066"/>
-        <rect x="370" y="372" width="36" height="24" rx="12" fill="url(#logo-rainbow)"/>
-      </svg>
-    </div>
+    <div class="logo" role="img" aria-label="2fRATE のロゴ"></div>
     <div class="hero-text">
       <h1>2fRATE</h1>
       <p>でらっくスコアを用いた新たなレートシステム</p>
