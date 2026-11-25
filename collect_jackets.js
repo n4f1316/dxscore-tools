@@ -16,18 +16,25 @@
     return;
   }
 
+  // 2fRATE と共通の配色（直線的な枠・光彩なし）。表示（ダーク／ライト）は 2fRATE と同じ保存先を見る（なければライト）
+  const DARK = (() => { try { return localStorage.getItem('2frate-theme') === 'dark'; } catch { return false; } })();
+  const T = DARK
+    ? { bg: '#0E0B1F', panel: '#16122E', line: '#2E2858', ink: '#F2F0FF', sub: '#A9A3D6', accent: '#4DE1FF', onAccent: '#0E0B1F' }
+    : { bg: '#F4F5F7', panel: '#E6E7EC', line: '#D5D6DE', ink: '#12101F', sub: '#55516E', accent: '#007A99', onAccent: '#F4F5F7' };
+  const FONT = '"Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif';
+
   document.getElementById('dxj-panel')?.remove();
   const panel = document.createElement('div');
   panel.id = 'dxj-panel';
   panel.style.cssText =
     'position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:99999;' +
-    'max-width:92vw;background:#fff;color:#2B2350;border:2px solid #E0348C;border-radius:14px;' +
-    'padding:14px 18px;font:14px/1.6 sans-serif;box-shadow:0 6px 24px rgba(43,35,80,.2);';
+    `max-width:92vw;background:${T.bg};color:${T.ink};border:1px solid ${T.line};border-top:3px solid ${T.accent};border-radius:0;` +
+    `padding:14px 18px;font:14px/1.6 ${FONT};`;
   const msg = document.createElement('div');
   msg.textContent = '楽曲リストを読み込み中…';
   const close = document.createElement('button');
   close.textContent = '閉じる';
-  close.style.cssText = 'margin-top:10px;padding:4px 14px;font:inherit;border-radius:999px;border:1.5px solid #ccc;background:#fff;cursor:pointer;';
+  close.style.cssText = `margin-top:10px;padding:5px 14px;font:inherit;font-weight:700;border-radius:0;border:1px solid ${T.line};background:${T.bg};color:${T.ink};cursor:pointer;`;
   close.onclick = () => panel.remove();
   panel.append(msg);
   document.body.appendChild(panel);
@@ -69,7 +76,7 @@
     link.href = URL.createObjectURL(blob);
     link.download = FILE_NAME;
     link.textContent = `${FILE_NAME} をダウンロード`;
-    link.style.cssText = 'display:inline-block;margin-top:6px;font-weight:bold;color:#E0348C;';
+    link.style.cssText = `display:inline-block;margin-top:8px;padding:6px 14px;font-weight:bold;text-decoration:none;background:${T.accent};color:${T.onAccent};`;
 
     msg.textContent = `${count} 曲の対応表を作成しました（同名の別曲 ${ambiguous} 組は、ジャンルとレベルで見分ける情報つき）。`;
     panel.append(document.createElement('br'), link, document.createElement('br'), close);

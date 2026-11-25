@@ -113,16 +113,23 @@
     return res.text();
   }
 
+  // 2fRATE と共通の配色（直線的な枠・光彩なし）。表示（ダーク／ライト）は 2fRATE と同じ保存先を見る（なければライト）
+  const DARK = (() => { try { return localStorage.getItem('2frate-theme') === 'dark'; } catch { return false; } })();
+  const T = DARK
+    ? { bg: '#0E0B1F', panel: '#16122E', line: '#2E2858', ink: '#F2F0FF', sub: '#A9A3D6', accent: '#4DE1FF', onAccent: '#0E0B1F' }
+    : { bg: '#F4F5F7', panel: '#E6E7EC', line: '#D5D6DE', ink: '#12101F', sub: '#55516E', accent: '#007A99', onAccent: '#F4F5F7' };
+  const FONT = '"Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif';
+
   function createPanel() {
     document.getElementById('dxc-panel')?.remove();
     const panel = document.createElement('div');
     panel.id = 'dxc-panel';
     panel.style.cssText =
       'position:fixed;inset:0;z-index:99999;overflow:auto;' +
-      'background:#fdfdfd;color:#222;font:14px/1.5 sans-serif;padding:12px;';
+      `background:${T.bg};color:${T.ink};font:14px/1.6 ${FONT};padding:16px 14px 40px;`;
     const close = document.createElement('button');
     close.textContent = '閉じる';
-    close.style.cssText = 'float:right;font-size:16px;padding:4px 14px;';
+    close.style.cssText = `float:right;font:inherit;font-weight:700;padding:5px 14px;border-radius:0;border:1px solid ${T.line};background:${T.bg};color:${T.ink};cursor:pointer;`;
     close.onclick = () => panel.remove();
     const status = document.createElement('p');
     const body = document.createElement('div');
@@ -133,12 +140,12 @@
 
   function makeTable(head, rows) {
     const table = document.createElement('table');
-    table.style.cssText = 'border-collapse:collapse;font-size:13px;margin-bottom:12px;';
+    table.style.cssText = `border-collapse:collapse;font-size:13px;margin-bottom:12px;border:1px solid ${T.line};`;
     const tr0 = table.insertRow();
     head.forEach((t) => {
       const th = document.createElement('th');
       th.textContent = t;
-      th.style.cssText = 'border-bottom:2px solid #888;padding:3px 8px;text-align:left;';
+      th.style.cssText = `background:${T.panel};color:${T.sub};border-bottom:1px solid ${T.line};padding:5px 10px;text-align:left;font-size:12px;`;
       tr0.appendChild(th);
     });
     rows.forEach((r) => {
@@ -146,7 +153,7 @@
       r.forEach((v) => {
         const td = tr.insertCell();
         td.textContent = v;
-        td.style.cssText = 'border-bottom:1px solid #ddd;padding:3px 8px;';
+        td.style.cssText = `border-top:1px solid ${T.line};padding:5px 10px;`;
       });
     });
     return table;
@@ -281,7 +288,7 @@
       `${results.length} 譜面を解析：定数確定 ${Object.keys(consts).length} 譜面 / 未確定 ${unresolved.length} 譜面`;
 
     const genreLine = document.createElement('p');
-    genreLine.style.cssText = 'color:#666;font-size:12px;';
+    genreLine.style.cssText = `color:${T.sub};font-size:12px;`;
     genreLine.textContent = `ジャンル順：${genreOrder.join(' → ')}`;
 
     const blob = new Blob([JSON.stringify(consts, null, 1)], { type: 'application/json' });
@@ -289,7 +296,7 @@
     dl.href = URL.createObjectURL(blob);
     dl.download = 'maimai_consts.json';
     dl.textContent = '定数表（maimai_consts.json）をダウンロード';
-    dl.style.cssText = 'display:inline-block;margin:4px 0 16px;font-size:16px;';
+    dl.style.cssText = `display:inline-block;margin:4px 0 16px;padding:8px 16px;font-size:15px;font-weight:bold;text-decoration:none;background:${T.accent};color:${T.onAccent};`;
 
     const h1 = document.createElement('h3');
     h1.textContent = 'レベルごとの結果';
