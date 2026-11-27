@@ -8,7 +8,8 @@
 <link rel="icon" href="logo/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="logo/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="logo/apple-touch-icon.png">
-<link rel="stylesheet" href="2frate.css?v=20261127a">
+<link rel="stylesheet" href="2frate.css?v=20261127b">
+<script src="2frate-i18n.js?v=20261127b"></script>
 <script src="2frate-theme.js?v=20261127a"></script>
 </head>
 <body class="pg-ranking">
@@ -21,6 +22,7 @@
   <p class="lead">2fRATE の「ランキングに登録」から登録された記録です。自分の記録（非公開にしたベスト枠を含む）は<a href="mypage.html">マイページ</a>で見られます。</p>
   <div class="status" id="status">ランキングを読み込み中…</div>
   <div id="app" hidden>
+    <div class="tabs" id="regionTabs" role="group" aria-label="地域"></div>
     <div class="tabs" id="modeTabs" role="group" aria-label="レートの種類"></div>
     <div class="tabs part-tabs" id="partTabs" role="group" aria-label="集計する難易度" hidden></div>
     <div class="tabs" id="verTabs" role="group" aria-label="定数表のバージョン"></div>
@@ -38,19 +40,34 @@
 (() => {
   'use strict';
 
+  // 表示する言語（2frate-i18n.js）。文の中の {0} {1} … は2つ目以降の値に置き換わる
+  const T = (ja, ...args) => {
+    const s = window.I18N ? I18N.t(ja) : ja;
+    return args.length ? s.replace(/\{(\d+)\}/g, (m, i) => String(args[Number(i)])) : s;
+  };
+  // 言語を切り替えたら、ページの処理で作った文も変わるように読み込み直す
+  const startLang = window.I18N?.lang;
+  document.addEventListener('2frate-lang', (e) => { if (e.detail.lang !== startLang) location.reload(); });
+  // 入力欄の案内（placeholder）は、ここで言語に合わせる
+  document.addEventListener('DOMContentLoaded', () => {
+    if ($('app').hidden && !$('status').classList.contains('error')) $('status').textContent = T('ランキングを読み込み中…');
+    $('search').placeholder = T('名前で絞り込み');
+    $('search').setAttribute('aria-label', T('名前で絞り込み'));
+  });
+
   const RANKING_API = 'https://2frate.want131611.workers.dev/';
   const ICON_BASE = 'https://maimaidx.jp/maimai-mobile/img/Icon/';
   const JACKETS_URL = '../maimai_jackets.json';   // α版は alpha/ フォルダーに置くので、1つ上を見る
   const OVERRIDES_URL = '../jacket_overrides.json';
   const JACKET_BASES = ['https://maimaidx.jp/maimai-mobile/img/Music/', 'https://maimai.sega.jp/storage/DX_jacket/'];
   const MODES = [
-    { key: 'rateFull', id: 'full', label: '☆7まで', shift: 0 },   // LEGEND 12.000 以上
-    { key: 'rateCap6', id: 'cap6', label: '☆6まで', shift: 0.5 }, // LEGEND 11.500 以上
-    { key: 'rateCap5', id: 'cap5', label: '☆5まで', shift: 1.5 }, // LEGEND 10.500 以上
+    { key: 'rateFull', id: 'full', label: T('☆7まで'), cap: 7, shift: 0 },   // LEGEND 12.000 以上
+    { key: 'rateCap6', id: 'cap6', label: T('☆6まで'), cap: 6, shift: 0.5 }, // LEGEND 11.500 以上
+    { key: 'rateCap5', id: 'cap5', label: T('☆5まで'), cap: 5, shift: 1.5 }, // LEGEND 10.500 以上
     // ☆7・☆6・☆5 を達成した MASTER / Re:MASTER の譜面数で並べる（count: true）
-    { id: 'star7', label: '☆7達成数', count: true, mas: 'star7Mas', re: 'star7Remas' },
-    { id: 'star6', label: '☆6達成数', count: true, mas: 'star6Mas', re: 'star6Remas' },
-    { id: 'star5', label: '☆5達成数', count: true, mas: 'star5Mas', re: 'star5Remas' },
+    { id: 'star7', label: T('☆7達成数'), count: true, mas: 'star7Mas', re: 'star7Remas' },
+    { id: 'star6', label: T('☆6達成数'), count: true, mas: 'star6Mas', re: 'star6Remas' },
+    { id: 'star5', label: T('☆5達成数'), count: true, mas: 'star5Mas', re: 'star5Remas' },
   ];
   // ベスト枠の切り替えに使う、レートの種類だけ
   const RATE_MODES = MODES.filter((m) => !m.count);
@@ -59,9 +76,9 @@
   const hasCount = (r, m) => !!r.counts && Number.isFinite(r.counts[m.mas]) && Number.isFinite(r.counts[m.re]);
   // 達成譜面数のタブでの集計範囲：'all'（MAS＋Re:MAS）/ 'mas'（MASのみ）/ 're'（Re:MASのみ）
   const PARTS = [
-    { id: 'all', label: '合計' },
-    { id: 'mas', label: 'MASのみ' },
-    { id: 're', label: 'Re:MASのみ' },
+    { id: 'all', label: T('合計') },
+    { id: 'mas', label: T('MASのみ') },
+    { id: 're', label: T('Re:MASのみ') },
   ];
   let countPart = 'all';
   const valueOf = (r, m) => {
@@ -191,7 +208,7 @@
   function cameraIcon(cls) {
     const d = el('div', cls + ' default-icon');
     d.innerHTML = CAMERA_ICON_SVG;
-    d.title = 'カメラで撮影したアイコン';
+    d.title = T('カメラで撮影したアイコン');
     return d;
   }
   // 登録されたアイコンの値から表示用の要素を作る
@@ -242,7 +259,7 @@
     const box = el('div', 'bf-box');
     box.setAttribute('role', 'dialog');
     box.setAttribute('aria-modal', 'true');
-    box.setAttribute('aria-label', frames ? `${player.name} のベスト枠` : `${player.name} のお気に入り譜面`);
+    box.setAttribute('aria-label', frames ? T('{0} のベスト枠', player.name) : T('{0} のお気に入り譜面', player.name));
     ov.appendChild(box);
     const close = () => { ov.remove(); document.removeEventListener('keydown', onKey); };
     const onKey = (e) => { if (e.key === 'Escape') close(); };
@@ -279,7 +296,7 @@
       const d = el('span', 'bf-chip bf-diff', fav.diff);
       if (fav.diff === 'Re:MASTER') d.classList.add('bf-remas');
       else d.style.background = BF_DIFF_COLOR[fav.diff] || '#999';
-      top.append(el('span', 'bf-fav-label', 'お気に入り'),
+      top.append(el('span', 'bf-fav-label', T('お気に入り')),
         el('span', `bf-chip bf-kind-${fav.kind === 'ST' ? 'ST' : 'DX'}`, fav.kind === 'ST' ? 'ST' : 'DX'), d);
       const fname = el('div', 'bf-fav-name', fav.name);
       fname.title = fav.name;
@@ -288,7 +305,7 @@
       who.appendChild(fv);
     }
     head.appendChild(who);
-    const x = el('button', 'bf-close', '閉じる');
+    const x = el('button', 'bf-close', T('閉じる'));
     x.type = 'button';
     x.onclick = close;
     // レートの種類の切り替え
@@ -308,7 +325,7 @@
         return b;
       }));
       // 上部のレート（ランクの色）
-      label.textContent = `2fRATE${m.label.replace('まで', '')}`; // 例：2fRATE☆7
+      label.textContent = `2fRATE☆${m.cap}`; // 例：2fRATE☆7
       rate.replaceChildren();
       const v = player[m.key];
       if (Number.isFinite(v)) {
@@ -325,11 +342,11 @@
       // 譜面の一覧（2fRATE 実行時の表と同じ形式）
       list = el('div', 'bf-list');
       const hr = el('div', 'bf-row bf-hrow');
-      hr.append(el('div', 'bf-no', '#'), el('div'), el('div', '', '曲名'), el('div', 'bf-c', '☆'),
-        el('div', 'bf-r bf-maxcol', 'MAX差'), el('div', 'bf-c', 'レート値'));
+      hr.append(el('div', 'bf-no', '#'), el('div'), el('div', '', T('曲名')), el('div', 'bf-c', '☆'),
+        el('div', 'bf-r bf-maxcol', T('MAX差')), el('div', 'bf-c', T('レート値')));
       list.appendChild(hr);
-      if (!top50) list.appendChild(el('div', 'bf-empty', `この記録には「${m.label}」のレート対象曲がありません（以前の版で登録された記録です。登録し直すと表示されます）。`));
-      else if (!top50.length) list.appendChild(el('div', 'bf-empty', 'ベスト枠のデータがありません。'));
+      if (!top50) list.appendChild(el('div', 'bf-empty', T('この記録には「{0}」のレート対象曲がありません（以前の版で登録された記録です。登録し直すと表示されます）。', m.label)));
+      else if (!top50.length) list.appendChild(el('div', 'bf-empty', T('ベスト枠のデータがありません。')));
       (top50 || []).forEach((t, i) => {
         const row = el('div', 'bf-row');
         const song = bfResolveSong(jk.map, jk.overrides, t.name, t.kind, t.diff, t.level, t.max);
@@ -360,7 +377,7 @@
           el('span', 'bf-maxinline' + (isMax ? ' is-max' : ''), maxText)
         );
         // 希少ボーナス（☆6以上の達成者が少ない譜面。単曲レート値に含まれている）
-        if (Number(t.rare) > 0) chips.appendChild(el('span', 'bf-chip bf-rare', `希少 +${Number(t.rare).toFixed(2)}`));
+        if (Number(t.rare) > 0) chips.appendChild(el('span', 'bf-chip bf-rare', T('希少 +{0}', Number(t.rare).toFixed(2))));
         main.append(nm, chips);
         const star = el('div', 'bf-c');
         star.appendChild(el('span', `bf-star ${bfStarClass(Math.floor(Number(t.star)))}`, `☆${Number(t.star).toFixed(1)}`));
@@ -396,7 +413,7 @@
     const box = el('div', 'bf-box');
     box.setAttribute('role', 'dialog');
     box.setAttribute('aria-modal', 'true');
-    box.setAttribute('aria-label', `${player.name} の☆6・☆7達成譜面`);
+    box.setAttribute('aria-label', T('{0} の☆6・☆7達成譜面', player.name));
     ov.appendChild(box);
     const close = () => { ov.remove(); document.removeEventListener('keydown', onKey); };
     const onKey = (e) => { if (e.key === 'Escape') close(); };
@@ -408,9 +425,9 @@
     const who = el('div', 'bf-who');
     const nm = el('div', 'bf-name', player.name);
     nm.title = player.name;
-    who.append(nm, el('div', 'bf-label', `達成譜面 ☆7 ${n7}・☆6以上 ${all.length}`));
+    who.append(nm, el('div', 'bf-label', T('達成譜面 ☆7 {0}・☆6以上 {1}', n7, all.length)));
     head.appendChild(who);
-    const x = el('button', 'bf-close', '閉じる');
+    const x = el('button', 'bf-close', T('閉じる'));
     x.type = 'button';
     x.onclick = close;
     const starTabs = el('div', 'bf-tabs');
@@ -419,8 +436,8 @@
     const crange = el('div', 'ac-crange');
     const search = el('input', 'ac-search');
     search.type = 'search';
-    search.placeholder = '曲名で絞り込み';
-    search.setAttribute('aria-label', '曲名で絞り込み');
+    search.placeholder = T('曲名で絞り込み');
+    search.setAttribute('aria-label', T('曲名で絞り込み'));
     const info = el('div', 'ac-info');
     const listBox = el('div');
     box.append(x, head, starTabs, diffTabs, kindTabs, crange, search, info, listBox);
@@ -453,7 +470,7 @@
         if (!opts.disabled && !opts.current) b.onclick = () => { pg = n; render(); info.scrollIntoView({ block: 'start' }); };
         return b;
       };
-      nav.appendChild(btn('« 前へ', pg - 1, { disabled: pg === 1 }));
+      nav.appendChild(btn(T('« 前へ'), pg - 1, { disabled: pg === 1 }));
       const nums = new Set([1, total]);
       for (let n = pg - 2; n <= pg + 2; n++) if (n >= 1 && n <= total) nums.add(n);
       let prev = 0;
@@ -462,13 +479,13 @@
         nav.appendChild(btn(String(n), n, { current: n === pg }));
         prev = n;
       });
-      nav.appendChild(btn('次へ »', pg + 1, { disabled: pg === total }));
+      nav.appendChild(btn(T('次へ »'), pg + 1, { disabled: pg === total }));
       return nav;
     };
     function render() {
-      tabs(starTabs, [[7, `☆7（${n7}）`], [6, `☆6以上（${all.length}）`]], star, (v) => { star = v; pg = 1; render(); });
-      tabs(diffTabs, [['*', 'すべての難易度'], ['MASTER', 'MASTERのみ'], ['Re:MASTER', 'Re:MASTERのみ']], diff, (v) => { diff = v; pg = 1; render(); });
-      tabs(kindTabs, [['*', 'DX・ST'], ['DX', 'DXのみ'], ['ST', 'STのみ']], kind, (v) => { kind = v; pg = 1; render(); });
+      tabs(starTabs, [[7, `☆7（${n7}）`], [6, T('☆6以上（{0}）', all.length)]], star, (v) => { star = v; pg = 1; render(); });
+      tabs(diffTabs, [['*', T('すべての難易度')], ['MASTER', T('MASTERのみ')], ['Re:MASTER', T('Re:MASTERのみ')]], diff, (v) => { diff = v; pg = 1; render(); });
+      tabs(kindTabs, [['*', T('DX・ST')], ['DX', T('DXのみ')], ['ST', T('STのみ')]], kind, (v) => { kind = v; pg = 1; render(); });
       renderRange();
       const word = q.trim().toLowerCase();
       const items = all
@@ -481,12 +498,12 @@
       pg = Math.min(Math.max(pg, 1), total);
       const start = (pg - 1) * AC_PAGE_SIZE;
       const shown = items.slice(start, start + AC_PAGE_SIZE);
-      info.textContent = items.length > AC_PAGE_SIZE ? `${items.length} 譜面中 ${start + 1}〜${start + shown.length} 件目（譜面定数の高い順）` : `${items.length} 譜面（譜面定数の高い順）`;
+      info.textContent = items.length > AC_PAGE_SIZE ? T('{0} 譜面中 {1}〜{2} 件目（譜面定数の高い順）', items.length, start + 1, start + shown.length) : T('{0} 譜面（譜面定数の高い順）', items.length);
       const list = el('div', 'bf-list');
       const hr = el('div', 'bf-row ac-row bf-hrow');
-      hr.append(el('div', 'bf-no', '#'), el('div'), el('div', '', '曲名'), el('div', 'bf-c', '☆'), el('div', 'bf-r', 'スコア'), el('div', 'bf-r bf-maxcol', 'MAX差'));
+      hr.append(el('div', 'bf-no', '#'), el('div'), el('div', '', T('曲名')), el('div', 'bf-c', '☆'), el('div', 'bf-r', T('スコア')), el('div', 'bf-r bf-maxcol', T('MAX差')));
       list.appendChild(hr);
-      if (!shown.length) list.appendChild(el('div', 'bf-empty', 'この条件の譜面はありません。'));
+      if (!shown.length) list.appendChild(el('div', 'bf-empty', T('この条件の譜面はありません。')));
       shown.forEach((t, i) => {
         const row = el('div', 'bf-row ac-row');
         const song = bfResolveSong(jk.map, jk.overrides, t.name, t.kind, t.diff, t.level, t.max);
@@ -534,14 +551,14 @@
         sel.onchange = () => { onChange(Number(sel.value)); pg = 1; render(); };
         return sel;
       };
-      const reset = el('button', '', '定数の指定なし');
+      const reset = el('button', '', T('定数の指定なし'));
       reset.type = 'button';
       reset.setAttribute('aria-pressed', String(cMin === null && cMax === null));
       reset.onclick = () => { cMin = null; cMax = null; pg = 1; render(); };
-      crange.replaceChildren(el('span', 'ac-crange-label', '譜面定数'),
-        mk(cMin ?? cLo, '譜面定数の下限', (v) => { cMin = v; if (cMax !== null && cMax < v) cMax = v; }),
+      crange.replaceChildren(el('span', 'ac-crange-label', T('譜面定数')),
+        mk(cMin ?? cLo, T('譜面定数の下限'), (v) => { cMin = v; if (cMax !== null && cMax < v) cMax = v; }),
         el('span', 'ac-crange-label', '〜'),
-        mk(cMax ?? cHi, '譜面定数の上限', (v) => { cMax = v; if (cMin !== null && cMin > v) cMin = v; }),
+        mk(cMax ?? cHi, T('譜面定数の上限'), (v) => { cMax = v; if (cMin !== null && cMin > v) cMin = v; }),
         reset);
     }
     let timer = null;
@@ -555,19 +572,19 @@
   async function showAchv(r, btn) {
     const label = btn.textContent;
     btn.disabled = true;
-    btn.textContent = '読み込み中…';
+    btn.textContent = T('読み込み中…');
     try {
       let achv = achvCache.get(r.id);
       if (!achv) {
         const res = await fetch(RANKING_API + '?achv=' + encodeURIComponent(r.id) + '&t=' + Date.now());
         const data = await res.json();
-        if (!data.ok) throw new Error(data.error || '読み込めませんでした。');
+        if (!data.ok) throw new Error(data.error || T('読み込めませんでした。'));
         achv = data.achv;
         achvCache.set(r.id, achv);
       }
       openAchv({ name: r.name, icon: r.icon }, achv, await loadJackets());
     } catch (e) {
-      alert(e.message || '☆6・☆7達成譜面を読み込めませんでした。');
+      alert(e.message || T('☆6・☆7達成譜面を読み込めませんでした。'));
     } finally {
       btn.disabled = false;
       btn.textContent = label;
@@ -584,13 +601,13 @@
   async function showBestFrame(r, btn) {
     const label = btn.textContent;
     btn.disabled = true;
-    btn.textContent = '読み込み中…';
+    btn.textContent = T('読み込み中…');
     try {
       let top50 = top50Cache.get(r.id);
       if (!top50) {
         const res = await fetch(RANKING_API + '?top50=' + encodeURIComponent(r.id) + '&t=' + Date.now());
         const data = await res.json();
-        if (!data.ok) throw new Error(data.error || '読み込めませんでした。');
+        if (!data.ok) throw new Error(data.error || T('読み込めませんでした。'));
         top50 = framesOf(data.top50);
         top50.favorite = data.favorite || null;
         top50Cache.set(r.id, top50);
@@ -598,7 +615,7 @@
       openBestFrame({ name: r.name, icon: r.icon, rateFull: r.rateFull, rateCap6: r.rateCap6, rateCap5: r.rateCap5, favorite: top50.favorite },
         top50, await loadJackets(), mode.id);
     } catch (e) {
-      alert(e.message || 'ベスト枠を読み込めませんでした。');
+      alert(e.message || T('ベスト枠を読み込めませんでした。'));
     } finally {
       btn.disabled = false;
       btn.textContent = label;
@@ -607,7 +624,17 @@
 
   let all = [];
   let mode = MODES[0];
-  let version = null;
+  // 地域：jp（日本版）/ intl（International版）/ all（全世界）。日本語で見ている人は日本版、それ以外は International版から表示する
+  const REGIONS = [
+    { id: 'jp', label: T('日本版') },
+    { id: 'intl', label: T('International版') },
+    { id: 'all', label: T('全世界') },
+  ];
+  const regionOfRow = (r) => (r.region === 'intl' ? 'intl' : 'jp');
+  let region = (window.I18N?.lang || 'ja') === 'ja' ? 'jp' : 'intl';
+  // 定数表のバージョン（地域ごとに選ぶ。全世界では絞り込まない）
+  const versionByRegion = {};
+  const inRegion = (r) => region === 'all' || regionOfRow(r) === region;
   // 計算式の版：いちばん新しい版の記録だけを表示する（計算式が変わる前の記録とは比べられないため）
   let formula = null;
   const formulaNo = (v) => Number(String(v || '').replace(/^v/, '')) || 0;
@@ -638,18 +665,30 @@
         pt.appendChild(b);
       });
     }
-    // 定数表のバージョンが複数あるときだけ切り替えを出す
-    const vers = [...new Set(all.map((r) => r.constVersion).filter(Boolean))];
+    // 地域の切り替え
+    const rt = $('regionTabs');
+    rt.replaceChildren();
+    REGIONS.forEach((x) => {
+      const b = el('button', '', x.label);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(x.id === region));
+      b.onclick = () => { region = x.id; page = 1; renderTabs(); renderList(); };
+      rt.appendChild(b);
+    });
+    // 定数表のバージョンが複数あるときだけ切り替えを出す（地域ごと。全世界ではバージョンをまたいで並べる）
     const vt = $('verTabs');
     vt.replaceChildren();
-    if (vers.length > 1) {
-      vers.forEach((v) => {
-        const b = el('button', '', v);
-        b.type = 'button';
-        b.setAttribute('aria-pressed', String(v === version));
-        b.onclick = () => { version = v; page = 1; renderTabs(); renderList(); };
-        vt.appendChild(b);
-      });
+    if (region !== 'all') {
+      const vers = [...new Set(all.filter(inRegion).map((r) => r.constVersion).filter(Boolean))];
+      if (vers.length > 1) {
+        vers.forEach((v) => {
+          const b = el('button', '', v);
+          b.type = 'button';
+          b.setAttribute('aria-pressed', String(v === versionByRegion[region]));
+          b.onclick = () => { versionByRegion[region] = v; page = 1; renderTabs(); renderList(); };
+          vt.appendChild(b);
+        });
+      }
     }
   }
 
@@ -658,7 +697,7 @@
   let page = 1;
   function pager(totalPages, where) {
     const box = el('nav', 'pager');
-    box.setAttribute('aria-label', `ページ切り替え（${where}）`);
+    box.setAttribute('aria-label', T('ページ切り替え（{0}）', where));
     if (totalPages <= 1) return box;
     const go = (n) => {
       page = n;
@@ -673,7 +712,7 @@
       else if (!opts.current) b.onclick = () => go(n);
       return b;
     };
-    box.appendChild(btn('« 前へ', page - 1, { disabled: page === 1 }));
+    box.appendChild(btn(T('« 前へ'), page - 1, { disabled: page === 1 }));
     const nums = new Set([1, totalPages]);
     for (let n = page - 2; n <= page + 2; n++) if (n >= 1 && n <= totalPages) nums.add(n);
     let prev = 0;
@@ -682,14 +721,16 @@
       box.appendChild(btn(String(n), n, { current: n === page }));
       prev = n;
     });
-    box.appendChild(btn('次へ »', page + 1, { disabled: page === totalPages }));
+    box.appendChild(btn(T('次へ »'), page + 1, { disabled: page === totalPages }));
     return box;
   }
 
   function renderList() {
     const q = query.trim().toLowerCase();
+    const ver = region === 'all' ? null : versionByRegion[region] || null;
     const sorted = all
-      .filter((r) => !version || r.constVersion === version)
+      .filter(inRegion)
+      .filter((r) => !ver || r.constVersion === ver)
       .filter((r) => !formula || r.formulaVersion === formula)
       .filter((r) => Number.isFinite(valueOf(r, mode)))
       .sort((a, b) => valueOf(b, mode) - valueOf(a, mode));
@@ -704,11 +745,11 @@
     page = Math.min(Math.max(page, 1), totalPages);
     const start = (page - 1) * PAGE_SIZE;
     const shown = items.slice(start, start + PAGE_SIZE);
-    $('info').textContent = `${sorted.length} 人が登録` + (version ? `（定数表：${version}）` : '') +
-      (items.length > PAGE_SIZE ? `　${items.length} 人中 ${start + 1}〜${start + shown.length} 人目` : '');
+    $('info').textContent = T('{0} 人が登録', sorted.length) + (ver ? T('（定数表：{0}）', ver) : '') +
+      (items.length > PAGE_SIZE ? T('　{0} 人中 {1}〜{2} 人目', items.length, start + 1, start + shown.length) : '');
 
     const list = el('div', 'list');
-    if (!items.length) list.appendChild(el('div', 'empty', '該当する記録はありません。'));
+    if (!items.length) list.appendChild(el('div', 'empty', T('該当する記録はありません。')));
     shown.forEach((r) => {
       const row = el('div', 'r');
       const pos = posOf.get(r);
@@ -717,15 +758,18 @@
       row.appendChild(iconNode(r.icon, 'icon', true));
 
       const main = el('div');
-      main.append(el('div', 'name' + (r.anonymous ? ' anon' : ''), r.name), el('div', 'meta', `更新 ${dateOf(r.updatedAt)}`));
+      const nm = el('div', 'name' + (r.anonymous ? ' anon' : ''), r.name);
+      // 全世界の表示では、名前の前に地域の印（JP / INTL）を付ける
+      if (region === 'all') nm.prepend(el('span', 'region-tag region-' + regionOfRow(r), regionOfRow(r) === 'intl' ? 'INTL' : 'JP'));
+      main.append(nm, el('div', 'meta', T('更新 {0}', dateOf(r.updatedAt))));
       if (r.hasTop50 && r.id) {
-        const bf = el('button', 'bf-open', 'ベスト枠を見る');
+        const bf = el('button', 'bf-open', T('ベスト枠を見る'));
         bf.type = 'button';
         bf.onclick = () => showBestFrame(r, bf);
         main.appendChild(bf);
       } else if (r.favorite && r.favorite.name) {
         // ベスト枠を公開していない人は、お気に入り譜面だけを見られる（未登録なら何も出さない）
-        const fb = el('button', 'bf-open', 'お気に入り譜面を見る');
+        const fb = el('button', 'bf-open', T('お気に入り譜面を見る'));
         fb.type = 'button';
         fb.onclick = async () => {
           fb.disabled = true;
@@ -740,7 +784,7 @@
       }
       // ☆6・☆7達成譜面（公開している人だけ）
       if (r.hasAchv && r.id) {
-        const ab = el('button', 'bf-open', '☆6・☆7達成譜面を見る');
+        const ab = el('button', 'bf-open', T('☆6・☆7達成譜面を見る'));
         ab.type = 'button';
         ab.onclick = () => showAchv(r, ab);
         main.appendChild(ab);
@@ -752,7 +796,7 @@
       const v = valueOf(r, mode);
       if (mode.count) {
         const val = tnum(el('span', 'rate-value', String(v)));
-        val.appendChild(el('span', 'count-unit', '譜面'));
+        val.appendChild(el('span', 'count-unit', T('譜面')));
         rate.appendChild(val);
         right.append(rate, el('div', 'rank-name', `MAS ${r.counts[mode.mas]} ／ Re:MAS ${r.counts[mode.re]}`));
       } else {
@@ -771,7 +815,7 @@
       row.appendChild(right);
       list.appendChild(row);
     });
-    $('listBox').replaceChildren(pager(totalPages, '上'), list, pager(totalPages, '下'));
+    $('listBox').replaceChildren(pager(totalPages, T('上')), list, pager(totalPages, T('下')));
   }
 
   async function load() {
@@ -781,14 +825,16 @@
       if (!data.ok) throw new Error('bad response');
       all = (data.list || []).filter((r) => r && typeof r.name === 'string');
     } catch (e) {
-      $('status').textContent = 'ランキングを読み込めませんでした。時間をおいて再読み込みしてください。';
+      $('status').textContent = T('ランキングを読み込めませんでした。時間をおいて再読み込みしてください。');
       $('status').classList.add('error');
       return;
     }
-    // 定数表のバージョンは、いちばん多いものを最初に表示
-    const count = {};
-    all.forEach((r) => { if (r.constVersion) count[r.constVersion] = (count[r.constVersion] || 0) + 1; });
-    version = Object.keys(count).sort((a, b) => count[b] - count[a])[0] || null;
+    // 定数表のバージョンは、地域ごとにいちばん多いものを最初に表示
+    for (const rg of ['jp', 'intl']) {
+      const count = {};
+      all.filter((r) => regionOfRow(r) === rg).forEach((r) => { if (r.constVersion) count[r.constVersion] = (count[r.constVersion] || 0) + 1; });
+      versionByRegion[rg] = Object.keys(count).sort((a, b) => count[b] - count[a])[0] || null;
+    }
     formula = all.map((r) => r.formulaVersion).filter(Boolean).sort((a, b) => formulaNo(b) - formulaNo(a))[0] || null;
     $('status').textContent = '';
     $('app').hidden = false;

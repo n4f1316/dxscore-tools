@@ -483,3 +483,10 @@ html[data-theme="dark"] .logo { background-image: url("logo/icon-dark.svg"); }
   .mp-count-num { font-size: 20px; }
   .mp-btns { grid-template-columns: 1fr; }
 }
+
+/* ランキング：全世界の表示で名前の前に付ける地域の印（JP / INTL） */
+.region-tag { display: inline-block; margin-right: 6px; padding: 1px 5px; border: 1px solid currentColor;
+  font-family: "Chakra Petch", sans-serif; font-size: 10px; font-weight: 700; letter-spacing: .04em; line-height: 1.4; vertical-align: 2px; }
+.region-jp { color: var(--accent); }
+.region-intl { color: #C26A12; }
+html[data-theme="dark"] .region-intl { color: #F0A659; }

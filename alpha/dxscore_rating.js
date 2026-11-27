@@ -870,7 +870,7 @@
     paintTheme();
     // 言語の切り替え（選ぶと、その言語でこのプログラムを読み込み直す。メニューからやり直しになる）
     const langSel = el('select', 'dxr-lang');
-    langSel.setAttribute('aria-label', 'Language / 言語 / 언어');
+    langSel.setAttribute('aria-label', T('Language / 言語 / 언어'));
     for (const [code, name] of LANGS) {
       const o = el('option', '', name);
       o.value = code;
@@ -1749,8 +1749,6 @@
   // ランキングのサーバーに送る。混み合っている（busy）・応答が読めない場合は、数秒おいて1回だけ自動で送り直す
   //   onRetry：送り直すときに呼ぶ（画面に「送り直しています…」を出すため）
   async function callRanking(body, onRetry) {
-    // International版は試験中のため、ランキング・マイページ（データベース）は使わない（日本版の記録と混ざらないように）
-    if (IS_INTL) throw new Error('International版は試験中のため、ランキング・マイページの機能は使えません。');
     const send = async () => {
       // text/plain で送ると、ブラウザの事前確認（CORS のプリフライト）なしで送れる
       const res = await fetch(RANKING_API, {
@@ -1763,7 +1761,7 @@
         return await res.json();
       } catch {
         // サーバー側のエラーで JSON 以外が返ってきた（混雑時など）
-        return { ok: false, busy: true, error: 'サーバーの応答を読み取れませんでした。' };
+        return { ok: false, busy: true, error: T('サーバーの応答を読み取れませんでした。') };
       }
     };
     let r = await send();
@@ -1771,7 +1769,7 @@
       if (onRetry) onRetry();
       await sleep(4000);
       r = await send();
-      if (!r.ok && r.busy) r.error = '混み合っています。少し時間をおいて、もう一度お試しください。';
+      if (!r.ok && r.busy) r.error = T('混み合っています。少し時間をおいて、もう一度お試しください。');
     }
     return r;
   }
@@ -1870,8 +1868,8 @@
     // ---- 入力画面 ----
     function inputView(prev = {}) {
       dlg.replaceChildren();
-      dlg.append(el('h3', '', 'ランキングに登録'),
-        el('p', '', '初めての人は、ユーザー名とPINを決めて登録します。2回目以降は同じユーザー名とPINで記録が更新されます。'));
+      dlg.append(el('h3', '', T('ランキングに登録')),
+        el('p', '', T('初めての人は、ユーザー名とPINを決めて登録します。2回目以降は同じユーザー名とPINで記録が更新されます。')));
 
       const field = (label, type, value, note, attrs = {}) => {
         const lab = el('label', 'dxr-field', label);
@@ -1884,12 +1882,12 @@
         dlg.appendChild(lab);
         return input;
       };
-      const user = field('ユーザー名', 'text', prev.username ?? savedUser,
-        '英数字とアンダーバーで3〜16文字（公開されません）', { autocomplete: 'username', autocapitalize: 'off', spellcheck: 'false' });
+      const user = field(T('ユーザー名'), 'text', prev.username ?? savedUser,
+        T('英数字とアンダーバーで3〜16文字（公開されません）'), { autocomplete: 'username', autocapitalize: 'off', spellcheck: 'false' });
       const pin = field('PIN', 'password', prev.pin ?? '',
-        '数字4〜8桁（公開されません。忘れると更新できなくなります）', { inputmode: 'numeric', autocomplete: 'current-password' });
-      const name = field('表示名', 'text', prev.displayName ?? (typeof savedForm.displayName === 'string' && savedForm.displayName ? savedForm.displayName : (profile.name || '')),
-        'ランキングに表示する名前（20文字まで）', { maxlength: '20' });
+        T('数字4〜8桁（公開されません。忘れると更新できなくなります）'), { inputmode: 'numeric', autocomplete: 'current-password' });
+      const name = field(T('表示名'), 'text', prev.displayName ?? (typeof savedForm.displayName === 'string' && savedForm.displayName ? savedForm.displayName : (profile.name || '')),
+        T('ランキングに表示する名前（20文字まで）'), { maxlength: '20' });
 
       const check = (label, checked) => {
         const lab = el('label', 'dxr-check');
@@ -1900,17 +1898,17 @@
         dlg.appendChild(lab);
         return { lab, cb };
       };
-      const anon = check('匿名で掲載する（表示名の代わりに「匿名#記号」で表示し、アイコンも初期アイコンにします）', prev.anonymous ?? (savedForm.anonymous === true));
-      const pub = check('ベスト枠（3種類のレートそれぞれのレート対象曲50譜面）をランキングで公開する', prev.publicTop50 ?? (typeof savedForm.publicTop50 === 'boolean' ? savedForm.publicTop50 : true));
-      const pubAchv = check('☆6・☆7達成譜面（MASTER・Re:MASTER のスコアと☆）をランキングで公開する', prev.publicAchv ?? (typeof savedForm.publicAchv === 'boolean' ? savedForm.publicAchv : true));
+      const anon = check(T('匿名で掲載する（表示名の代わりに「匿名#記号」で表示し、アイコンも初期アイコンにします）'), prev.anonymous ?? (savedForm.anonymous === true));
+      const pub = check(T('ベスト枠（3種類のレートそれぞれのレート対象曲50譜面）をランキングで公開する'), prev.publicTop50 ?? (typeof savedForm.publicTop50 === 'boolean' ? savedForm.publicTop50 : true));
+      const pubAchv = check(T('☆6・☆7達成譜面（MASTER・Re:MASTER のスコアと☆）をランキングで公開する'), prev.publicAchv ?? (typeof savedForm.publicAchv === 'boolean' ? savedForm.publicAchv : true));
       const sync = () => { name.disabled = anon.cb.checked; };
       anon.cb.onchange = sync;
       sync();
 
       const err = el('div', 'dxr-err');
       const actions = el('div', 'dxr-actions');
-      const cancel = el('button', '', 'やめる');
-      const next = el('button', 'primary', '内容を確認');
+      const cancel = el('button', '', T('やめる'));
+      const next = el('button', 'primary', T('内容を確認'));
       cancel.type = next.type = 'button';
       cancel.onclick = close;
       actions.append(cancel, next);
@@ -1943,23 +1941,23 @@
           publicTop50: pub.cb.checked,
           publicAchv: pubAchv.cb.checked,
         };
-        if (!/^[a-z0-9_]{3,16}$/.test(form.username)) { err.textContent = 'ユーザー名は英数字とアンダーバーで3〜16文字にしてください。'; return; }
-        if (!/^\d{4,8}$/.test(form.pin)) { err.textContent = 'PINは数字4〜8桁にしてください。'; return; }
-        if (!form.anonymous && !form.displayName) { err.textContent = '表示名を入力するか、匿名で掲載を選んでください。'; return; }
+        if (!/^[a-z0-9_]{3,16}$/.test(form.username)) { err.textContent = T('ユーザー名は英数字とアンダーバーで3〜16文字にしてください。'); return; }
+        if (!/^\d{4,8}$/.test(form.pin)) { err.textContent = T('PINは数字4〜8桁にしてください。'); return; }
+        if (!form.anonymous && !form.displayName) { err.textContent = T('表示名を入力するか、匿名で掲載を選んでください。'); return; }
         next.disabled = true;
-        err.textContent = '確認中…';
+        err.textContent = T('確認中…');
         try {
           // 先に始めておいた確認が使えればそれを使い、なければここで確認する
           const key = form.username + '\n' + form.pin;
           let r = pre && pre.key === key ? await pre.promise : null;
           if (!r || (!r.ok && r.busy)) {
             r = await callRanking({ action: 'check', username: form.username, pin: form.pin },
-              () => { err.textContent = '混み合っているため、送り直しています…'; });
+              () => { err.textContent = T('混み合っているため、送り直しています…'); });
           }
-          if (!r.ok) { err.textContent = r.error || '確認できませんでした。'; next.disabled = false; return; }
+          if (!r.ok) { err.textContent = r.error || T('確認できませんでした。'); next.disabled = false; return; }
           confirmView(form, r);
         } catch (e) {
-          err.textContent = '通信に失敗しました。時間をおいてもう一度お試しください。';
+          err.textContent = T('通信に失敗しました。時間をおいてもう一度お試しください。');
           next.disabled = false;
         }
       };
@@ -1968,13 +1966,13 @@
     // ---- 確認画面 ----
     function confirmView(form, check) {
       dlg.replaceChildren();
-      dlg.append(el('h3', '', check.exists ? '記録を更新します' : '新しく登録します'),
+      dlg.append(el('h3', '', check.exists ? T('記録を更新します') : T('新しく登録します')),
         el('p', '', form.publicTop50
-          ? 'ランキングには次の内容と、ベスト枠（☆7まで・☆6まで・☆5まで それぞれのレート対象曲50譜面）が公開されます（匿名の場合、アイコンは初期アイコンで表示されます）。ユーザー名とPINは公開されません。'
-          : 'ランキングには次の内容が公開されます（匿名の場合、アイコンは初期アイコンで表示されます）。ベスト枠は管理者の確認用に送信されますが、公開はされません。ユーザー名とPINは公開されません。'),
+          ? T('ランキングには次の内容と、ベスト枠（☆7まで・☆6まで・☆5まで それぞれのレート対象曲50譜面）が公開されます（匿名の場合、アイコンは初期アイコンで表示されます）。ユーザー名とPINは公開されません。')
+          : T('ランキングには次の内容が公開されます（匿名の場合、アイコンは初期アイコンで表示されます）。ベスト枠は管理者の確認用に送信されますが、公開はされません。ユーザー名とPINは公開されません。')),
         el('p', '', form.publicAchv
-          ? '☆6・☆7を達成した MASTER・Re:MASTER の譜面（スコアと☆）も公開されます。'
-          : '☆6・☆7達成譜面は送信されますが、公開はされません（マイページの設定でいつでも公開に切り替えられます）。'));
+          ? T('☆6・☆7を達成した MASTER・Re:MASTER の譜面（スコアと☆）も公開されます。')
+          : T('☆6・☆7達成譜面は送信されますが、公開はされません（マイページの設定でいつでも公開に切り替えられます）。')));
 
       const pv = el('div', 'dxr-preview');
       if (form.showIcon && iconFile) {
@@ -1996,25 +1994,25 @@
       }
       const tx = el('div');
       tx.append(
-        el('div', 'nm', form.anonymous ? `匿名#${check.anonCode}` : form.displayName),
-        el('div', 'rt', `☆7まで ${full.rating.toFixed(3)}（${rankName}）／☆6まで ${cap6.rating.toFixed(3)}（${rankCap6}）／☆5まで ${cap5.rating.toFixed(3)}（${rankCap5}）`)
+        el('div', 'nm', form.anonymous ? T('匿名#{0}', check.anonCode) : form.displayName),
+        el('div', 'rt', T('☆7まで {0}（{1}）／☆6まで {2}（{3}）／☆5まで {4}（{5}）', full.rating.toFixed(3), rankName, cap6.rating.toFixed(3), rankCap6, cap5.rating.toFixed(3), rankCap5))
       );
       if (counts) {
         tx.appendChild(el('div', 'rt',
           [7, 6, 5].map((n) => {
             const mas = counts[`star${n}Mas`], re = counts[`star${n}Remas`];
-            return `☆${n}達成 ${mas + re}譜面（MAS ${mas}／Re:MAS ${re}）`;
-          }).join('・')));
+            return T('☆{0}達成 {1}譜面（MAS {2}／Re:MAS {3}）', n, mas + re, mas, re);
+          }).join(T('・'))));
       }
       pv.appendChild(tx);
       dlg.appendChild(pv);
-      if (form.showIcon && !iconFile) dlg.appendChild(el('p', '', 'カメラで撮影した写真をアイコンにしている場合、ランキングではカメラマークで表示されます（写真は送信されません）。'));
-      if (form.anonymous) dlg.appendChild(el('p', '', `あなたの匿名表記は「匿名#${check.anonCode}」です。ランキングで自分の記録を探すときの目印になります。`));
+      if (form.showIcon && !iconFile) dlg.appendChild(el('p', '', T('カメラで撮影した写真をアイコンにしている場合、ランキングではカメラマークで表示されます（写真は送信されません）。')));
+      if (form.anonymous) dlg.appendChild(el('p', '', T('あなたの匿名表記は「匿名#{0}」です。ランキングで自分の記録を探すときの目印になります。', check.anonCode)));
 
       const err = el('div', 'dxr-err');
       const actions = el('div', 'dxr-actions');
-      const back = el('button', '', '戻る');
-      const send = el('button', 'primary', check.exists ? '更新する' : '登録する');
+      const back = el('button', '', T('戻る'));
+      const send = el('button', 'primary', check.exists ? T('更新する') : T('登録する'));
       back.type = send.type = 'button';
       back.onclick = () => inputView(form);
       actions.append(back, send);
@@ -2023,15 +2021,15 @@
       send.onclick = async () => {
         send.disabled = true;
         back.disabled = true;
-        err.textContent = '送信中…';
+        err.textContent = T('送信中…');
         try {
           const r = await callRanking({
             ...buildSubmitBody(profile, results, counts, form, scored),
             username: form.username,
             pin: form.pin,
-          }, () => { err.textContent = '混み合っているため、送り直しています…'; });
+          }, () => { err.textContent = T('混み合っているため、送り直しています…'); });
           if (!r.ok) {
-            err.textContent = r.error || '登録できませんでした。';
+            err.textContent = r.error || T('登録できませんでした。');
             send.disabled = false;
             back.disabled = false;
             return;
@@ -2044,7 +2042,7 @@
           } catch { /* 保存できない環境では何もしない */ }
           doneView(r, form);
         } catch (e) {
-          err.textContent = '通信に失敗しました。時間をおいてもう一度お試しください。';
+          err.textContent = T('通信に失敗しました。時間をおいてもう一度お試しください。');
           send.disabled = false;
           back.disabled = false;
         }
@@ -2054,15 +2052,15 @@
     // ---- 完了画面 ----
     function doneView(r, form) {
       dlg.replaceChildren();
-      dlg.append(el('h3', '', r.created ? '登録しました' : '更新しました'),
-        el('div', 'dxr-ok', form.anonymous ? `「匿名#${r.anonCode}」としてランキングに掲載されます。` : `「${form.displayName}」としてランキングに掲載されます。`),
-        el('p', '', 'ランキングへの反映には少し時間がかかることがあります。'));
+      dlg.append(el('h3', '', r.created ? T('登録しました') : T('更新しました')),
+        el('div', 'dxr-ok', form.anonymous ? T('「匿名#{0}」としてランキングに掲載されます。', r.anonCode) : T('「{0}」としてランキングに掲載されます。', form.displayName)),
+        el('p', '', T('ランキングへの反映には少し時間がかかることがあります。')));
       const actions = el('div', 'dxr-actions');
-      const link = el('a', '', 'ランキングを見る ›');
+      const link = el('a', '', T('ランキングを見る ›'));
       link.href = RANKING_PAGE;
       link.target = '_blank';
       link.rel = 'noopener';
-      const ok = el('button', 'primary', '閉じる');
+      const ok = el('button', 'primary', T('閉じる'));
       ok.type = 'button';
       ok.onclick = close;
       actions.append(link, ok);
@@ -2432,7 +2430,7 @@
 
     const platesCaption = el('p', 'dxr-plates-caption', T('3種類のレートを計算しました。押すと、下の表と画像化するレートが切り替わります。'));
     ui.body.append(player, platesCaption, plates, ...(counts || bc ? [countBox] : []), layoutSel.el, shareBtn, showLabel,
-      ...(bonus ? [] : [...(IS_INTL ? [] : [rankBtn]), ...(SHOW_RECOMMEND ? [recBtn] : [])]), listHead, ...lists, note);
+      ...(bonus ? [] : [rankBtn, ...(SHOW_RECOMMEND ? [recBtn] : [])]), listHead, ...lists, note);
   }
 
   // ============================================================
@@ -2719,10 +2717,10 @@
   // 譜面データビューアと同じ形の選択画面（レベル・難易度・曲名で絞り込み、50件ずつ表示）
   function favPicker(onPick) {
     const box = el('div', 'dxr-picker');
-    const status = el('p', 'dxr-card-desc', '譜面の一覧を読み込み中…');
+    const status = el('p', 'dxr-card-desc', T('譜面の一覧を読み込み中…'));
     box.appendChild(status);
     loadFavCharts().then(({ list }) => {
-      if (!list.length) { status.textContent = '譜面の一覧を読み込めませんでした。時間をおいてお試しください。'; return; }
+      if (!list.length) { status.textContent = T('譜面の一覧を読み込めませんでした。時間をおいてお試しください。'); return; }
       status.remove();
       // 譜面定数の範囲（下限・上限。0.1刻み）。null は制限なし
       let cMin = null;
@@ -2737,8 +2735,8 @@
       const kindTabsP = el('div', 'dxr-ptabs');
       const search = el('input', 'dxr-psearch');
       search.type = 'search';
-      search.placeholder = '曲名で絞り込み';
-      search.setAttribute('aria-label', '曲名で絞り込み');
+      search.placeholder = T('曲名で絞り込み');
+      search.setAttribute('aria-label', T('曲名で絞り込み'));
       const info = el('p', 'dxr-card-desc');
       const listBox = el('div');
       box.append(levelTabs, diffTabs, kindTabsP, search, info, listBox);
@@ -2768,18 +2766,18 @@
           sel.onchange = () => { onChange(Number(sel.value)); page = 1; renderTabs(); renderList(); };
           return sel;
         };
-        levelTabs.replaceChildren(el('span', 'dxr-crange-label', '譜面定数'),
-          mkSel(cMin ?? lo, '譜面定数の下限', (v) => { cMin = v; if (cMax !== null && cMax < v) cMax = v; }),
+        levelTabs.replaceChildren(el('span', 'dxr-crange-label', T('譜面定数')),
+          mkSel(cMin ?? lo, T('譜面定数の下限'), (v) => { cMin = v; if (cMax !== null && cMax < v) cMax = v; }),
           el('span', 'dxr-crange-sep', '〜'),
-          mkSel(cMax ?? hi, '譜面定数の上限', (v) => { cMax = v; if (cMin !== null && cMin > v) cMin = v; }),
-          tab('すべて', cMin === null && cMax === null, '', () => { cMin = null; cMax = null; page = 1; renderTabs(); renderList(); }));
-        diffTabs.replaceChildren(tab('すべての難易度', diffs === null, '', () => { diffs = null; page = 1; renderTabs(); renderList(); }),
+          mkSel(cMax ?? hi, T('譜面定数の上限'), (v) => { cMax = v; if (cMin !== null && cMin > v) cMin = v; }),
+          tab(T('すべて'), cMin === null && cMax === null, '', () => { cMin = null; cMax = null; page = 1; renderTabs(); renderList(); }));
+        diffTabs.replaceChildren(tab(T('すべての難易度'), diffs === null, '', () => { diffs = null; page = 1; renderTabs(); renderList(); }),
           ...diffsHere.map((d) => tab(d, !!diffs?.has(d), `pd-${d.replace(':', '').toUpperCase()}`, () => {
             if (diffs === null) diffs = new Set([d]);
             else if (diffs.has(d)) { diffs.delete(d); if (!diffs.size) diffs = null; } else diffs.add(d);
             page = 1; renderTabs(); renderList();
           })));
-        kindTabsP.replaceChildren(...[['*', 'DX・ST'], ['DX', 'DXのみ'], ['ST', 'STのみ']].map(([v, label]) =>
+        kindTabsP.replaceChildren(...[['*', T('DX・ST')], ['DX', T('DXのみ')], ['ST', T('STのみ')]].map(([v, label]) =>
           tab(label, kindF === v, '', () => { kindF = v; page = 1; renderTabs(); renderList(); })));
       };
       const pager = (total) => pagerEl(page, total, (n) => { page = n; renderList(); info.scrollIntoView({ block: 'start' }); });
@@ -2790,9 +2788,9 @@
         const total = Math.max(1, Math.ceil(items.length / FAV_PAGE_SIZE));
         page = Math.min(Math.max(page, 1), total);
         const shown = items.slice((page - 1) * FAV_PAGE_SIZE, page * FAV_PAGE_SIZE);
-        info.textContent = `${items.length} 譜面（押して選ぶ）`;
+        info.textContent = T('{0} 譜面（押して選ぶ）', items.length);
         const ul = el('div', 'dxr-list');
-        if (!shown.length) ul.appendChild(el('div', 'dxr-rec-empty', '見つかりませんでした。'));
+        if (!shown.length) ul.appendChild(el('div', 'dxr-rec-empty', T('見つかりませんでした。')));
         shown.forEach((x) => {
           const row = el('button', 'dxr-prow' + (selected === x ? ' is-on' : ''));
           row.type = 'button';
@@ -2812,10 +2810,10 @@
           // 選んだ譜面のすぐ下に、登録ボタンを出す
           if (selected === x) {
             const bar = el('div', 'dxr-pconfirm');
-            const ok = el('button', 'primary', 'この譜面をお気に入りに登録');
+            const ok = el('button', 'primary', T('この譜面をお気に入りに登録'));
             ok.type = 'button';
             ok.onclick = () => onPick(x, ok);
-            const cancel = el('button', '', 'やめる');
+            const cancel = el('button', '', T('やめる'));
             cancel.type = 'button';
             cancel.onclick = () => { selected = null; renderList(); };
             bar.append(cancel, ok);
@@ -2863,27 +2861,27 @@
     };
 
     function loginView() {
-      card.replaceChildren(el('h3', '', '保存した記録・ランキングの設定・お気に入り譜面・PINの変更'),
-        el('p', 'dxr-card-desc', 'ランキングに登録したユーザー名とPINで入ります。最後に保存した記録の確認、ランキングに載せる名前や自動登録の設定、お気に入り譜面（ランキングページに表示）、PINの変更ができます。'));
-      const user = field(card, 'ユーザー名', 'text', savedUser, '', { autocomplete: 'username', autocapitalize: 'off', spellcheck: 'false' });
+      card.replaceChildren(el('h3', '', T('保存した記録・ランキングの設定・お気に入り譜面・PINの変更')),
+        el('p', 'dxr-card-desc', T('ランキングに登録したユーザー名とPINで入ります。最後に保存した記録の確認、ランキングに載せる名前や自動登録の設定、お気に入り譜面（ランキングページに表示）、PINの変更ができます。')));
+      const user = field(card, T('ユーザー名'), 'text', savedUser, '', { autocomplete: 'username', autocapitalize: 'off', spellcheck: 'false' });
       const pin = field(card, 'PIN', 'password', '', '', { inputmode: 'numeric', autocomplete: 'current-password' });
       const err = el('div', 'dxr-err');
       const actions = el('div', 'dxr-actions');
-      const go = el('button', 'primary', '入る');
+      const go = el('button', 'primary', T('入る'));
       go.type = 'button';
       actions.appendChild(go);
       card.append(err, actions);
       const submit = async () => {
         const username = user.value.trim().toLowerCase();
         const p = pin.value.trim();
-        if (!/^[a-z0-9_]{3,16}$/.test(username)) { err.textContent = 'ユーザー名は英数字とアンダーバーで3〜16文字です。'; return; }
-        if (!/^\d{4,8}$/.test(p)) { err.textContent = 'PINは数字4〜8桁です。'; return; }
+        if (!/^[a-z0-9_]{3,16}$/.test(username)) { err.textContent = T('ユーザー名は英数字とアンダーバーで3〜16文字です。'); return; }
+        if (!/^\d{4,8}$/.test(p)) { err.textContent = T('PINは数字4〜8桁です。'); return; }
         go.disabled = true;
-        err.textContent = '確認中…';
-        const r = await callRanking({ action: 'mypage', username, pin: p }, () => { err.textContent = '混み合っています。送り直しています…'; })
-          .catch(() => ({ ok: false, error: '通信できませんでした。' }));
+        err.textContent = T('確認中…');
+        const r = await callRanking({ action: 'mypage', username, pin: p }, () => { err.textContent = T('混み合っています。送り直しています…'); })
+          .catch(() => ({ ok: false, error: T('通信できませんでした。') }));
         go.disabled = false;
-        if (!r.ok) { err.textContent = r.error || '確認できませんでした。'; return; }
+        if (!r.ok) { err.textContent = r.error || T('確認できませんでした。'); return; }
         try { localStorage.setItem(USER_KEY, username); } catch { /* 保存できなくても続ける */ }
         savedUser = username;
         memberView({ username, pin: p, info: r });
@@ -2896,50 +2894,50 @@
       const { info } = auth;
       card.replaceChildren();
       const head = el('div', 'dxr-card-head');
-      head.append(el('h3', '', info.anonymous ? `匿名#${info.anonCode}` : (info.displayName || auth.username)));
-      const out = el('button', 'dxr-mini', 'ログアウト');
+      head.append(el('h3', '', info.anonymous ? T('匿名#{0}', info.anonCode) : (info.displayName || auth.username)));
+      const out = el('button', 'dxr-mini', T('ログアウト'));
       out.type = 'button';
       out.onclick = loginView;
       head.appendChild(out);
       card.appendChild(head);
-      card.appendChild(el('p', 'dxr-card-desc', `ユーザー名：${auth.username}`));
+      card.appendChild(el('p', 'dxr-card-desc', T('ユーザー名：{0}', auth.username)));
 
       // ---- 最後に保存した記録（押したときに読み込む） ----
       const recBox = el('div', 'dxr-sub');
       card.appendChild(recBox);
-      recBox.append(el('h4', '', '最後に保存した記録'),
-        el('p', 'dxr-card-desc', 'ランキングに最後に登録・更新したときのレートとレート対象曲です（ベスト枠を公開していなくても、自分は見られます）。'));
-      const recBtn = el('button', 'dxr-rank-open', '保存した記録を見る');
+      recBox.append(el('h4', '', T('最後に保存した記録')),
+        el('p', 'dxr-card-desc', T('ランキングに最後に登録・更新したときのレートとレート対象曲です（ベスト枠を公開していなくても、自分は見られます）。')));
+      const recBtn = el('button', 'dxr-rank-open', T('保存した記録を見る'));
       recBtn.type = 'button';
       recBtn.style.margin = '4px 0 0';
       const recOut = el('div');
       recBox.append(recBtn, recOut);
       recBtn.onclick = async () => {
         recBtn.disabled = true;
-        recOut.replaceChildren(el('p', 'dxr-card-desc', '読み込み中…'));
+        recOut.replaceChildren(el('p', 'dxr-card-desc', T('読み込み中…')));
         try {
           const [rec, jackets] = await Promise.all([
             callRanking({ action: 'myRecord', username: auth.username, pin: auth.pin }, () => {
-              recOut.replaceChildren(el('p', 'dxr-card-desc', '混み合っています。送り直しています…'));
+              recOut.replaceChildren(el('p', 'dxr-card-desc', T('混み合っています。送り直しています…')));
             }),
             loadJacketMap(),
           ]);
-          if (!rec.ok) throw new Error(rec.error || '記録を読み込めませんでした。');
+          if (!rec.ok) throw new Error(rec.error || T('記録を読み込めませんでした。'));
           recBtn.remove();
           recOut.replaceChildren(savedRecordView(rec, profile, jackets));
         } catch (e) {
           recBtn.disabled = false;
-          recOut.replaceChildren(el('p', 'dxr-err', 'エラー: ' + e.message));
+          recOut.replaceChildren(el('p', 'dxr-err', T('エラー: ') + e.message));
         }
       };
 
       // ---- ランキングの設定（表示名・匿名・ベスト枠の公開・自動登録） ----
       const setBox = el('div', 'dxr-sub');
       card.appendChild(setBox);
-      setBox.appendChild(el('h4', '', 'ランキングの設定'));
-      setBox.appendChild(el('p', 'dxr-card-desc', 'ランキングに載せる内容です。保存するとすぐにランキングに反映され、次からの登録（自動登録を含む）でもこの内容を使います。'));
+      setBox.appendChild(el('h4', '', T('ランキングの設定')));
+      setBox.appendChild(el('p', 'dxr-card-desc', T('ランキングに載せる内容です。保存するとすぐにランキングに反映され、次からの登録（自動登録を含む）でもこの内容を使います。')));
       const local = loadJson(FORM_KEY) || {};
-      const dnInput = field(setBox, '表示名', 'text', info.displayName || local.displayName || profile.name || '', 'ランキングに表示する名前（20文字まで）', { maxlength: '20' });
+      const dnInput = field(setBox, T('表示名'), 'text', info.displayName || local.displayName || profile.name || '', T('ランキングに表示する名前（20文字まで）'), { maxlength: '20' });
       const chk = (label, checked) => {
         const lab = el('label', 'dxr-check');
         const cb = el('input');
@@ -2949,31 +2947,31 @@
         setBox.appendChild(lab);
         return cb;
       };
-      const anonCb = chk('匿名で掲載する（「匿名#記号」と初期アイコンで表示）', !!info.anonymous);
-      const pubCb = chk('ベスト枠をランキングで公開する', info.publicTop50 !== false);
-      const achvCb = chk('☆6・☆7達成譜面（スコアと☆）をランキングで公開する', info.publicAchv !== false);
+      const anonCb = chk(T('匿名で掲載する（「匿名#記号」と初期アイコンで表示）'), !!info.anonymous);
+      const pubCb = chk(T('ベスト枠をランキングで公開する'), info.publicTop50 !== false);
+      const achvCb = chk(T('☆6・☆7達成譜面（スコアと☆）をランキングで公開する'), info.publicAchv !== false);
       const syncName = () => { dnInput.disabled = anonCb.checked; };
       anonCb.onchange = syncName;
       syncName();
       const setErr = el('div', 'dxr-err');
       const setActions = el('div', 'dxr-actions');
-      const setBtn = el('button', 'primary', '設定を保存');
+      const setBtn = el('button', 'primary', T('設定を保存'));
       setBtn.type = 'button';
       setActions.appendChild(setBtn);
       setBox.append(setErr, setActions);
       setBtn.onclick = async () => {
         const form = { displayName: dnInput.value.trim(), anonymous: anonCb.checked, publicTop50: pubCb.checked, publicAchv: achvCb.checked };
-        if (!form.anonymous && !form.displayName) { setErr.textContent = '表示名を入力するか、匿名で掲載を選んでください。'; return; }
+        if (!form.anonymous && !form.displayName) { setErr.textContent = T('表示名を入力するか、匿名で掲載を選んでください。'); return; }
         setBtn.disabled = true;
-        setErr.textContent = '保存中…';
+        setErr.textContent = T('保存中…');
         const r = await callRanking({ action: 'setProfile', username: auth.username, pin: auth.pin, ...form, icon: iconValueOf(profile, form.anonymous) },
-          () => { setErr.textContent = '混み合っています。送り直しています…'; })
-          .catch(() => ({ ok: false, error: '通信できませんでした。' }));
+          () => { setErr.textContent = T('混み合っています。送り直しています…'); })
+          .catch(() => ({ ok: false, error: T('通信できませんでした。') }));
         setBtn.disabled = false;
-        if (!r.ok) { setErr.textContent = r.error || '保存できませんでした。'; return; }
+        if (!r.ok) { setErr.textContent = r.error || T('保存できませんでした。'); return; }
         saveJson(FORM_KEY, form);
         setErr.textContent = '';
-        setErr.replaceChildren(el('span', 'dxr-ok', '設定を保存しました。'));
+        setErr.replaceChildren(el('span', 'dxr-ok', T('設定を保存しました。')));
       };
 
       // 自動登録：このブラウザに「自動登録用の鍵」を保存し、レート計算のあとに自動で登録・更新する（PINは保存しない）
@@ -2983,12 +2981,12 @@
       autoCb.type = 'checkbox';
       const savedAuto = loadJson(AUTO_KEY);
       autoCb.checked = !!(savedAuto && savedAuto.token && savedAuto.username === auth.username);
-      autoLab.append(autoCb, document.createTextNode('レート計算のあとに、自動でランキングに登録・更新する'));
+      autoLab.append(autoCb, document.createTextNode(T('レート計算のあとに、自動でランキングに登録・更新する')));
       const autoNote = el('p', 'dxr-card-desc',
-        'このブラウザだけの設定です。PINは保存せず、自動登録専用の鍵を保存します（鍵でできるのはランキングの登録・更新だけです）。'
-        + '別のブラウザで設定すると、こちらの設定は無効になります。');
+        T('このブラウザだけの設定です。PINは保存せず、自動登録専用の鍵を保存します（鍵でできるのはランキングの登録・更新だけです）。')
+        + T('別のブラウザで設定すると、こちらの設定は無効になります。'));
       if (info.autoUpload && !autoCb.checked) {
-        autoNote.textContent += '（現在、別のブラウザで自動登録が設定されています）';
+        autoNote.textContent += T('（現在、別のブラウザで自動登録が設定されています）');
       }
       const autoErr = el('div', 'dxr-err');
       autoBox.append(autoLab, autoNote, autoErr);
@@ -2996,13 +2994,13 @@
       autoCb.onchange = async () => {
         const on = autoCb.checked;
         autoCb.disabled = true;
-        autoErr.textContent = on ? '設定中…' : '解除中…';
+        autoErr.textContent = on ? T('設定中…') : T('解除中…');
         const r = await callRanking({ action: on ? 'issueToken' : 'revokeToken', username: auth.username, pin: auth.pin })
-          .catch(() => ({ ok: false, error: '通信できませんでした。' }));
+          .catch(() => ({ ok: false, error: T('通信できませんでした。') }));
         autoCb.disabled = false;
         if (!r.ok) {
           autoCb.checked = !on;
-          autoErr.textContent = r.error || '設定できませんでした。';
+          autoErr.textContent = r.error || T('設定できませんでした。');
           return;
         }
         if (on) {
@@ -3013,7 +3011,7 @@
           saveJson(AUTO_KEY, null);
         }
         autoErr.textContent = '';
-        autoErr.replaceChildren(el('span', 'dxr-ok', on ? '自動登録を設定しました。次のレート計算から自動で登録されます。' : '自動登録を解除しました。'));
+        autoErr.replaceChildren(el('span', 'dxr-ok', on ? T('自動登録を設定しました。次のレート計算から自動で登録されます。') : T('自動登録を解除しました。')));
       };
 
       // ---- お気に入り譜面 ----
@@ -3021,7 +3019,7 @@
       card.appendChild(fav);
       let current = info.favorite || null;
       const favView = () => {
-        fav.replaceChildren(el('h4', '', 'お気に入り譜面'));
+        fav.replaceChildren(el('h4', '', T('お気に入り譜面')));
         const now = el('div', 'dxr-fav-now');
         if (current) {
           const main = el('div');
@@ -3034,19 +3032,19 @@
             if (song?.img) jk.replaceWith(jacketBox(song.img));
           });
         } else {
-          now.appendChild(el('div', 'dxr-card-desc', 'まだ登録されていません。'));
+          now.appendChild(el('div', 'dxr-card-desc', T('まだ登録されていません。')));
         }
         fav.appendChild(now);
-        fav.appendChild(el('p', 'dxr-card-desc', '1譜面だけ登録できます。ランキングでは、ジャケット・曲名・ST/DX・難易度が表示されます。'));
+        fav.appendChild(el('p', 'dxr-card-desc', T('1譜面だけ登録できます。ランキングでは、ジャケット・曲名・ST/DX・難易度が表示されます。')));
         const err = el('div', 'dxr-err');
         const actions = el('div', 'dxr-actions');
         if (current) {
-          const clear = el('button', '', 'お気に入りを外す');
+          const clear = el('button', '', T('お気に入りを外す'));
           clear.type = 'button';
           clear.onclick = () => save(null, clear, err);
           actions.appendChild(clear);
         }
-        const open = el('button', 'primary', current ? '別の譜面に変える' : '譜面を選ぶ');
+        const open = el('button', 'primary', current ? T('別の譜面に変える') : T('譜面を選ぶ'));
         open.type = 'button';
         actions.appendChild(open);
         const holder = el('div');
@@ -3058,42 +3056,42 @@
       };
       const save = async (value, button, err) => {
         button.disabled = true;
-        err.textContent = '保存中…';
+        err.textContent = T('保存中…');
         const r = await callRanking({ action: 'setFavorite', username: auth.username, pin: auth.pin, favorite: value },
-          () => { err.textContent = '混み合っています。送り直しています…'; })
-          .catch(() => ({ ok: false, error: '通信できませんでした。' }));
+          () => { err.textContent = T('混み合っています。送り直しています…'); })
+          .catch(() => ({ ok: false, error: T('通信できませんでした。') }));
         button.disabled = false;
-        if (!r.ok) { err.textContent = r.error || '保存できませんでした。'; return; }
+        if (!r.ok) { err.textContent = r.error || T('保存できませんでした。'); return; }
         current = r.favorite || null;
         favView();
-        fav.appendChild(el('div', 'dxr-ok', current ? 'お気に入り譜面を登録しました。' : 'お気に入り譜面を外しました。'));
+        fav.appendChild(el('div', 'dxr-ok', current ? T('お気に入り譜面を登録しました。') : T('お気に入り譜面を外しました。')));
       };
       favView();
 
       // ---- PINの変更 ----
       const pinBox = el('div', 'dxr-sub');
-      pinBox.appendChild(el('h4', '', 'PINの変更'));
-      pinBox.appendChild(el('p', 'dxr-card-desc', '管理者から仮のPINを受け取った方は、ここで自分で決めたPINに変更してください。'));
-      const np1 = field(pinBox, '新しいPIN', 'password', '', '数字4〜8桁', { inputmode: 'numeric', autocomplete: 'new-password' });
-      const np2 = field(pinBox, '新しいPIN（確認のためもう一度）', 'password', '', '', { inputmode: 'numeric', autocomplete: 'new-password' });
+      pinBox.appendChild(el('h4', '', T('PINの変更')));
+      pinBox.appendChild(el('p', 'dxr-card-desc', T('管理者から仮のPINを受け取った方は、ここで自分で決めたPINに変更してください。')));
+      const np1 = field(pinBox, T('新しいPIN'), 'password', '', T('数字4〜8桁'), { inputmode: 'numeric', autocomplete: 'new-password' });
+      const np2 = field(pinBox, T('新しいPIN（確認のためもう一度）'), 'password', '', '', { inputmode: 'numeric', autocomplete: 'new-password' });
       const pinErr = el('div', 'dxr-err');
       const pinActions = el('div', 'dxr-actions');
-      const pinBtn = el('button', 'primary', 'PINを変更');
+      const pinBtn = el('button', 'primary', T('PINを変更'));
       pinBtn.type = 'button';
       pinActions.appendChild(pinBtn);
       pinBox.append(pinErr, pinActions);
       card.appendChild(pinBox);
       pinBtn.onclick = async () => {
         const v = np1.value.trim();
-        if (!/^\d{4,8}$/.test(v)) { pinErr.textContent = '新しいPINは数字4〜8桁にしてください。'; return; }
-        if (v !== np2.value.trim()) { pinErr.textContent = '新しいPINが2回とも同じになるように入力してください。'; return; }
+        if (!/^\d{4,8}$/.test(v)) { pinErr.textContent = T('新しいPINは数字4〜8桁にしてください。'); return; }
+        if (v !== np2.value.trim()) { pinErr.textContent = T('新しいPINが2回とも同じになるように入力してください。'); return; }
         pinBtn.disabled = true;
-        pinErr.textContent = '変更中…';
+        pinErr.textContent = T('変更中…');
         const r = await callRanking({ action: 'changePin', username: auth.username, pin: auth.pin, newPin: v },
-          () => { pinErr.textContent = '混み合っています。送り直しています…'; })
-          .catch(() => ({ ok: false, error: '通信できませんでした。' }));
+          () => { pinErr.textContent = T('混み合っています。送り直しています…'); })
+          .catch(() => ({ ok: false, error: T('通信できませんでした。') }));
         pinBtn.disabled = false;
-        if (!r.ok) { pinErr.textContent = r.error || '変更できませんでした。'; return; }
+        if (!r.ok) { pinErr.textContent = r.error || T('変更できませんでした。'); return; }
         auth.pin = v;
         np1.value = np2.value = '';
         // PINを変えると自動登録の鍵も無効になるので、このブラウザの設定も消す
@@ -3103,7 +3101,7 @@
           autoCb.checked = false;
         }
         pinErr.textContent = '';
-        pinErr.replaceChildren(Object.assign(el('span', 'dxr-ok', 'PINを変更しました。次からは新しいPINを使ってください。')));
+        pinErr.replaceChildren(Object.assign(el('span', 'dxr-ok', T('PINを変更しました。次からは新しいPINを使ってください。'))));
       };
     }
 
@@ -3186,21 +3184,21 @@
       publicTop50: form.publicTop50 !== false,
       publicAchv: form.publicAchv !== false,
     };
-    const box = el('div', 'dxr-auto', 'ランキングに自動で登録しています…');
+    const box = el('div', 'dxr-auto', T('ランキングに自動で登録しています…'));
     ui.body.prepend(box);
     const r = await callRanking({ ...buildSubmitBody(profile, results, counts, settings, scored), username: auto.username, token: auto.token },
-      () => { box.textContent = '混み合っているため、送り直しています…'; })
-      .catch(() => ({ ok: false, error: '通信できませんでした。' }));
+      () => { box.textContent = T('混み合っているため、送り直しています…'); })
+      .catch(() => ({ ok: false, error: T('通信できませんでした。') }));
     if (r.ok) {
-      box.textContent = `ランキングに自動で登録しました（${settings.anonymous ? `匿名#${r.anonCode}` : settings.displayName}）。`;
-      const a = el('a', '', 'ランキングを見る ›');
+      box.textContent = T('ランキングに自動で登録しました（{0}）。', settings.anonymous ? T('匿名#{0}', r.anonCode) : settings.displayName);
+      const a = el('a', '', T('ランキングを見る ›'));
       a.href = RANKING_PAGE;
       a.target = '_blank';
       a.rel = 'noopener';
       box.append(' ', a);
     } else {
       box.classList.add('is-error');
-      box.textContent = `自動登録できませんでした：${r.error || '不明なエラー'}`;
+      box.textContent = T('自動登録できませんでした：{0}', r.error || T('不明なエラー'));
       if (r.tokenInvalid) saveJson(AUTO_KEY, null);
     }
   }
@@ -3208,7 +3206,7 @@
   function renderMyPage(ui, profile, ctx) {
     ui.status('');
     const player = profileEl(ui, profile, T('マイページ'));
-    ui.body.append(player, recommendCard(ctx, profile), rareCard(), ...(IS_INTL ? [] : [memberCard(profile)]));
+    ui.body.append(player, recommendCard(ctx, profile), rareCard(), memberCard(profile));
   }
 
   // 起動時のメニュー（ログインを確認したあとに表示）
@@ -3225,14 +3223,8 @@
       b.onclick = onClick;
       menu.appendChild(b);
     };
-    if (IS_INTL) {
-      // International版は試験中：ランキング・マイページの登録情報（データベース）は使わない
-      item(T('レート計算'), T('2fRATE を計算して、レート対象曲の一覧・画像化を行います（International版は試験中のため、ランキング登録はできません）'), () => go('rating'), true);
-      item(T('マイページ'), T('達成人数で見る自分の達成譜面・おすすめ楽曲'), () => go('mypage'), false);
-    } else {
-      item(T('レート計算・ランキング登録'), T('2fRATE を計算して、レート対象曲の一覧・画像化・ランキング登録を行います'), () => go('rating'), true);
-      item(T('マイページ'), T('最後に保存した記録・達成人数で見る自分の達成譜面・おすすめ楽曲・ランキングの設定（自動登録）・お気に入り譜面・PINの変更'), () => go('mypage'), false);
-    }
+    item(T('レート計算・ランキング登録'), T('2fRATE を計算して、レート対象曲の一覧・画像化・ランキング登録を行います'), () => go('rating'), true);
+    item(T('マイページ'), T('最後に保存した記録・達成人数で見る自分の達成譜面・おすすめ楽曲・ランキングの設定（自動登録）・お気に入り譜面・PINの変更'), () => go('mypage'), false);
     // オマケ（対象の譜面を絞ったレート）は別枠にする
     const main = menu.cloneNode(false);
     main.append(...menu.childNodes);
@@ -3296,9 +3288,9 @@
     const box = el('div');
     const counts = rec.counts;
     box.appendChild(el('p', 'dxr-card-desc',
-      `保存した日時：${fmtDate(rec.updatedAt) || '不明'}` +
-      (counts ? `　／　☆7達成 ${counts.star7Mas + counts.star7Remas}・☆6達成 ${counts.star6Mas + counts.star6Remas}` +
-        (counts.star5Mas !== null && counts.star5Mas !== undefined ? `・☆5達成 ${counts.star5Mas + counts.star5Remas}` : '') + ' 譜面' : '')));
+      T('保存した日時：{0}', fmtDate(rec.updatedAt) || T('不明')) +
+      (counts ? T('　／　☆7達成 {0}・☆6達成 {1}', counts.star7Mas + counts.star7Remas, counts.star6Mas + counts.star6Remas) +
+        (counts.star5Mas !== null && counts.star5Mas !== undefined ? T('・☆5達成 {0}', counts.star5Mas + counts.star5Remas) : '') + T(' 譜面') : '')));
     // 以前の版で登録された記録は、☆7まで の配列だけが入っている
     const frames = Array.isArray(rec.top50) ? { full: rec.top50 } : (rec.top50 || {});
     const tabs = el('div', 'dxr-tabs');
@@ -3317,11 +3309,11 @@
       rateRow.append(el('span', 'dxr-plate-label', `2fRATE${'☆' + mode.capStars}`), icon, value);
       const list = frames[modeId];
       if (!Array.isArray(list) || !list.length) {
-        out.replaceChildren(rateRow, el('p', 'dxr-card-desc', `この記録には「${mode.label}」のレート対象曲が保存されていません（以前の版で登録した記録です）。`));
+        out.replaceChildren(rateRow, el('p', 'dxr-card-desc', T('この記録には「{0}」のレート対象曲が保存されていません（以前の版で登録した記録です）。', mode.label)));
         return;
       }
       const result = { mode, rating, top: list.map((t) => savedSong(t, modeId)) };
-      const share = el('button', 'dxr-share', `「${mode.label}」のレート対象曲を画像にする`);
+      const share = el('button', 'dxr-share', T('「{0}」のレート対象曲を画像にする', mode.label));
       share.type = 'button';
       share.style.margin = '0 0 8px';
       const opt = el('label', 'dxr-share-opt');
@@ -3329,7 +3321,7 @@
       const check = el('input');
       check.type = 'checkbox';
       check.checked = true;
-      opt.append(check, document.createTextNode('画像にプレイヤー名と称号を載せる'));
+      opt.append(check, document.createTextNode(T('画像にプレイヤー名と称号を載せる')));
       const layoutSel = layoutPicker();
       share.onclick = () => openShareImage(profile, result, jackets, share, { hideProfile: !check.checked, ...layoutSel.opts() });
       out.replaceChildren(rateRow, layoutSel.el, share, opt, buildList(result.top, mode, jackets));
@@ -3353,10 +3345,10 @@
   function renderOffline(ui) {
     const card = el('div', 'dxr-card');
     card.append(
-      el('h3', '', '保存済みのデータから表示（検証用）'),
-      el('p', 'dxr-card-desc', 'ランキングに保存されているベスト枠（公開している人のみ）から、レート対象曲の一覧と画像を作ります。' +
-        'ログインは不要です。称号は保存していないため、画像に載せたい場合は下の欄に入力してください。'));
-    const msg = el('p', 'dxr-card-desc', 'ランキングを読み込み中…');
+      el('h3', '', T('保存済みのデータから表示（検証用）')),
+      el('p', 'dxr-card-desc', T('ランキングに保存されているベスト枠（公開している人のみ）から、レート対象曲の一覧と画像を作ります。') +
+        T('ログインは不要です。称号は保存していないため、画像に載せたい場合は下の欄に入力してください。')));
+    const msg = el('p', 'dxr-card-desc', T('ランキングを読み込み中…'));
     card.appendChild(msg);
     ui.body.replaceChildren(card);
 
@@ -3369,12 +3361,12 @@
           fetch(RANKING_API + '?t=' + Date.now()).then((r) => r.json()),
           loadJacketMap(),
         ]);
-        if (!data.ok) throw new Error(data.error || 'ランキングを取得できませんでした。');
+        if (!data.ok) throw new Error(data.error || T('ランキングを取得できませんでした。'));
         users = (data.list || []).filter((r) => r.hasTop50).sort((a, b) => (b.rateFull || 0) - (a.rateFull || 0));
-        if (!users.length) throw new Error('ベスト枠を公開している記録がありません。');
+        if (!users.length) throw new Error(T('ベスト枠を公開している記録がありません。'));
         jackets = map;
       } catch (e) {
-        msg.textContent = 'エラー: ' + e.message;
+        msg.textContent = T('エラー: ') + e.message;
         msg.className = 'dxr-err';
         console.error(e);
         return;
@@ -3385,7 +3377,7 @@
       let showId = 0;
 
       const tabs = el('div', 'dxr-tabs');
-      const field = el('label', 'dxr-field', 'ユーザー（☆7まで のレートが高い順）');
+      const field = el('label', 'dxr-field', T('ユーザー（☆7まで のレートが高い順）'));
       const select = el('select', 'dxr-off-select');
       users.forEach((u) => {
         const o = el('option', '', `${(Number(u.rateFull) || 0).toFixed(3)}　${u.name}`);
@@ -3394,14 +3386,14 @@
       });
       field.appendChild(select);
       // 称号（ランキングには保存していないので、画像に載せる文字と色を自分で入れる）
-      const trophyField = el('label', 'dxr-field', '画像に載せる称号（空なら称号なし）');
+      const trophyField = el('label', 'dxr-field', T('画像に載せる称号（空なら称号なし）'));
       const trophyInput = el('input');
       trophyInput.type = 'text';
       trophyInput.maxLength = 40;
       trophyField.appendChild(trophyInput);
-      const rankField = el('label', 'dxr-field', '称号の色');
+      const rankField = el('label', 'dxr-field', T('称号の色'));
       const rankSelect = el('select', 'dxr-off-select');
-      [['Normal', 'ノーマル'], ['Bronze', 'ブロンズ'], ['Silver', 'シルバー'], ['Gold', 'ゴールド'], ['Rainbow', 'レインボー']].forEach(([v, t]) => {
+      [['Normal', T('ノーマル')], ['Bronze', T('ブロンズ')], ['Silver', T('シルバー')], ['Gold', T('ゴールド')], ['Rainbow', T('レインボー')]].forEach(([v, t]) => {
         const o = el('option', '', t);
         o.value = v;
         rankSelect.appendChild(o);
@@ -3415,12 +3407,12 @@
         const my = ++showId;
         const u = users.find((x) => x.id === select.value);
         const mode = RATE_MODES.find((m) => m.id === modeId);
-        out.replaceChildren(el('p', 'dxr-card-desc', 'ベスト枠を読み込み中…'));
+        out.replaceChildren(el('p', 'dxr-card-desc', T('ベスト枠を読み込み中…')));
         try {
           let data = cache.get(u.id);
           if (!data) {
             data = await fetch(RANKING_API + '?top50=' + encodeURIComponent(u.id) + '&t=' + Date.now()).then((r) => r.json());
-            if (!data.ok) throw new Error(data.error || 'ベスト枠を取得できませんでした。');
+            if (!data.ok) throw new Error(data.error || T('ベスト枠を取得できませんでした。'));
             cache.set(u.id, data);
           }
           if (my !== showId) return;
@@ -3428,7 +3420,7 @@
           const frames = Array.isArray(data.top50) ? { full: data.top50 } : (data.top50 || {});
           const list = frames[modeId];
           if (!Array.isArray(list) || !list.length) {
-            out.replaceChildren(el('p', 'dxr-card-desc', `この記録には「${mode.label}」のレート対象曲がありません（以前の版で登録された記録です）。`));
+            out.replaceChildren(el('p', 'dxr-card-desc', T('この記録には「{0}」のレート対象曲がありません（以前の版で登録された記録です）。', mode.label)));
             return;
           }
           const profile = {
@@ -3447,7 +3439,7 @@
           icon.innerHTML = rankIconSvg(rank.name); // ツール内で作った固定のSVGのみ
           rateRow.append(el('span', 'dxr-plate-label', `${u.name} ／ 2fRATE${'☆' + mode.capStars}`), icon, value);
 
-          const share = el('button', 'dxr-share', `「${mode.label}」のレート対象曲を画像にする`);
+          const share = el('button', 'dxr-share', T('「{0}」のレート対象曲を画像にする', mode.label));
           share.type = 'button';
           share.style.margin = '0 0 8px';
           const opt = el('label', 'dxr-share-opt');
@@ -3455,7 +3447,7 @@
           const check = el('input');
           check.type = 'checkbox';
           check.checked = true;
-          opt.append(check, document.createTextNode('画像にプレイヤー名と称号を載せる'));
+          opt.append(check, document.createTextNode(T('画像にプレイヤー名と称号を載せる')));
           const layoutSel = layoutPicker();
           // 称号は、押した時点で入力されている文字と色を使う
           share.onclick = () => openShareImage(
@@ -3465,7 +3457,7 @@
           out.replaceChildren(rateRow, layoutSel.el, share, opt, buildList(result.top, mode, jackets));
         } catch (e) {
           if (my !== showId) return;
-          const err = el('p', 'dxr-err', 'エラー: ' + e.message);
+          const err = el('p', 'dxr-err', T('エラー: ') + e.message);
           out.replaceChildren(err);
           console.error(e);
         }
@@ -3518,7 +3510,7 @@
   } catch (e) {
     ui.status(T('エラー: ') + e.message, true);
     console.error(e);
-    if (!IS_INTL) renderOffline(ui); // α版：ログインできないときは、保存済みのデータからの表示（検証用）を出す（日本版のデータベースなので日本版のみ）
+    renderOffline(ui); // α版：ログインできないときは、保存済みのデータからの表示（検証用）を出す
     return;
   }
 
@@ -3559,7 +3551,7 @@
       saveLastRecommend(profile, run);
       ui.status('');
       renderResult(ui, profile, run.results, run.info, run.jackets, { all: run.scored, stats: run.stats, counts: run.counts });
-      if (!IS_INTL) autoUpload(ui, profile, run.results, run.counts, run.scored);
+      autoUpload(ui, profile, run.results, run.counts, run.scored);
     } catch (e) {
       if (left()) return;
       ui.status(T('エラー: ') + e.message, true);
@@ -3856,7 +3848,137 @@
       "{0}（{1} 譜面中 {2}〜{3} 件目）": "{0} ({2}–{3} of {1} charts)",
       "{0}（{1} 譜面）": "{0} ({1} charts)",
       "Lv{0}〜Lv{1} の {2} ページを取得し、{3} の {4} 譜面から計算": "Loaded {2} pages (Lv{0}–Lv{1}); calculated from {4} {3} charts",
-      "Lv{0}〜Lv{1} の {2} ページを取得し、{3} 譜面から計算": "Loaded {2} pages (Lv{0}–Lv{1}); calculated from {3} charts"
+      "Lv{0}〜Lv{1} の {2} ページを取得し、{3} 譜面から計算": "Loaded {2} pages (Lv{0}–Lv{1}); calculated from {3} charts",
+      "Language / 言語 / 언어": "Language / 言語 / 언어",
+      "サーバーの応答を読み取れませんでした。": "Could not read the server response.",
+      "混み合っています。少し時間をおいて、もう一度お試しください。": "The server is busy. Please wait a little and try again.",
+      "ランキングに登録": "Register to ranking",
+      "初めての人は、ユーザー名とPINを決めて登録します。2回目以降は同じユーザー名とPINで記録が更新されます。": "First time: choose a user name and PIN to register. After that, use the same user name and PIN to update your record.",
+      "ユーザー名": "User name",
+      "英数字とアンダーバーで3〜16文字（公開されません）": "3–16 letters, numbers or underscores (not published)",
+      "数字4〜8桁（公開されません。忘れると更新できなくなります）": "4–8 digits (not published; if you forget it, you cannot update)",
+      "表示名": "Display name",
+      "ランキングに表示する名前（20文字まで）": "The name shown on the ranking (up to 20 characters)",
+      "匿名で掲載する（表示名の代わりに「匿名#記号」で表示し、アイコンも初期アイコンにします）": "Post anonymously (shown as \"Anonymous#code\" instead of a display name, with the default icon)",
+      "ベスト枠（3種類のレートそれぞれのレート対象曲50譜面）をランキングで公開する": "Publish your best 50 (rated charts for each of the three ratings) on the ranking",
+      "☆6・☆7達成譜面（MASTER・Re:MASTER のスコアと☆）をランキングで公開する": "Publish your ☆6/☆7 charts (MASTER and Re:MASTER scores and ☆) on the ranking",
+      "やめる": "Cancel",
+      "内容を確認": "Review",
+      "ユーザー名は英数字とアンダーバーで3〜16文字にしてください。": "The user name must be 3–16 letters, numbers or underscores.",
+      "PINは数字4〜8桁にしてください。": "The PIN must be 4–8 digits.",
+      "表示名を入力するか、匿名で掲載を選んでください。": "Enter a display name or choose to post anonymously.",
+      "確認中…": "Checking…",
+      "混み合っているため、送り直しています…": "The server is busy; retrying…",
+      "確認できませんでした。": "Could not check.",
+      "通信に失敗しました。時間をおいてもう一度お試しください。": "Connection failed. Please wait and try again.",
+      "記録を更新します": "Update your record",
+      "新しく登録します": "Register as new",
+      "ランキングには次の内容と、ベスト枠（☆7まで・☆6まで・☆5まで それぞれのレート対象曲50譜面）が公開されます（匿名の場合、アイコンは初期アイコンで表示されます）。ユーザー名とPINは公開されません。": "The following and your best 50 (50 rated charts each for up to ☆7, ☆6 and ☆5) will be published on the ranking (if anonymous, the default icon is shown). Your user name and PIN are not published.",
+      "ランキングには次の内容が公開されます（匿名の場合、アイコンは初期アイコンで表示されます）。ベスト枠は管理者の確認用に送信されますが、公開はされません。ユーザー名とPINは公開されません。": "The following will be published on the ranking (if anonymous, the default icon is shown). Your best 50 is sent for the admin to check but not published. Your user name and PIN are not published.",
+      "☆6・☆7を達成した MASTER・Re:MASTER の譜面（スコアと☆）も公開されます。": "Your MASTER/Re:MASTER charts at ☆6/☆7 (scores and ☆) will also be published.",
+      "☆6・☆7達成譜面は送信されますが、公開はされません（マイページの設定でいつでも公開に切り替えられます）。": "Your ☆6/☆7 charts are sent but not published (you can publish them any time in My Page).",
+      "匿名#{0}": "Anonymous#{0}",
+      "☆7まで {0}（{1}）／☆6まで {2}（{3}）／☆5まで {4}（{5}）": "Up to ☆7 {0} ({1}) / Up to ☆6 {2} ({3}) / Up to ☆5 {4} ({5})",
+      "☆{0}達成 {1}譜面（MAS {2}／Re:MAS {3}）": "☆{0}: {1} charts (MAS {2} / Re:MAS {3})",
+      "・": " · ",
+      "カメラで撮影した写真をアイコンにしている場合、ランキングではカメラマークで表示されます（写真は送信されません）。": "If your icon is a camera photo, it is shown as a camera mark on the ranking (the photo is not sent).",
+      "あなたの匿名表記は「匿名#{0}」です。ランキングで自分の記録を探すときの目印になります。": "Your anonymous name is \"Anonymous#{0}\". Use it to find your record on the ranking.",
+      "戻る": "Back",
+      "更新する": "Update",
+      "登録する": "Register",
+      "送信中…": "Sending…",
+      "登録できませんでした。": "Could not register.",
+      "登録しました": "Registered",
+      "更新しました": "Updated",
+      "「匿名#{0}」としてランキングに掲載されます。": "You will appear on the ranking as \"Anonymous#{0}\".",
+      "「{0}」としてランキングに掲載されます。": "You will appear on the ranking as \"{0}\".",
+      "ランキングへの反映には少し時間がかかることがあります。": "It may take a little while to show on the ranking.",
+      "ランキングを見る ›": "View ranking ›",
+      "譜面の一覧を読み込み中…": "Loading the chart list…",
+      "譜面の一覧を読み込めませんでした。時間をおいてお試しください。": "Could not load the chart list. Please try again later.",
+      "曲名で絞り込み": "Filter by song name",
+      "すべて": "All",
+      "すべての難易度": "All difficulties",
+      "{0} 譜面（押して選ぶ）": "{0} charts (tap to choose)",
+      "見つかりませんでした。": "Not found.",
+      "この譜面をお気に入りに登録": "Set this chart as favorite",
+      "保存した記録・ランキングの設定・お気に入り譜面・PINの変更": "Saved record · Ranking settings · Favorite chart · Change PIN",
+      "ランキングに登録したユーザー名とPINで入ります。最後に保存した記録の確認、ランキングに載せる名前や自動登録の設定、お気に入り譜面（ランキングページに表示）、PINの変更ができます。": "Log in with the user name and PIN you registered to the ranking. You can see your last saved record, set the name shown on the ranking and auto upload, set a favorite chart (shown on the ranking page) and change your PIN.",
+      "入る": "Log in",
+      "ユーザー名は英数字とアンダーバーで3〜16文字です。": "The user name is 3–16 letters, numbers or underscores.",
+      "PINは数字4〜8桁です。": "The PIN is 4–8 digits.",
+      "混み合っています。送り直しています…": "The server is busy; retrying…",
+      "通信できませんでした。": "Could not connect.",
+      "ログアウト": "Log out",
+      "ユーザー名：{0}": "User name: {0}",
+      "最後に保存した記録": "Last saved record",
+      "ランキングに最後に登録・更新したときのレートとレート対象曲です（ベスト枠を公開していなくても、自分は見られます）。": "Your ratings and rated charts from your last ranking registration/update (you can see them even if your best 50 is not public).",
+      "保存した記録を見る": "View saved record",
+      "読み込み中…": "Loading…",
+      "記録を読み込めませんでした。": "Could not load the record.",
+      "ランキングの設定": "Ranking settings",
+      "ランキングに載せる内容です。保存するとすぐにランキングに反映され、次からの登録（自動登録を含む）でもこの内容を使います。": "What is shown on the ranking. When saved, it is reflected on the ranking right away and used for future registrations (including auto upload).",
+      "匿名で掲載する（「匿名#記号」と初期アイコンで表示）": "Post anonymously (shown as \"Anonymous#code\" with the default icon)",
+      "ベスト枠をランキングで公開する": "Publish your best 50 on the ranking",
+      "☆6・☆7達成譜面（スコアと☆）をランキングで公開する": "Publish your ☆6/☆7 charts (scores and ☆) on the ranking",
+      "設定を保存": "Save settings",
+      "保存中…": "Saving…",
+      "保存できませんでした。": "Could not save.",
+      "設定を保存しました。": "Settings saved.",
+      "レート計算のあとに、自動でランキングに登録・更新する": "Automatically register/update the ranking after calculating your rating",
+      "このブラウザだけの設定です。PINは保存せず、自動登録専用の鍵を保存します（鍵でできるのはランキングの登録・更新だけです）。": "This setting is for this browser only. Your PIN is not saved; a key only for auto upload is saved (it can only register/update the ranking).",
+      "別のブラウザで設定すると、こちらの設定は無効になります。": "If you set it in another browser, the setting here stops working.",
+      "（現在、別のブラウザで自動登録が設定されています）": "(Auto upload is currently set in another browser)",
+      "設定中…": "Setting…",
+      "解除中…": "Turning off…",
+      "設定できませんでした。": "Could not set it.",
+      "自動登録を設定しました。次のレート計算から自動で登録されます。": "Auto upload is on. Your next rating calculation will be registered automatically.",
+      "自動登録を解除しました。": "Auto upload is off.",
+      "お気に入り譜面": "Favorite chart",
+      "まだ登録されていません。": "Not set yet.",
+      "1譜面だけ登録できます。ランキングでは、ジャケット・曲名・ST/DX・難易度が表示されます。": "You can set one chart. The ranking shows its jacket, song name, ST/DX and difficulty.",
+      "お気に入りを外す": "Remove favorite",
+      "別の譜面に変える": "Change chart",
+      "譜面を選ぶ": "Choose a chart",
+      "お気に入り譜面を登録しました。": "Favorite chart set.",
+      "お気に入り譜面を外しました。": "Favorite chart removed.",
+      "PINの変更": "Change PIN",
+      "管理者から仮のPINを受け取った方は、ここで自分で決めたPINに変更してください。": "If you received a temporary PIN from the admin, change it to your own PIN here.",
+      "新しいPIN": "New PIN",
+      "数字4〜8桁": "4–8 digits",
+      "新しいPIN（確認のためもう一度）": "New PIN (again to confirm)",
+      "PINを変更": "Change PIN",
+      "新しいPINは数字4〜8桁にしてください。": "The new PIN must be 4–8 digits.",
+      "新しいPINが2回とも同じになるように入力してください。": "Enter the same new PIN twice.",
+      "変更中…": "Changing…",
+      "変更できませんでした。": "Could not change it.",
+      "PINを変更しました。次からは新しいPINを使ってください。": "PIN changed. Use the new PIN from now on.",
+      "ランキングに自動で登録しています…": "Registering to the ranking automatically…",
+      "不明なエラー": "Unknown error",
+      "自動登録できませんでした：{0}": "Auto upload failed: {0}",
+      "不明": "Unknown",
+      "保存した日時：{0}": "Saved: {0}",
+      "　／　☆7達成 {0}・☆6達成 {1}": " / ☆7: {0} · ☆6: {1}",
+      "・☆5達成 {0}": " · ☆5: {0}",
+      " 譜面": " charts",
+      "この記録には「{0}」のレート対象曲が保存されていません（以前の版で登録した記録です）。": "This record has no rated charts saved for \"{0}\" (it was registered with an older version).",
+      "保存済みのデータから表示（検証用）": "Show from saved data (testing)",
+      "ランキングに保存されているベスト枠（公開している人のみ）から、レート対象曲の一覧と画像を作ります。": "Makes the rated chart list and image from best 50s saved on the ranking (public ones only).",
+      "ログインは不要です。称号は保存していないため、画像に載せたい場合は下の欄に入力してください。": "No login needed. Titles are not saved, so enter one below if you want it on the image.",
+      "ランキングを読み込み中…": "Loading the ranking…",
+      "ランキングを取得できませんでした。": "Could not get the ranking.",
+      "ベスト枠を公開している記録がありません。": "No records have a public best 50.",
+      "ユーザー（☆7まで のレートが高い順）": "User (by \"Up to ☆7\" rating)",
+      "画像に載せる称号（空なら称号なし）": "Title for the image (empty for none)",
+      "称号の色": "Title color",
+      "ノーマル": "Normal",
+      "ブロンズ": "Bronze",
+      "シルバー": "Silver",
+      "ゴールド": "Gold",
+      "レインボー": "Rainbow",
+      "ベスト枠を読み込み中…": "Loading best 50…",
+      "ベスト枠を取得できませんでした。": "Could not get the best 50.",
+      "この記録には「{0}」のレート対象曲がありません（以前の版で登録された記録です）。": "This record has no rated charts for \"{0}\" (it was registered with an older version)."
      },
      "ko": {
       "α版": "알파판",
@@ -4005,7 +4127,137 @@
       "{0}（{1} 譜面中 {2}〜{3} 件目）": "{0}({1} 보면 중 {2}~{3}번째)",
       "{0}（{1} 譜面）": "{0}({1} 보면)",
       "Lv{0}〜Lv{1} の {2} ページを取得し、{3} の {4} 譜面から計算": "Lv{0}~Lv{1}의 {2}페이지를 가져와 {3} {4}보면으로 계산",
-      "Lv{0}〜Lv{1} の {2} ページを取得し、{3} 譜面から計算": "Lv{0}~Lv{1}의 {2}페이지를 가져와 {3}보면으로 계산"
+      "Lv{0}〜Lv{1} の {2} ページを取得し、{3} 譜面から計算": "Lv{0}~Lv{1}의 {2}페이지를 가져와 {3}보면으로 계산",
+      "Language / 言語 / 언어": "Language / 言語 / 언어",
+      "サーバーの応答を読み取れませんでした。": "서버 응답을 읽지 못했습니다.",
+      "混み合っています。少し時間をおいて、もう一度お試しください。": "혼잡합니다. 잠시 후 다시 시도하세요.",
+      "ランキングに登録": "랭킹에 등록",
+      "初めての人は、ユーザー名とPINを決めて登録します。2回目以降は同じユーザー名とPINで記録が更新されます。": "처음인 분은 사용자명과 PIN을 정해서 등록합니다. 2회째부터는 같은 사용자명과 PIN으로 기록이 갱신됩니다.",
+      "ユーザー名": "사용자명",
+      "英数字とアンダーバーで3〜16文字（公開されません）": "영문·숫자·밑줄 3~16자(공개되지 않습니다)",
+      "数字4〜8桁（公開されません。忘れると更新できなくなります）": "숫자 4~8자리(공개되지 않습니다. 잊으면 갱신할 수 없습니다)",
+      "表示名": "표시 이름",
+      "ランキングに表示する名前（20文字まで）": "랭킹에 표시할 이름(20자까지)",
+      "匿名で掲載する（表示名の代わりに「匿名#記号」で表示し、アイコンも初期アイコンにします）": "익명으로 게재하기(표시 이름 대신 「익명#기호」로 표시하고, 아이콘도 기본 아이콘으로 합니다)",
+      "ベスト枠（3種類のレートそれぞれのレート対象曲50譜面）をランキングで公開する": "베스트 50(3종류 레이트 각각의 레이트 대상 50보면)을 랭킹에 공개하기",
+      "☆6・☆7達成譜面（MASTER・Re:MASTER のスコアと☆）をランキングで公開する": "☆6·☆7 달성 보면(MASTER·Re:MASTER의 스코어와 ☆)을 랭킹에 공개하기",
+      "やめる": "그만두기",
+      "内容を確認": "내용 확인",
+      "ユーザー名は英数字とアンダーバーで3〜16文字にしてください。": "사용자명은 영문·숫자·밑줄 3~16자로 해 주세요.",
+      "PINは数字4〜8桁にしてください。": "PIN은 숫자 4~8자리로 해 주세요.",
+      "表示名を入力するか、匿名で掲載を選んでください。": "표시 이름을 입력하거나 익명 게재를 선택하세요.",
+      "確認中…": "확인 중…",
+      "混み合っているため、送り直しています…": "혼잡해서 다시 보내고 있습니다…",
+      "確認できませんでした。": "확인하지 못했습니다.",
+      "通信に失敗しました。時間をおいてもう一度お試しください。": "통신에 실패했습니다. 잠시 후 다시 시도하세요.",
+      "記録を更新します": "기록을 갱신합니다",
+      "新しく登録します": "새로 등록합니다",
+      "ランキングには次の内容と、ベスト枠（☆7まで・☆6まで・☆5まで それぞれのレート対象曲50譜面）が公開されます（匿名の場合、アイコンは初期アイコンで表示されます）。ユーザー名とPINは公開されません。": "랭킹에는 다음 내용과 베스트 50(☆7까지·☆6까지·☆5까지 각각의 레이트 대상 50보면)이 공개됩니다(익명인 경우 아이콘은 기본 아이콘으로 표시됩니다). 사용자명과 PIN은 공개되지 않습니다.",
+      "ランキングには次の内容が公開されます（匿名の場合、アイコンは初期アイコンで表示されます）。ベスト枠は管理者の確認用に送信されますが、公開はされません。ユーザー名とPINは公開されません。": "랭킹에는 다음 내용이 공개됩니다(익명인 경우 아이콘은 기본 아이콘으로 표시됩니다). 베스트 50은 관리자 확인용으로 전송되지만 공개되지 않습니다. 사용자명과 PIN은 공개되지 않습니다.",
+      "☆6・☆7を達成した MASTER・Re:MASTER の譜面（スコアと☆）も公開されます。": "☆6·☆7을 달성한 MASTER·Re:MASTER 보면(스코어와 ☆)도 공개됩니다.",
+      "☆6・☆7達成譜面は送信されますが、公開はされません（マイページの設定でいつでも公開に切り替えられます）。": "☆6·☆7 달성 보면은 전송되지만 공개되지 않습니다(마이페이지 설정에서 언제든 공개로 바꿀 수 있습니다).",
+      "匿名#{0}": "익명#{0}",
+      "☆7まで {0}（{1}）／☆6まで {2}（{3}）／☆5まで {4}（{5}）": "☆7까지 {0}({1}) / ☆6까지 {2}({3}) / ☆5까지 {4}({5})",
+      "☆{0}達成 {1}譜面（MAS {2}／Re:MAS {3}）": "☆{0} 달성 {1}보면(MAS {2} / Re:MAS {3})",
+      "・": " · ",
+      "カメラで撮影した写真をアイコンにしている場合、ランキングではカメラマークで表示されます（写真は送信されません）。": "카메라로 찍은 사진을 아이콘으로 쓰는 경우, 랭킹에서는 카메라 마크로 표시됩니다(사진은 전송되지 않습니다).",
+      "あなたの匿名表記は「匿名#{0}」です。ランキングで自分の記録を探すときの目印になります。": "당신의 익명 표기는 「익명#{0}」입니다. 랭킹에서 자신의 기록을 찾을 때 표시가 됩니다.",
+      "戻る": "돌아가기",
+      "更新する": "갱신하기",
+      "登録する": "등록하기",
+      "送信中…": "전송 중…",
+      "登録できませんでした。": "등록하지 못했습니다.",
+      "登録しました": "등록했습니다",
+      "更新しました": "갱신했습니다",
+      "「匿名#{0}」としてランキングに掲載されます。": "「익명#{0}」로 랭킹에 게재됩니다.",
+      "「{0}」としてランキングに掲載されます。": "「{0}」로 랭킹에 게재됩니다.",
+      "ランキングへの反映には少し時間がかかることがあります。": "랭킹에 반영되기까지 시간이 조금 걸릴 수 있습니다.",
+      "ランキングを見る ›": "랭킹 보기 ›",
+      "譜面の一覧を読み込み中…": "보면 목록을 불러오는 중…",
+      "譜面の一覧を読み込めませんでした。時間をおいてお試しください。": "보면 목록을 불러오지 못했습니다. 잠시 후 다시 시도하세요.",
+      "曲名で絞り込み": "곡명으로 좁히기",
+      "すべて": "전체",
+      "すべての難易度": "모든 난이도",
+      "{0} 譜面（押して選ぶ）": "{0}보면(눌러서 선택)",
+      "見つかりませんでした。": "찾지 못했습니다.",
+      "この譜面をお気に入りに登録": "이 보면을 즐겨찾기에 등록",
+      "保存した記録・ランキングの設定・お気に入り譜面・PINの変更": "저장한 기록·랭킹 설정·즐겨찾기 보면·PIN 변경",
+      "ランキングに登録したユーザー名とPINで入ります。最後に保存した記録の確認、ランキングに載せる名前や自動登録の設定、お気に入り譜面（ランキングページに表示）、PINの変更ができます。": "랭킹에 등록한 사용자명과 PIN으로 들어갑니다. 마지막으로 저장한 기록 확인, 랭킹에 실을 이름과 자동 등록 설정, 즐겨찾기 보면(랭킹 페이지에 표시), PIN 변경을 할 수 있습니다.",
+      "入る": "들어가기",
+      "ユーザー名は英数字とアンダーバーで3〜16文字です。": "사용자명은 영문·숫자·밑줄 3~16자입니다.",
+      "PINは数字4〜8桁です。": "PIN은 숫자 4~8자리입니다.",
+      "混み合っています。送り直しています…": "혼잡합니다. 다시 보내고 있습니다…",
+      "通信できませんでした。": "통신하지 못했습니다.",
+      "ログアウト": "로그아웃",
+      "ユーザー名：{0}": "사용자명: {0}",
+      "最後に保存した記録": "마지막으로 저장한 기록",
+      "ランキングに最後に登録・更新したときのレートとレート対象曲です（ベスト枠を公開していなくても、自分は見られます）。": "랭킹에 마지막으로 등록·갱신했을 때의 레이트와 레이트 대상 곡입니다(베스트 50을 공개하지 않아도 본인은 볼 수 있습니다).",
+      "保存した記録を見る": "저장한 기록 보기",
+      "読み込み中…": "불러오는 중…",
+      "記録を読み込めませんでした。": "기록을 불러오지 못했습니다.",
+      "ランキングの設定": "랭킹 설정",
+      "ランキングに載せる内容です。保存するとすぐにランキングに反映され、次からの登録（自動登録を含む）でもこの内容を使います。": "랭킹에 실을 내용입니다. 저장하면 바로 랭킹에 반영되며, 다음 등록(자동 등록 포함)부터도 이 내용을 사용합니다.",
+      "匿名で掲載する（「匿名#記号」と初期アイコンで表示）": "익명으로 게재하기(「익명#기호」와 기본 아이콘으로 표시)",
+      "ベスト枠をランキングで公開する": "베스트 50을 랭킹에 공개하기",
+      "☆6・☆7達成譜面（スコアと☆）をランキングで公開する": "☆6·☆7 달성 보면(스코어와 ☆)을 랭킹에 공개하기",
+      "設定を保存": "설정 저장",
+      "保存中…": "저장 중…",
+      "保存できませんでした。": "저장하지 못했습니다.",
+      "設定を保存しました。": "설정을 저장했습니다.",
+      "レート計算のあとに、自動でランキングに登録・更新する": "레이트 계산 후 자동으로 랭킹에 등록·갱신하기",
+      "このブラウザだけの設定です。PINは保存せず、自動登録専用の鍵を保存します（鍵でできるのはランキングの登録・更新だけです）。": "이 브라우저만의 설정입니다. PIN은 저장하지 않고, 자동 등록 전용 키를 저장합니다(키로 할 수 있는 것은 랭킹 등록·갱신뿐입니다).",
+      "別のブラウザで設定すると、こちらの設定は無効になります。": "다른 브라우저에서 설정하면 이쪽 설정은 무효가 됩니다.",
+      "（現在、別のブラウザで自動登録が設定されています）": "(현재 다른 브라우저에서 자동 등록이 설정되어 있습니다)",
+      "設定中…": "설정 중…",
+      "解除中…": "해제 중…",
+      "設定できませんでした。": "설정하지 못했습니다.",
+      "自動登録を設定しました。次のレート計算から自動で登録されます。": "자동 등록을 설정했습니다. 다음 레이트 계산부터 자동으로 등록됩니다.",
+      "自動登録を解除しました。": "자동 등록을 해제했습니다.",
+      "お気に入り譜面": "즐겨찾기 보면",
+      "まだ登録されていません。": "아직 등록되어 있지 않습니다.",
+      "1譜面だけ登録できます。ランキングでは、ジャケット・曲名・ST/DX・難易度が表示されます。": "1보면만 등록할 수 있습니다. 랭킹에는 재킷·곡명·ST/DX·난이도가 표시됩니다.",
+      "お気に入りを外す": "즐겨찾기 해제",
+      "別の譜面に変える": "다른 보면으로 바꾸기",
+      "譜面を選ぶ": "보면 고르기",
+      "お気に入り譜面を登録しました。": "즐겨찾기 보면을 등록했습니다.",
+      "お気に入り譜面を外しました。": "즐겨찾기 보면을 해제했습니다.",
+      "PINの変更": "PIN 변경",
+      "管理者から仮のPINを受け取った方は、ここで自分で決めたPINに変更してください。": "관리자에게 임시 PIN을 받은 분은 여기서 직접 정한 PIN으로 변경하세요.",
+      "新しいPIN": "새 PIN",
+      "数字4〜8桁": "숫자 4~8자리",
+      "新しいPIN（確認のためもう一度）": "새 PIN(확인을 위해 한 번 더)",
+      "PINを変更": "PIN 변경",
+      "新しいPINは数字4〜8桁にしてください。": "새 PIN은 숫자 4~8자리로 해 주세요.",
+      "新しいPINが2回とも同じになるように入力してください。": "새 PIN을 두 번 모두 같게 입력하세요.",
+      "変更中…": "변경 중…",
+      "変更できませんでした。": "변경하지 못했습니다.",
+      "PINを変更しました。次からは新しいPINを使ってください。": "PIN을 변경했습니다. 다음부터는 새 PIN을 사용하세요.",
+      "ランキングに自動で登録しています…": "랭킹에 자동으로 등록하고 있습니다…",
+      "不明なエラー": "알 수 없는 오류",
+      "自動登録できませんでした：{0}": "자동 등록하지 못했습니다: {0}",
+      "不明": "알 수 없음",
+      "保存した日時：{0}": "저장한 일시: {0}",
+      "　／　☆7達成 {0}・☆6達成 {1}": " / ☆7 달성 {0}·☆6 달성 {1}",
+      "・☆5達成 {0}": "·☆5 달성 {0}",
+      " 譜面": "보면",
+      "この記録には「{0}」のレート対象曲が保存されていません（以前の版で登録した記録です）。": "이 기록에는 「{0}」의 레이트 대상 곡이 저장되어 있지 않습니다(이전 버전으로 등록한 기록입니다).",
+      "保存済みのデータから表示（検証用）": "저장된 데이터로 표시(검증용)",
+      "ランキングに保存されているベスト枠（公開している人のみ）から、レート対象曲の一覧と画像を作ります。": "랭킹에 저장된 베스트 50(공개한 사람만)으로 레이트 대상 곡 목록과 이미지를 만듭니다.",
+      "ログインは不要です。称号は保存していないため、画像に載せたい場合は下の欄に入力してください。": "로그인은 필요 없습니다. 칭호는 저장하지 않으므로, 이미지에 넣고 싶다면 아래 칸에 입력하세요.",
+      "ランキングを読み込み中…": "랭킹을 불러오는 중…",
+      "ランキングを取得できませんでした。": "랭킹을 가져오지 못했습니다.",
+      "ベスト枠を公開している記録がありません。": "베스트 50을 공개한 기록이 없습니다.",
+      "ユーザー（☆7まで のレートが高い順）": "사용자(☆7까지 레이트가 높은 순)",
+      "画像に載せる称号（空なら称号なし）": "이미지에 넣을 칭호(비우면 칭호 없음)",
+      "称号の色": "칭호 색",
+      "ノーマル": "노멀",
+      "ブロンズ": "브론즈",
+      "シルバー": "실버",
+      "ゴールド": "골드",
+      "レインボー": "레인보우",
+      "ベスト枠を読み込み中…": "베스트 50을 불러오는 중…",
+      "ベスト枠を取得できませんでした。": "베스트 50을 가져오지 못했습니다.",
+      "この記録には「{0}」のレート対象曲がありません（以前の版で登録された記録です）。": "이 기록에는 「{0}」의 레이트 대상 곡이 없습니다(이전 버전으로 등록된 기록입니다)."
      }
     };
   }
