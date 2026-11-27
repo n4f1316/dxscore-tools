@@ -8,7 +8,7 @@
 <link rel="icon" href="logo/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="logo/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="logo/apple-touch-icon.png">
-<link rel="stylesheet" href="2frate.css?v=20261127c">
+<link rel="stylesheet" href="2frate.css?v=20261127d">
 <script src="2frate-theme.js?v=20261127a"></script>
 </head>
 <body class="pg-ranking pg-mypage">
@@ -29,7 +29,7 @@
     </label>
     <div class="mp-actions"><button type="submit" class="mp-go" id="go">入る</button></div>
     <div class="status" id="status" role="status"></div>
-    <p class="mp-note">PINはこのページに保存しません（ユーザー名だけ、次回のためにこのブラウザに保存します）。PINを10回続けて間違えると、そのユーザー名は15分間ロックされます。表示名や公開の設定、お気に入り譜面、PINの変更は、ブックマークレットのマイページで行います。</p>
+    <p class="mp-note">PINはこのページに保存しません（ユーザー名だけ、次回のためにこのブラウザに保存します）。PINを10回続けて間違えると、そのユーザー名は15分間ロックされます。表示名や公開の設定、お気に入り譜面、PINの変更は、ブックマークレットのマイページで行います。記録の削除は、入ったあとのページの下にあります。</p>
   </form>
 
   <div id="me" hidden></div>
@@ -669,7 +669,56 @@
     card.appendChild(btns);
     card.appendChild(el('p', 'mp-note', `定数表：${rec.constVersion || '不明'}　／　計算式：${rec.formulaVersion || '不明'}。記録を新しくするには、ブックマークレットでレートを計算してランキングに登録・更新してください。`));
     me.appendChild(card);
+    me.appendChild(deleteCard(username));
     me.hidden = false;
+  }
+
+  // 記録の削除（本人が自分で消す。元に戻せない）
+  //   押し間違いを防ぐため、ユーザー名をもう一度と、PIN を入れてもらう（PIN はこのページに持っていないため）
+  function deleteCard(username) {
+    const card = el('section', 'card mp-card mp-delete');
+    card.appendChild(el('h2', '', '記録の削除'));
+    card.appendChild(el('p', 'mp-note', 'ランキングに登録した記録（レート・ベスト枠・達成譜面・お気に入り譜面・設定）をすべて削除し、ランキングから外します。削除すると元に戻せません。同じユーザー名で、あとから新しく登録し直すことはできます。'));
+    const field = (label, type, attrs) => {
+      const lab = el('label', 'mp-field', label);
+      const input = el('input', 'search');
+      input.type = type;
+      Object.entries(attrs).forEach(([k, v]) => input.setAttribute(k, v));
+      lab.appendChild(input);
+      card.appendChild(lab);
+      return input;
+    };
+    const name = field('確認のため、ユーザー名をもう一度入力', 'text', { autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', maxlength: '16' });
+    const pin = field('PIN', 'password', { inputmode: 'numeric', autocomplete: 'current-password', maxlength: '8' });
+    const actions = el('div', 'mp-actions');
+    const btn = el('button', 'mp-danger', '記録を削除する');
+    btn.type = 'button';
+    actions.appendChild(btn);
+    const st = el('div', 'status');
+    st.setAttribute('role', 'status');
+    card.append(actions, st);
+    btn.onclick = async () => {
+      st.classList.remove('error');
+      const fail = (t) => { st.textContent = t; st.classList.add('error'); };
+      if (name.value.trim().toLowerCase() !== username) return fail('確認のため、ユーザー名をもう一度正しく入力してください。');
+      if (!/^\d{4,8}$/.test(pin.value.trim())) return fail('PINは数字4〜8桁です。');
+      btn.disabled = true;
+      st.textContent = '削除中…';
+      try {
+        const r = await post({ action: 'deleteMe', username, pin: pin.value.trim(), confirm: name.value.trim() });
+        if (!r.ok) return fail(r.error || '削除できませんでした。');
+        try { if (localStorage.getItem(USER_KEY) === username) localStorage.removeItem(USER_KEY); } catch { /* なし */ }
+        $('user').value = '';
+        logout();
+        $('status').textContent = '記録を削除しました。ランキングからも外れます（反映に少し時間がかかることがあります）。';
+      } catch {
+        fail('通信できませんでした。時間をおいてお試しください。');
+      } finally {
+        btn.disabled = false;
+        pin.value = '';
+      }
+    };
+    return card;
   }
 
   function logout() {

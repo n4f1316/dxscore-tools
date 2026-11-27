@@ -453,6 +453,11 @@ html[data-theme="dark"] .logo { background-image: url("logo/icon-dark.svg"); }
 .mp-actions { margin-top: 12px; }
 .mp-go { width: 100%; min-height: 44px; background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .mp-go:disabled { opacity: .6; cursor: default; }
+/* マイページ：記録の削除（元に戻せない操作なので、赤の枠線で目立たせる） */
+.mp-delete { margin-top: 16px; }
+.mp-delete h2 { margin-top: 0; }
+.mp-danger { width: 100%; min-height: 44px; background: transparent; border-color: var(--err, #C0392B); color: var(--err, #C0392B); font-weight: 700; }
+.mp-danger:disabled { opacity: .6; cursor: default; }
 .mp-note { margin: 10px 0 0 !important; font-size: 12px; color: var(--sub); line-height: 1.7; }
 .mp-card { margin-top: 16px; }
 .mp-head { display: flex; align-items: center; gap: 12px; }

@@ -5,7 +5,7 @@
   // ============================================================
   //  表示する言語（日本語／English／한국어）
   //   選んだ言語はこのサイト（maimaiでらっくすNET）のブラウザに保存する。まだ選んでいないときはブラウザの言語から決める
-  //   画面の文は日本語で書き、T('日本語の文') で今の言語の文にする（辞書はファイルの最後の i18nDict）
+  //   画面の文は日本語で書き、T に日本語の文を渡して今の言語の文にする（辞書はファイルの最後の i18nDict）
   //   文の中の {0} {1} … は、T の2つ目以降の値に置き換わる
   // ============================================================
   const LANG_KEY = '2frate-lang';
@@ -18,6 +18,10 @@
     return n.startsWith('ja') ? 'ja' : n.startsWith('ko') ? 'ko' : 'en';
   })();
   let dictCache = null;
+  // サーバー（ランキング）からのエラー文を今の言語にする（ロック中の文は時間を含むので、まとめた文にする）
+  const srvErr = (r) => (r?.locked
+    ? T('PINを続けて間違えたため、このユーザー名は一時的にロックされています。時間をおいてもう一度お試しください。')
+    : r?.error ? T(r.error) : '');
   const T = (ja, ...args) => {
     let s = ja;
     if (LANG !== 'ja') {
@@ -798,6 +802,7 @@
       border: 1px solid var(--line); color: var(--ink); background: var(--bg);
     }
     .dxr-card .dxr-actions button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+    .dxr-card .dxr-actions button.danger { background: transparent; border-color: var(--err); color: var(--err); }
     /* 保存済みのデータから表示（検証用） */
     .dxr-off-select { display: block; width: 100%; margin-top: 4px; font: inherit; font-size: 16px; padding: 8px 10px;
       border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
@@ -1954,7 +1959,7 @@
             r = await callRanking({ action: 'check', username: form.username, pin: form.pin },
               () => { err.textContent = T('混み合っているため、送り直しています…'); });
           }
-          if (!r.ok) { err.textContent = r.error || T('確認できませんでした。'); next.disabled = false; return; }
+          if (!r.ok) { err.textContent = srvErr(r) || T('確認できませんでした。'); next.disabled = false; return; }
           confirmView(form, r);
         } catch (e) {
           err.textContent = T('通信に失敗しました。時間をおいてもう一度お試しください。');
@@ -2029,7 +2034,7 @@
             pin: form.pin,
           }, () => { err.textContent = T('混み合っているため、送り直しています…'); });
           if (!r.ok) {
-            err.textContent = r.error || T('登録できませんでした。');
+            err.textContent = srvErr(r) || T('登録できませんでした。');
             send.disabled = false;
             back.disabled = false;
             return;
@@ -2881,7 +2886,7 @@
         const r = await callRanking({ action: 'mypage', username, pin: p }, () => { err.textContent = T('混み合っています。送り直しています…'); })
           .catch(() => ({ ok: false, error: T('通信できませんでした。') }));
         go.disabled = false;
-        if (!r.ok) { err.textContent = r.error || T('確認できませんでした。'); return; }
+        if (!r.ok) { err.textContent = srvErr(r) || T('確認できませんでした。'); return; }
         try { localStorage.setItem(USER_KEY, username); } catch { /* 保存できなくても続ける */ }
         savedUser = username;
         memberView({ username, pin: p, info: r });
@@ -2968,7 +2973,7 @@
           () => { setErr.textContent = T('混み合っています。送り直しています…'); })
           .catch(() => ({ ok: false, error: T('通信できませんでした。') }));
         setBtn.disabled = false;
-        if (!r.ok) { setErr.textContent = r.error || T('保存できませんでした。'); return; }
+        if (!r.ok) { setErr.textContent = srvErr(r) || T('保存できませんでした。'); return; }
         saveJson(FORM_KEY, form);
         setErr.textContent = '';
         setErr.replaceChildren(el('span', 'dxr-ok', T('設定を保存しました。')));
@@ -3000,7 +3005,7 @@
         autoCb.disabled = false;
         if (!r.ok) {
           autoCb.checked = !on;
-          autoErr.textContent = r.error || T('設定できませんでした。');
+          autoErr.textContent = srvErr(r) || T('設定できませんでした。');
           return;
         }
         if (on) {
@@ -3061,7 +3066,7 @@
           () => { err.textContent = T('混み合っています。送り直しています…'); })
           .catch(() => ({ ok: false, error: T('通信できませんでした。') }));
         button.disabled = false;
-        if (!r.ok) { err.textContent = r.error || T('保存できませんでした。'); return; }
+        if (!r.ok) { err.textContent = srvErr(r) || T('保存できませんでした。'); return; }
         current = r.favorite || null;
         favView();
         fav.appendChild(el('div', 'dxr-ok', current ? T('お気に入り譜面を登録しました。') : T('お気に入り譜面を外しました。')));
@@ -3091,7 +3096,7 @@
           () => { pinErr.textContent = T('混み合っています。送り直しています…'); })
           .catch(() => ({ ok: false, error: T('通信できませんでした。') }));
         pinBtn.disabled = false;
-        if (!r.ok) { pinErr.textContent = r.error || T('変更できませんでした。'); return; }
+        if (!r.ok) { pinErr.textContent = srvErr(r) || T('変更できませんでした。'); return; }
         auth.pin = v;
         np1.value = np2.value = '';
         // PINを変えると自動登録の鍵も無効になるので、このブラウザの設定も消す
@@ -3102,6 +3107,35 @@
         }
         pinErr.textContent = '';
         pinErr.replaceChildren(Object.assign(el('span', 'dxr-ok', T('PINを変更しました。次からは新しいPINを使ってください。'))));
+      };
+
+      // ---- 記録の削除（本人が自分で消す。元に戻せない） ----
+      const delBox = el('div', 'dxr-sub');
+      delBox.appendChild(el('h4', '', T('記録の削除')));
+      delBox.appendChild(el('p', 'dxr-card-desc', T('ランキングに登録した記録（レート・ベスト枠・達成譜面・お気に入り譜面・設定）をすべて削除し、ランキングから外します。削除すると元に戻せません。同じユーザー名で、あとから新しく登録し直すことはできます。')));
+      const delName = field(delBox, T('確認のため、ユーザー名をもう一度入力'), 'text', '', '', { autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false' });
+      const delErr = el('div', 'dxr-err');
+      const delActions = el('div', 'dxr-actions');
+      const delBtn = el('button', 'danger', T('記録を削除する'));
+      delBtn.type = 'button';
+      delActions.appendChild(delBtn);
+      delBox.append(delErr, delActions);
+      card.appendChild(delBox);
+      delBtn.onclick = async () => {
+        if (delName.value.trim().toLowerCase() !== auth.username) { delErr.textContent = T('確認のため、ユーザー名をもう一度正しく入力してください。'); return; }
+        delBtn.disabled = true;
+        delErr.textContent = T('削除中…');
+        const r = await callRanking({ action: 'deleteMe', username: auth.username, pin: auth.pin, confirm: delName.value.trim() },
+          () => { delErr.textContent = T('混み合っています。送り直しています…'); })
+          .catch(() => ({ ok: false, error: T('通信できませんでした。') }));
+        delBtn.disabled = false;
+        if (!r.ok) { delErr.textContent = srvErr(r) || T('削除できませんでした。'); return; }
+        // このブラウザに残っている自動登録の設定とユーザー名も消す
+        const sa = loadJson(AUTO_KEY);
+        if (sa && sa.username === auth.username) saveJson(AUTO_KEY, null);
+        try { if (localStorage.getItem(USER_KEY) === auth.username) localStorage.removeItem(USER_KEY); } catch { /* なし */ }
+        savedUser = '';
+        card.replaceChildren(el('h3', '', T('記録の削除')), el('p', 'dxr-ok', T('記録を削除しました。ランキングからも外れます（反映に少し時間がかかることがあります）。')));
       };
     }
 
@@ -3198,7 +3232,7 @@
       box.append(' ', a);
     } else {
       box.classList.add('is-error');
-      box.textContent = T('自動登録できませんでした：{0}', r.error || T('不明なエラー'));
+      box.textContent = T('自動登録できませんでした：{0}', srvErr(r) || T('不明なエラー'));
       if (r.tokenInvalid) saveJson(AUTO_KEY, null);
     }
   }
@@ -3978,7 +4012,29 @@
       "レインボー": "Rainbow",
       "ベスト枠を読み込み中…": "Loading best 50…",
       "ベスト枠を取得できませんでした。": "Could not get the best 50.",
-      "この記録には「{0}」のレート対象曲がありません（以前の版で登録された記録です）。": "This record has no rated charts for \"{0}\" (it was registered with an older version)."
+      "この記録には「{0}」のレート対象曲がありません（以前の版で登録された記録です）。": "This record has no rated charts for \"{0}\" (it was registered with an older version).",
+      "記録の削除": "Delete record",
+      "ランキングに登録した記録（レート・ベスト枠・達成譜面・お気に入り譜面・設定）をすべて削除し、ランキングから外します。削除すると元に戻せません。同じユーザー名で、あとから新しく登録し直すことはできます。": "Deletes everything you registered to the ranking (ratings, best 50, achieved charts, favorite chart and settings) and removes you from the ranking. This cannot be undone. You can register again later with the same user name.",
+      "確認のため、ユーザー名をもう一度入力": "Enter your user name again to confirm",
+      "記録を削除する": "Delete my record",
+      "確認のため、ユーザー名をもう一度正しく入力してください。": "To confirm, enter your user name again correctly.",
+      "削除中…": "Deleting…",
+      "削除できませんでした。": "Could not delete.",
+      "記録を削除しました。ランキングからも外れます（反映に少し時間がかかることがあります）。": "Your record has been deleted and removed from the ranking (it may take a little while to show).",
+      "PINを続けて間違えたため、このユーザー名は一時的にロックされています。時間をおいてもう一度お試しください。": "This user name is temporarily locked because the PIN was entered wrong too many times. Please wait and try again.",
+      "ランキングに自動で登録しました（{0}）。": "Registered to the ranking automatically ({0}).",
+      "PINが違います。": "Wrong PIN.",
+      "maimaiでらっくすNET 上でブックマークレットを実行して登録してください。": "Please register by running the bookmarklet on maimai DX NET.",
+      "お気に入り譜面の内容が正しくありません。": "The favorite chart data is not valid.",
+      "このユーザーは見つかりません。": "User not found.",
+      "このユーザー名はすでに使われています。別のユーザー名にしてください。": "This user name is already taken. Please choose another.",
+      "このユーザー名はすでに使われているか、PINが違います。": "This user name is already taken, or the PIN is wrong.",
+      "このユーザー名は登録されていません。先にランキングに登録してください。": "This user name is not registered. Please register to the ranking first.",
+      "サーバーでエラーが起きました。少し時間をおいてお試しください。": "A server error occurred. Please wait a little and try again.",
+      "レートの値が正しくありません。": "The rating values are not valid.",
+      "対応していない操作です。": "This operation is not supported.",
+      "自動登録の設定が無効になっています。マイページで自動登録を設定し直してください。": "Auto upload is no longer valid. Please set it up again in My Page.",
+      "送信内容を読み取れませんでした。": "Could not read the request."
      },
      "ko": {
       "α版": "알파판",
@@ -4257,7 +4313,29 @@
       "レインボー": "레인보우",
       "ベスト枠を読み込み中…": "베스트 50을 불러오는 중…",
       "ベスト枠を取得できませんでした。": "베스트 50을 가져오지 못했습니다.",
-      "この記録には「{0}」のレート対象曲がありません（以前の版で登録された記録です）。": "이 기록에는 「{0}」의 레이트 대상 곡이 없습니다(이전 버전으로 등록된 기록입니다)."
+      "この記録には「{0}」のレート対象曲がありません（以前の版で登録された記録です）。": "이 기록에는 「{0}」의 레이트 대상 곡이 없습니다(이전 버전으로 등록된 기록입니다).",
+      "記録の削除": "기록 삭제",
+      "ランキングに登録した記録（レート・ベスト枠・達成譜面・お気に入り譜面・設定）をすべて削除し、ランキングから外します。削除すると元に戻せません。同じユーザー名で、あとから新しく登録し直すことはできます。": "랭킹에 등록한 기록(레이트·베스트 50·달성 보면·즐겨찾기 보면·설정)을 모두 삭제하고 랭킹에서 제외합니다. 삭제하면 되돌릴 수 없습니다. 같은 사용자명으로 나중에 새로 등록할 수는 있습니다.",
+      "確認のため、ユーザー名をもう一度入力": "확인을 위해 사용자명을 한 번 더 입력",
+      "記録を削除する": "기록 삭제하기",
+      "確認のため、ユーザー名をもう一度正しく入力してください。": "확인을 위해 사용자명을 한 번 더 정확히 입력하세요.",
+      "削除中…": "삭제 중…",
+      "削除できませんでした。": "삭제하지 못했습니다.",
+      "記録を削除しました。ランキングからも外れます（反映に少し時間がかかることがあります）。": "기록을 삭제했습니다. 랭킹에서도 제외됩니다(반영에 시간이 조금 걸릴 수 있습니다).",
+      "PINを続けて間違えたため、このユーザー名は一時的にロックされています。時間をおいてもう一度お試しください。": "PIN을 연속으로 틀려서 이 사용자명은 일시적으로 잠겨 있습니다. 잠시 후 다시 시도하세요.",
+      "ランキングに自動で登録しました（{0}）。": "랭킹에 자동으로 등록했습니다({0}).",
+      "PINが違います。": "PIN이 다릅니다.",
+      "maimaiでらっくすNET 上でブックマークレットを実行して登録してください。": "maimai DX NET에서 북마크릿을 실행해 등록하세요.",
+      "お気に入り譜面の内容が正しくありません。": "즐겨찾기 보면 내용이 올바르지 않습니다.",
+      "このユーザーは見つかりません。": "이 사용자를 찾을 수 없습니다.",
+      "このユーザー名はすでに使われています。別のユーザー名にしてください。": "이 사용자명은 이미 사용 중입니다. 다른 사용자명으로 해 주세요.",
+      "このユーザー名はすでに使われているか、PINが違います。": "이 사용자명은 이미 사용 중이거나 PIN이 다릅니다.",
+      "このユーザー名は登録されていません。先にランキングに登録してください。": "이 사용자명은 등록되어 있지 않습니다. 먼저 랭킹에 등록하세요.",
+      "サーバーでエラーが起きました。少し時間をおいてお試しください。": "서버에서 오류가 발생했습니다. 잠시 후 다시 시도하세요.",
+      "レートの値が正しくありません。": "레이트 값이 올바르지 않습니다.",
+      "対応していない操作です。": "지원하지 않는 작업입니다.",
+      "自動登録の設定が無効になっています。マイページで自動登録を設定し直してください。": "자동 등록 설정이 무효가 되었습니다. 마이페이지에서 자동 등록을 다시 설정하세요.",
+      "送信内容を読み取れませんでした。": "전송 내용을 읽지 못했습니다."
      }
     };
   }

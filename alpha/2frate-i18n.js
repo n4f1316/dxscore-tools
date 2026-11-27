@@ -104,6 +104,30 @@
       return tr === undefined ? ja : tr.replace(/<[^>]+>/g, '');
     },
     apply,
+    // 翻訳の確認用（i18n_check.html）：ページ（DOM）の中で訳す対象の文のうち、辞書にないものを返す
+    //   返り値：[{ key: '日本語の文', missing: ['en', 'ko'] }, …]
+    check(root) {
+      const out = [];
+      const seen = new Set();
+      const look = (node) => {
+        for (const el of node.children) {
+          if (el.tagName === 'SCRIPT' || el.tagName === 'STYLE') continue;
+          if (el.matches(SEL) && !isProtected(el)) {
+            const key = el.getAttribute('data-i18n') || norm(el.textContent);
+            if (/[\u3040-\u30ff\u4e00-\u9fff]/.test(key) && !seen.has(key)) {
+              seen.add(key);
+              const missing = Object.keys(DICT).filter((l) => DICT[l][key] === undefined);
+              if (missing.length) out.push({ key, missing });
+            }
+          } else look(el);
+        }
+      };
+      look(root);
+      return out;
+    },
+    // 翻訳の確認用：日本語の文が辞書にあるか（ページの処理の中の文を調べるとき）
+    has(ja, l) { return DICT[l][norm(ja)] !== undefined; },
+    langs: Object.keys(DICT),
   };
 
   const start = () => { addSelects(); apply(); };
