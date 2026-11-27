@@ -374,6 +374,8 @@ html[data-theme="dark"] .logo { background-image: url("logo/icon-dark.svg"); }
 .pg-index .hero { flex-wrap: nowrap; }
 .hero-row { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; }
 .hero-row .theme-toggle { flex: none; }
+/* トップページ：言語の切り替えと表示の切り替えは、ページの右上に置く */
+.top-controls { display: flex; justify-content: flex-end; margin-bottom: 8px; }
 .hero-text .badge { margin-top: 8px; }
 .hero h1 { margin: 0; font-family: "Chakra Petch", "Noto Sans JP", sans-serif; font-size: 44px; line-height: 1.1; font-weight: 700; }
 .hero p { margin: 6px 0 0; color: var(--sub); font-weight: 700; }
