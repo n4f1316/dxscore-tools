@@ -38,7 +38,7 @@
   <p class="foot">
     Webページ：2frate-i18n.js の辞書と、各ページの文（表示される文と、ページの処理の中の <code>T('…')</code>）を照らし合わせます。<br>
     ブックマークレット：dxscore_rating.js の中の <code>T('…')</code> の文と、ファイルの最後の辞書（i18nDict）を照らし合わせます。<br>
-    「訳す対象になっていない日本語（参考）」は、<code>T('…')</code> で囲まれていない日本語の文字列です。画面に出ない文（内部のメモなど）も含まれるので、画面に出るものだけ <code>T('…')</code> で囲んで辞書に足してください。
+    「訳す対象になっていない日本語（参考）」は、<code>T('…')</code> で囲まれていない日本語の文字列です。画面に出るものは <code>T('…')</code> で囲んで辞書に足してください。訳さなくてよいもの（言語名・作者名・画面に出ない文字など）は、その行の最後に <code>// i18n-ok</code> と書くと数えなくなります。
   </p>
 </div>
 <script>
@@ -84,12 +84,14 @@
       l = l.replace(/\/\*.*?\*\//g, '');
       const b = l.indexOf('/*');
       if (b >= 0) { l = l.slice(0, b); inBlock = true; }
-      if (/^\s*\/\//.test(l) || /console\./.test(l)) return;
+      // 「// i18n-ok」と書いた行は、訳さなくてよい文（言語名・作者名・画面に出ない文字など）として数えない
+      if (/^\s*\/\//.test(l) || /console\./.test(l) || /\/\/\s*i18n-ok/.test(l)) return;
       l = l.replace(/\s\/\/.*$/, '');
       const re = /(T\(\s*)?(['`])((?:(?!\2)[^\\]|\\.)*)\2/g;
       let m;
       while ((m = re.exec(l))) {
-        if (m[1] || !JA.test(m[3])) continue;
+        // T(…) の中にある日本語は訳す対象なので、それを除いても日本語が残るものだけを数える
+        if (m[1] || !JA.test(m[3].replace(/\bT\(\s*'(?:[^'\\]|\\.)*'/g, ''))) continue;
         out.push({ line: i + 1, text: m[3] });
       }
     });

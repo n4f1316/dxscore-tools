@@ -9,7 +9,7 @@
   //   文の中の {0} {1} … は、T の2つ目以降の値に置き換わる
   // ============================================================
   const LANG_KEY = '2frate-lang';
-  const LANGS = [['ja', '日本語'], ['en', 'English'], ['ko', '한국어']];
+  const LANGS = [['ja', '日本語'], ['en', 'English'], ['ko', '한국어']]; // i18n-ok（言語名はそれぞれの言語で表示する）
   const LANG = (() => {
     let saved = null;
     try { saved = localStorage.getItem(LANG_KEY); } catch { /* 保存できない環境 */ }
@@ -1101,7 +1101,7 @@
 
   // 画像の注意書きに載せるツールのURL
   const TOOL_URL = 'https://github.com/n4f1316/dxscore-tools';
-  const COPYRIGHT = '© 2026 なふ（2fRATE）';
+  const COPYRIGHT = '© 2026 なふ（2fRATE）'; // i18n-ok（作者名なので訳さない）
 
   const IMG = {
     cols: 5, rows: 10, pad: 32, gap: 12,
@@ -1248,8 +1248,8 @@
     // フォントの読み込みを待つ（読めなければ端末のフォントで描く）
     try {
       await Promise.all([
-        document.fonts.load(`800 20px "Noto Sans JP"`, 'あ'),
-        document.fonts.load(`700 20px "Noto Sans JP"`, 'あ'),
+        document.fonts.load(`800 20px "Noto Sans JP"`, 'あ'), // i18n-ok（文字の読み込み用。画面には出ない）
+        document.fonts.load(`700 20px "Noto Sans JP"`, 'あ'), // i18n-ok
         document.fonts.load(`700 20px "Chakra Petch"`, '2fRATE 0123'),
       ]);
     } catch { /* そのまま */ }
@@ -1525,7 +1525,7 @@
         const nameY = OUT ? y + boxH + (cellH - boxH) / 2 + 1 : bandY + bandH / 2 + 1;
         if (accent) {
           // 縦のアクセントは、楽曲名の文字（漢字の高さ）の上端から下端に合わせる。書体によって文字の上下の位置が違うので、実際に測る
-          const m = ctx.measureText('楽');
+          const m = ctx.measureText('楽'); // i18n-ok（文字の高さを測るだけ。画面には出ない）
           const top = nameY - (m.actualBoundingBoxAscent || 8);
           const h = (m.actualBoundingBoxAscent || 8) + (m.actualBoundingBoxDescent || 8);
           ctx.fillStyle = accent.color;
