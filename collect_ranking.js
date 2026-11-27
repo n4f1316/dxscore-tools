@@ -18,7 +18,7 @@
   const WAIT_MS = 1500;            // ページ取得の間隔（サーバー負荷対策。以前は 2000）
   const SCORE_TYPE = 1;            // 1 = でらっくスコア
   const RANKING_TYPE = 99;         // 99 = 全国
-  const CONST_URL = 'https://n4f1316.github.io/dxscore-tools/maimai_consts_magical.json';
+  const CONST_URL = 'https://n4f1316.github.io/dxscore-tools/consts/maimai_consts_magical.json';
   // 集計結果の保存先：GitHub に置いた JSON を読み込み、取得済みの譜面は飛ばす
   // レベルごとに1ファイル：ranking/lv13p.json（13+）、ranking/lv14.json（14）… の形でGitHubに置く
   const RESULTS_DIR = 'https://n4f1316.github.io/dxscore-tools/ranking/';

@@ -238,8 +238,8 @@
   // 形式: { "曲名|DX|MASTER": 14.8, "曲名|ST|EXPERT": 12.3, ... }
   //   International版は日本版よりバージョンが遅れていて定数が一部違うため、そのバージョンの日本版の定数表を使う
   //   （International版がアップデートしたら CONST_URL_INTL を次のバージョンの表に変える）
-  const CONST_URL_JP = 'https://n4f1316.github.io/dxscore-tools/maimai_consts_magical.json';
-  const CONST_URL_INTL = 'https://n4f1316.github.io/dxscore-tools/maimai_consts_circleplus.json'; // International版の現行：CiRCLE PLUS
+  const CONST_URL_JP = 'https://n4f1316.github.io/dxscore-tools/consts/maimai_consts_magical.json';
+  const CONST_URL_INTL = 'https://n4f1316.github.io/dxscore-tools/consts/maimai_consts_circleplus.json'; // International版の現行：CiRCLE PLUS
   const CONST_URL = IS_INTL ? CONST_URL_INTL : CONST_URL_JP;
 
   // ランキング（Google Apps Script の受け取り口と、ランキングのページ）

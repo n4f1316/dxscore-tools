@@ -204,7 +204,7 @@
 
   // 譜面定数表（JSON）のURL。空なら表示レベルからの概算値（下限）を使う
   // 形式: { "曲名|DX|MASTER": 14.8, "曲名|ST|EXPERT": 12.3, ... }
-  const CONST_URL = 'https://n4f1316.github.io/dxscore-tools/maimai_consts_magical.json';
+  const CONST_URL = 'https://n4f1316.github.io/dxscore-tools/consts/maimai_consts_magical.json';
 
   // ランキング（Google Apps Script の受け取り口と、ランキングのページ）
   const RANKING_API = 'https://2frate.want131611.workers.dev/';
