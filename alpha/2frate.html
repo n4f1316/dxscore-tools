@@ -9,8 +9,9 @@
 <link rel="icon" href="logo/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="logo/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="logo/apple-touch-icon.png">
-<link rel="stylesheet" href="2frate.css?v=20261124a">
-<script src="2frate-theme.js?v=20261124a"></script>
+<link rel="stylesheet" href="2frate.css?v=20261127a">
+<script src="2frate-i18n.js?v=20261127a"></script>
+<script src="2frate-theme.js?v=20261127a"></script>
 </head>
 <body class="pg-doc">
 <div class="wrap">
@@ -18,7 +19,7 @@
     <a class="site-logo" href="./" aria-label="2fRATE トップへ">2fRATE</a>
     <button type="button" class="theme-toggle"></button>
   </header>
-  <h1>2fRATE レート計算<span class="tag-bm">ブックマーク</span></h1>
+  <h1 data-i18n="guide-title">2fRATE レート計算<span class="tag-bm">ブックマーク</span></h1>
   <p class="lead">maimaiでらっくすNET にログインした状態でブックマークから実行すると、あなたのでらっくスコアから 2fRATE を計算します。</p>
 
   <h2>できること</h2>
@@ -39,7 +40,7 @@
     <div class="code" id="code" style="margin-top:10px"></div>
     <div class="code-row">
       <button class="copy" type="button" data-copy="code">コードをコピー</button>
-      <span class="drag-wrap sub">PCなら <a class="drag" id="drag" href="#" title="ブックマークバーへドラッグしてください">★ 2fRATE</a> をブックマークバーへドラッグしても登録できます</span>
+      <span class="drag-wrap sub"><span data-i18n>PCなら</span> <a class="drag" id="drag" href="#" title="ブックマークバーへドラッグしてください">★ 2fRATE</a> <span data-i18n>をブックマークバーへドラッグしても登録できます</span></span>
     </div>
   </div>
 
@@ -195,7 +196,7 @@
     e.preventDefault();
     const s = e.currentTarget;
     const old = s.textContent;
-    s.textContent = 'ブックマークバーへドラッグしてください';
+    s.textContent = (window.I18N ? I18N.t('ブックマークバーへドラッグしてください') : 'ブックマークバーへドラッグしてください');
     setTimeout(() => { s.textContent = old; }, 2000);
   });
 
@@ -210,11 +211,12 @@
     ta.remove();
     return ok;
   }
+  const tr = (ja) => (window.I18N ? I18N.t(ja) : ja); // 今の言語の文（辞書は 2frate-i18n.js）
   document.querySelectorAll('[data-copy]').forEach((btn) => {
-    const label = btn.textContent;
     btn.addEventListener('click', async () => {
+      const label = tr('コードをコピー');
       const ok = await copyText(CODES[btn.dataset.copy]);
-      btn.textContent = ok ? 'コピーしました' : 'コピーできませんでした（長押しで選択してください）';
+      btn.textContent = ok ? tr('コピーしました') : tr('コピーできませんでした（長押しで選択してください）');
       btn.classList.toggle('done', ok);
       setTimeout(() => { btn.textContent = label; btn.classList.remove('done'); }, 2200);
     });

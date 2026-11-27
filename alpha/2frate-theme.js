@@ -24,11 +24,19 @@ window.tnum = (node) => {
   const root = document.documentElement;
   const load = () => { try { return localStorage.getItem(KEY); } catch { return null; } };
   const current = () => (root.dataset.theme === 'dark' ? 'dark' : 'light');
-  const label = () => (current() === 'dark' ? '表示：ダーク' : '表示：ライト');
+  // 言語の切り替え（2frate-i18n.js）があれば、ボタンの文字もその言語にする
+  const LABELS = {
+    ja: { dark: '表示：ダーク', light: '表示：ライト', hint: '（押すと切り替え）' },
+    en: { dark: 'Theme: Dark', light: 'Theme: Light', hint: ' (tap to switch)' },
+    ko: { dark: '화면: 다크', light: '화면: 라이트', hint: ' (눌러서 전환)' },
+  };
+  const words = () => LABELS[window.I18N?.lang] || LABELS.ja;
+  const label = () => words()[current()];
   const paint = () => document.querySelectorAll('.theme-toggle').forEach((b) => {
     b.textContent = label();
-    b.setAttribute('aria-label', `${label()}（押すと切り替え）`);
+    b.setAttribute('aria-label', label() + words().hint);
   });
+  document.addEventListener('2frate-lang', () => paint());
   const apply = (theme) => { root.dataset.theme = theme; paint(); };
 
   // 読み込み時：保存してある表示 → なければライト

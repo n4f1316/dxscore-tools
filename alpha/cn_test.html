@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2fRATE 舞萌DX 試作（α版）</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="logo/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="logo/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="logo/apple-touch-icon.png">
+<link rel="stylesheet" href="2frate.css?v=20261127a">
+<script src="2frate-theme.js?v=20261127a"></script>
+<style>
+  /* このページだけの部品（検証用） */
+  .it-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 12px; font-size: 13px; }
+  .it-row label { display: inline-flex; align-items: center; gap: 6px; color: var(--sub); font-weight: 700; }
+  .it-row select { font: inherit; font-size: 16px; padding: 6px 10px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--ink); border-radius: 0; max-width: 100%; }
+  .it-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); }
+  .it-btn { font: inherit; font-weight: 700; padding: 8px 18px; border: 1px solid var(--accent); background: var(--accent);
+    color: var(--on-accent); border-radius: 0; cursor: pointer; }
+  .it-btn.sub { background: transparent; color: var(--accent); }
+  .it-btn:disabled { opacity: .5; cursor: default; }
+  .it-note { color: var(--sub); }
+  .cn-sum { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; margin-top: 14px; padding: 12px 14px; border: 1px solid var(--line); }
+  .cn-sum .who { font-weight: 800; }
+  .cn-sum .rate { font-family: "Chakra Petch", sans-serif; font-size: 30px; font-weight: 700; line-height: 1; }
+  .cn-sum .rank { font-family: "Chakra Petch", sans-serif; font-weight: 700; letter-spacing: .04em; }
+  .cn-sum .meta { color: var(--sub); font-size: 12px; flex-basis: 100%; }
+  .cn-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+  .cn-table th, .cn-table td { border-bottom: 1px solid var(--line); padding: 5px 6px; text-align: left; white-space: nowrap; }
+  .cn-table th { color: var(--sub); font-size: 11px; font-weight: 700; }
+  .cn-table td.n { text-align: right; font-family: "Chakra Petch", sans-serif; }
+  .cn-table td.t { white-space: normal; min-width: 10em; }
+  .cn-wrap { overflow-x: auto; }
+  #out { margin-top: 16px; }
+  #out canvas, #out img { display: block; max-width: 100%; height: auto; border: 1px solid var(--line); }
+  details.cn-list { margin-top: 16px; }
+  details.cn-list summary { cursor: pointer; font-weight: 700; }
+</style>
+</head>
+<body class="pg-viewer">
+<div class="wrap">
+  <header class="site-head">
+    <a class="site-logo" href="./" aria-label="2fRATE トップへ">2fRATE</a>
+    <button type="button" class="theme-toggle"></button>
+  </header>
+  <div class="page-title"><h1>舞萌DX TEST</h1><span>中国版の試作（α版）</span></div>
+  <p class="lead">水鱼（Diving-Fish）の成績データから、ブックマークレット（α版）と同じ計算式で 2fRATE を計算し、画像にします。いまは水鱼が公開しているサンプルの成績（認証不要）で動作を確認します。</p>
+
+  <div class="tabs" id="modeTabs" role="group" aria-label="レートの種類"></div>
+  <div id="summary"></div>
+
+  <div class="it-row">
+    <label>画像の形
+      <select id="layout"><option value="standard">通常</option><option value="compact">コンパクト</option></select>
+    </label>
+    <label><input type="checkbox" id="hide"> 名前と称号を載せない</label>
+  </div>
+  <div class="it-row">
+    <button type="button" id="draw" class="it-btn" disabled>画像を作る</button>
+    <button type="button" id="save" class="it-btn sub" disabled>画像を保存</button>
+    <span id="saveNote" class="it-note"></span>
+  </div>
+  <div class="status" id="status">読み込み中…</div>
+  <div id="out"></div>
+
+  <details class="cn-list" id="listBox" hidden>
+    <summary>レート対象曲の一覧</summary>
+    <div class="cn-wrap"><table class="cn-table" id="list"></table></div>
+  </details>
+
+  <p class="foot">
+    検証用のページです。成績・譜面定数・ノーツ数は水鱼（Diving-Fish）の API から読み込みます。譜面定数は中国版の値です。<br>
+    希少ボーナスは日本版のランキングをもとにしているため、ここでは加算しません。ランキングへの登録もしません。<br>
+    ジャケット画像は水鱼の画像を使います。書き出せない場合は灰色の枠になります。<br>
+    非公式のファンメイドツールです。株式会社セガおよび関連会社、华立科技とは一切関係ありません。楽曲・ジャケット画像の著作権は、株式会社セガおよび各権利者に帰属します。<br>
+    © 2026 なふ（2fRATE）。2fRATE のプログラム・デザイン・ロゴの無断転載・無断使用を禁じます。
+  </p>
+</div>
+
+<script>
+(async () => {
+  'use strict';
+  const API = 'https://www.diving-fish.com/api/maimaidxprober/';
+  const RECORDS_URL = API + 'player/test_data'; // サンプルの成績（認証不要）。本番では /player/records（要認可）に差し替える
+  const MUSIC_URL = API + 'music_data';          // 曲データ（譜面定数・ノーツ数。認証不要）
+  const COVER_BASE = 'https://www.diving-fish.com/covers/';
+  const BOOKMARKLET = './dxscore_rating.js';     // 計算式と画像を描く処理は同じフォルダーの α版から借りる
+  const DIFFS = ['BASIC', 'ADVANCED', 'EXPERT', 'MASTER', 'Re:MASTER'];
+
+  const $ = (id) => document.getElementById(id);
+  const status = (t, isError = false) => {
+    $('status').textContent = t;
+    $('status').classList.toggle('error', isError);
+  };
+
+  // ブックマークレットを読み込み、計算と画像の関数だけを受け取る
+  const loadTool = () => new Promise((resolve, reject) => {
+    window.__2fRATE_PREVIEW__ = resolve;
+    const s = document.createElement('script');
+    s.src = BOOKMARKLET + '?' + Date.now();
+    s.onerror = () => reject(new Error('ブックマークレット（α版）を読み込めませんでした。'));
+    document.head.appendChild(s);
+    setTimeout(() => reject(new Error('ブックマークレット（α版）が検証用の読み込みに対応していません。')), 15000);
+  });
+
+  const getJson = async (url, what) => {
+    let res;
+    try {
+      res = await fetch(url);
+    } catch {
+      throw new Error(`${what}を読み込めませんでした（水鱼に接続できません）。`);
+    }
+    if (!res.ok) throw new Error(`${what}を読み込めませんでした（HTTP ${res.status}）。`);
+    return res.json();
+  };
+
+  // 水鱼のジャケット画像のファイル名（水鱼のサイトと同じ規則：10001〜11000 は 10000 を引く。5桁の0埋め）
+  const coverOf = (id) => {
+    let i = Number(id);
+    if (i > 10000 && i <= 11000) i -= 10000;
+    return COVER_BASE + String(i).padStart(5, '0') + '.png';
+  };
+
+  // 曲データ → 「曲ID|難易度の番号」→ でらっくスコアの最大値（総ノーツ数 × 3）
+  function buildMaxMap(music) {
+    const map = new Map();
+    for (const m of music) {
+      (m.charts || []).forEach((c, i) => {
+        const notes = (c.notes || []).reduce((a, b) => a + (Number(b) || 0), 0);
+        if (notes > 0) map.set(`${m.id}|${i}`, notes * 3);
+      });
+    }
+    return map;
+  }
+
+  // 水鱼の成績 → ブックマークレットの計算が使う形
+  //   譜面定数は成績に含まれる ds（中国版の定数）を使う。希少ボーナスの集計は渡さない（加算なし）
+  function convert(records, maxMap, tool) {
+    const scored = [];
+    const skip = { utage: 0, noMax: 0, noDx: 0, over: 0 };
+    for (const r of records) {
+      const id = Number(r.song_id);
+      if (id >= 100000 || !(r.level_index in DIFFS)) { skip.utage++; continue; } // 宴
+      const max = maxMap.get(`${id}|${r.level_index}`);
+      if (!max) { skip.noMax++; continue; }
+      const cur = Number(r.dxScore) || 0;
+      if (cur <= 0) { skip.noDx++; continue; } // でらっくスコアが 0（未記録・非公開）
+      if (cur > max) { skip.over++; continue; } // ノーツ数のデータと合わない
+      const s = {
+        name: String(r.title ?? ''), kind: r.type === 'SD' ? 'ST' : 'DX', diff: DIFFS[r.level_index],
+        level: String(r.level ?? ''), levelNo: 0, cur, max,
+      };
+      const one = tool.score(s, { [`${s.name}|${s.kind}|${s.diff}`]: Number(r.ds) || 0 }, null);
+      one.jacketUrl = coverOf(id);
+      one.songId = id;
+      scored.push(one);
+    }
+    return { scored, skip };
+  }
+
+  let tool, data, scored, skip, modeId = 'full';
+  let current = null; // 保存用の画像
+  let drawId = 0;
+
+  const resultOf = (id) => {
+    const mode = tool.modes.find((m) => m.id === id);
+    const top = [...scored].sort((a, b) => b.values[id] - a.values[id]).slice(0, tool.topN);
+    // 50曲未満の場合も 50 で割る（ブックマークレットと同じ）
+    const rating = top.reduce((sum, s) => sum + s.values[id], 0) / tool.topN;
+    return { mode, rating, top };
+  };
+
+  const profileOf = () => ({ name: data.nickname || data.username || 'PLAYER', icon: '', trophy: data.plate || '', trophyRank: 'Normal' });
+
+  function paintRank(node, rank) {
+    if (!rank) return;
+    node.classList.add('rank-grad');
+    node.style.setProperty('--g', `linear-gradient(90deg, ${rank.colors.join(', ')})`);
+    node.style.setProperty('--gd', `linear-gradient(90deg, ${(rank.dark || rank.colors).join(', ')})`);
+  }
+
+  function showSummary() {
+    const r = resultOf(modeId);
+    const rank = tool.rankOf(r.rating, modeId);
+    const box = document.createElement('div');
+    box.className = 'cn-sum';
+    const who = document.createElement('span');
+    who.className = 'who';
+    who.textContent = `${data.nickname || data.username}（${r.mode.label}）`;
+    const rate = document.createElement('span');
+    rate.className = 'rate';
+    rate.textContent = r.rating.toFixed(3);
+    if (window.tnum) window.tnum(rate);
+    const rk = document.createElement('span');
+    rk.className = 'rank';
+    rk.textContent = rank ? rank.name : '';
+    paintRank(rk, rank);
+    const meta = document.createElement('span');
+    meta.className = 'meta';
+    const skipped = [
+      skip.noDx && `でらっくスコア 0：${skip.noDx}`,
+      skip.noMax && `ノーツ数不明：${skip.noMax}`,
+      skip.over && `ノーツ数と不一致：${skip.over}`,
+      skip.utage && `宴：${skip.utage}`,
+    ].filter(Boolean).join('　');
+    meta.textContent = `計算に使った譜面 ${scored.length}　／　除外 ${skipped || 'なし'}　／　参考：水鱼の DX Rating ${data.rating ?? '-'}`;
+    box.append(who, rate, rk, meta);
+    $('summary').replaceChildren(box);
+
+    // レート対象曲の一覧
+    const head = '<tr><th>#</th><th>曲名</th><th>種別</th><th>難易度</th><th>定数</th><th>でらっくスコア</th><th>☆</th><th>単曲</th></tr>';
+    const t = $('list');
+    t.innerHTML = head;
+    r.top.forEach((s, i) => {
+      const tr = document.createElement('tr');
+      const cells = [
+        [String(i + 1), 'n'], [s.name, 't'], [s.kind, ''], [`${s.diff} ${s.level}`, ''],
+        [s.c.toFixed(1), 'n'], [`${s.cur} / ${s.max}`, 'n'], [tool.starDisplay(s.cur, s.max), 'n'], [s.values[modeId].toFixed(3), 'n'],
+      ];
+      for (const [v, cls] of cells) {
+        const td = document.createElement('td');
+        td.textContent = v;
+        if (cls) td.className = cls;
+        tr.appendChild(td);
+      }
+      t.appendChild(tr);
+    });
+    $('listBox').hidden = false;
+  }
+
+  const toUrl = (canvas) => { try { return canvas.toDataURL('image/png'); } catch { return null; } };
+
+  async function draw() {
+    const my = ++drawId;
+    current = null;
+    $('save').disabled = true;
+    $('saveNote').textContent = '';
+    try {
+      status('画像を作成中…');
+      const result = resultOf(modeId);
+      tool.setTheme(document.documentElement.dataset.theme);
+      const base = { hideProfile: $('hide').checked, layout: $('layout').value };
+      // まずジャケット入りで描き、書き出せるか試す。書き出せないときは灰色の枠で描き直す
+      let canvas = await tool.buildShareImage(profileOf(), result, null, { ...base, cors: true });
+      let url = toUrl(canvas);
+      let note = '';
+      if (!url) {
+        canvas = await tool.buildShareImage(profileOf(), result, null, { ...base, noImages: true });
+        url = toUrl(canvas);
+        note = '　※ジャケットは書き出せないため、灰色の枠にしています';
+      }
+      if (my !== drawId) return;
+      const img = new Image();
+      img.src = url;
+      img.alt = '2fRATE レート対象曲';
+      $('out').replaceChildren(img);
+      current = { url, fileName: `2fRATE_cn_test_${modeId}_${$('layout').value}.png` };
+      $('save').disabled = false;
+      status(`${result.mode.label} ／ ${result.top.length}譜面（${canvas.width}×${canvas.height}px）${note}`);
+    } catch (e) {
+      if (my !== drawId) return;
+      status('エラー: ' + e.message, true);
+      console.error(e);
+    }
+  }
+
+  function save() {
+    if (!current) return;
+    const a = document.createElement('a');
+    a.href = current.url;
+    a.download = current.fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    $('saveNote').textContent = '保存しました。';
+  }
+
+  try {
+    status('水鱼からサンプルの成績と曲データを読み込み中…');
+    const [t, records, music] = await Promise.all([
+      loadTool(),
+      getJson(RECORDS_URL + '?t=' + Date.now(), 'サンプルの成績'),
+      getJson(MUSIC_URL, '曲データ'),
+    ]);
+    tool = t;
+    data = records;
+    if (!Array.isArray(data.records) || !Array.isArray(music)) throw new Error('水鱼のデータの形が想定と違います。');
+    ({ scored, skip } = convert(data.records, buildMaxMap(music), tool));
+    if (!scored.length) throw new Error('計算できる譜面がありませんでした。');
+
+    tool.modes.forEach((m) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = m.label;
+      b.setAttribute('aria-pressed', String(m.id === modeId));
+      b.onclick = () => {
+        modeId = m.id;
+        $('modeTabs').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        showSummary();
+        if ($('out').firstChild) draw();
+      };
+      $('modeTabs').appendChild(b);
+    });
+
+    showSummary();
+    status('');
+    $('draw').disabled = false;
+    $('draw').onclick = draw;
+    $('save').onclick = save;
+    $('layout').onchange = () => { if ($('out').firstChild) draw(); };
+    $('hide').onchange = () => { if ($('out').firstChild) draw(); };
+    // 表示（ダーク／ライト）を切り替えたら描き直す
+    new MutationObserver(() => { if ($('out').firstChild) draw(); })
+      .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  } catch (e) {
+    status('エラー: ' + e.message, true);
+    console.error(e);
+  }
+})();
+</script>
+</body>
+</html>

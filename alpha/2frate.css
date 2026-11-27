@@ -46,6 +46,11 @@ a { color: var(--accent); }
 .site-logo::before { content: ""; width: 36px; height: 36px; flex: none; background: url("logo/icon-light.svg") center / contain no-repeat; }
 html[data-theme="dark"] .site-logo::before { background-image: url("logo/icon-dark.svg"); }
 .theme-toggle { min-height: 40px; font-size: 12px; }
+/* 言語の切り替え（2frate-i18n.js が表示の切り替えボタンの前に置く） */
+.head-controls { display: flex; align-items: center; gap: 6px; flex: none; }
+.lang-select { min-height: 40px; font: inherit; font-size: 12px; font-weight: 700; padding: 6px 28px 6px 10px; border: 1px solid var(--line);
+  border-radius: 0; background: var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23888' stroke-width='1.5'/%3E%3C/svg%3E") right 10px center / 10px 6px no-repeat;
+  color: var(--ink); appearance: none; -webkit-appearance: none; cursor: pointer; }
 /* 見出し：英字ラベル＋日本語、下に太い線 */
 .page-title { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin: 14px 0 0; padding-bottom: 8px; border-bottom: 2px solid var(--ink); }
 .page-title h1 { margin: 0; font-family: "Chakra Petch", "Noto Sans JP", sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 3px; }
@@ -365,6 +370,11 @@ html:not([data-theme="dark"]) .formula .rare { -webkit-text-stroke: 1.5px #12101
 .logo { width: 88px; height: 88px; flex: none; background: url("logo/icon-light.svg") center / contain no-repeat; }
 html[data-theme="dark"] .logo { background-image: url("logo/icon-dark.svg"); }
 .hero-text { flex: 1 1 280px; min-width: 0; }
+/* トップページ：1行目に「2fRATE」と表示の切り替え（右端）、2行目に「非公式・ファンメイドツール」 */
+.pg-index .hero { flex-wrap: nowrap; }
+.hero-row { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; }
+.hero-row .theme-toggle { flex: none; }
+.hero-text .badge { margin-top: 8px; }
 .hero h1 { margin: 0; font-family: "Chakra Petch", "Noto Sans JP", sans-serif; font-size: 44px; line-height: 1.1; font-weight: 700; }
 .hero p { margin: 6px 0 0; color: var(--sub); font-weight: 700; }
 .badge { display: inline-block; font-size: 11px; font-weight: 700; color: var(--sub); border: 1px solid var(--sub); padding: 1px 10px; margin-top: 8px; }
